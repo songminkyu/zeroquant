@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use chrono::Utc;
@@ -48,12 +48,7 @@ impl DbInvestmentConfig {
         }
     }
 
-    pub fn from_env() -> Option<Self> {
-        let app_key = std::env::var("DB_APP_KEY").ok()?;
-        let app_secret = std::env::var("DB_SECRET_KEY").ok()?;
-        let base_url = std::env::var("DB_BASE_URL").ok();
-        Some(Self::new(app_key, app_secret, base_url))
-    }
+
 }
 
 // ============================================================================
@@ -96,31 +91,14 @@ impl DbInvestmentClient {
     async fn get_token(&self) -> Result<String, ProviderError> {
         let mut tm = self.token_manager.lock().await;
 
+        // 메모리 캐시 확인
         if let Some(token) = &tm.access_token {
             if Instant::now() < tm.expires_at {
                 return Ok(token.clone());
             }
         }
 
-        let token_file_path = "db_token.json";
-        if let Ok(file) = std::fs::File::open(token_file_path) {
-             if let Ok(saved_token) = serde_json::from_reader::<_, Value>(file) {
-                 if let Some(token) = saved_token["access_token"].as_str() {
-                     if let Ok(metadata) = std::fs::metadata(token_file_path) {
-                         if let Ok(modified) = metadata.modified() {
-                             if let Ok(duration) = SystemTime::now().duration_since(modified) {
-                                 if duration.as_secs() < 6 * 3600 {
-                                     tm.access_token = Some(token.to_string());
-                                     tm.expires_at = Instant::now() + Duration::from_secs(3600);
-                                     return Ok(token.to_string());
-                                 }
-                             }
-                         }
-                     }
-                 }
-             }
-        }
-
+        // 만료 시 새 토큰 발급
         let url = format!("{}/oauth2/token", self.config.base_url);
         let params = [
             ("grant_type", "client_credentials"),
@@ -151,17 +129,8 @@ impl DbInvestmentClient {
         
         if let Some(token) = body["access_token"].as_str() {
             let expires_in = body["expires_in"].as_u64().unwrap_or(3600);
-            tm.expires_at = Instant::now() + Duration::from_secs(expires_in.saturating_sub(10));
+            tm.expires_at = Instant::now() + Duration::from_secs(expires_in.saturating_sub(60));
             tm.access_token = Some(token.to_string());
-            
-            let save_data = json!({
-                "access_token": token,
-                "expires_in": expires_in,
-                "timestamp": Utc::now().to_rfc3339()
-            });
-            if let Ok(file) = std::fs::File::create(token_file_path) {
-                let _ = serde_json::to_writer(file, &save_data);
-            }
             
             Ok(token.to_string())
         } else {

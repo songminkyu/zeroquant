@@ -43,11 +43,7 @@ impl BithumbConfig {
         }
     }
 
-    pub fn from_env() -> Option<Self> {
-        let access_key = std::env::var("BITHUMB_ACCESS_KEY").ok()?;
-        let secret_key = std::env::var("BITHUMB_SECRET_KEY").ok()?;
-        Some(Self::new(access_key, secret_key))
-    }
+
 }
 
 // ============================================================================
@@ -271,7 +267,7 @@ impl ExchangeProvider for BithumbClient {
             if b.currency == "KRW" { continue; } 
             
             let quantity = Decimal::from_str(&b.balance).unwrap_or_default() + Decimal::from_str(&b.locked).unwrap_or_default();
-            let avg_price = Decimal::ZERO; 
+            let avg_price = Decimal::from_str(&b.avg_buy_price).unwrap_or_default();
             
             if quantity > Decimal::ZERO {
                 let ticker = format!("KRW-{}", b.currency); 

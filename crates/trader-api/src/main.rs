@@ -4,6 +4,7 @@
 //! 헬스 체크, 전략 관리, 주문/포지션 조회 등의 엔드포인트를 제공합니다.
 
 use std::net::SocketAddr;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -12,6 +13,7 @@ use metrics_exporter_prometheus::PrometheusHandle;
 use trader_data::{Database, DatabaseConfig};
 use tokio_util::sync::CancellationToken;
 use tower_http::cors::{AllowOrigin, CorsLayer};
+use tower_http::services::{ServeDir, ServeFile};
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
@@ -404,12 +406,24 @@ fn create_router(
     let ws_router = standalone_websocket_router(ws_state);
 
     // 전체 라우터 조합
-    Router::new()
+    let router = Router::new()
         .merge(metrics_router)
         .merge(api_router)
         .nest("/ws", ws_router)
         // OpenAPI 문서 및 Swagger UI
-        .merge(swagger_ui_router())
+        .merge(swagger_ui_router());
+
+    // 프론트엔드 정적 파일 서빙 (FRONTEND_DIR 설정 시)
+    let router = if let Some(frontend_dir) = frontend_static_dir() {
+        let index_html = frontend_dir.join("index.html");
+        let serve = ServeDir::new(&frontend_dir)
+            .not_found_service(ServeFile::new(index_html));
+        router.fallback_service(serve)
+    } else {
+        router
+    };
+
+    router
         // 메트릭 미들웨어 (모든 요청에 적용)
         .layer(middleware::from_fn(metrics_layer))
         // 기타 미들웨어
@@ -417,6 +431,35 @@ fn create_router(
         // 전역 타임아웃 (30초) - 408 상태 코드 반환
         .layer(TimeoutLayer::with_status_code(StatusCode::REQUEST_TIMEOUT, Duration::from_secs(30)))
         .layer(cors_layer())
+}
+
+/// 프론트엔드 정적 파일 디렉토리 반환.
+///
+/// `FRONTEND_DIR` 환경변수 또는 실행 파일 옆 `dist/` 디렉토리를 탐색한다.
+fn frontend_static_dir() -> Option<PathBuf> {
+    // 1순위: FRONTEND_DIR 환경변수
+    if let Ok(dir) = std::env::var("FRONTEND_DIR") {
+        let path = PathBuf::from(&dir);
+        if path.join("index.html").exists() {
+            info!("프론트엔드 서빙: {}", path.display());
+            return Some(path);
+        }
+        warn!("FRONTEND_DIR={} 에 index.html 없음, 무시", dir);
+    }
+
+    // 2순위: 실행 파일 옆 dist/ 디렉토리
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(parent) = exe.parent() {
+            let dist = parent.join("dist");
+            if dist.join("index.html").exists() {
+                info!("프론트엔드 서빙: {}", dist.display());
+                return Some(dist);
+            }
+        }
+    }
+
+    info!("프론트엔드 디렉토리 없음 - API 전용 모드");
+    None
 }
 
 /// OpenAPI 스펙 내보내기 처리.

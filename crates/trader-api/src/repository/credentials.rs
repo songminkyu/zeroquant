@@ -15,11 +15,14 @@ use std::sync::Arc;
 use tracing::{debug, info, warn};
 use trader_core::CredentialEncryptor;
 use trader_core::{ExchangeProvider, MarketDataProvider};
-use trader_exchange::connector::kis::KisAccountType;
-use trader_exchange::connector::{KisConfig, KisOAuth};
-use trader_exchange::connector::kis::KisClient;
+use trader_exchange::connector::kis::{KisAccountType, KisClient, KisConfig, KisOAuth};
+use trader_exchange::{
+    BithumbClient, BithumbConfig, DbInvestmentClient, DbInvestmentConfig,
+    LsSecClient, LsSecConfig, UpbitClient, UpbitConfig,
+};
 use trader_exchange::provider::{
-    KisProvider, MockConfig, MockExchangeProvider,
+    BithumbProvider, DbInvestmentProvider, KisProvider, LsSecProvider,
+    MockConfig, MockExchangeProvider, UpbitProvider,
 };
 
 /// Exchange 및 MarketData Provider 번들.
@@ -397,16 +400,47 @@ pub async fn create_kis_client_from_credential(
     ))
 }
 
+/// Credential 복호화 헬퍼 (거래소 중립)
+///
+/// DB에서 credential을 조회하고 복호화하여 반환합니다.
+/// exchange_id 필터 없이 credential_id만으로 조회합니다.
+async fn load_and_decrypt_credential(
+    pool: &PgPool,
+    encryptor: &CredentialEncryptor,
+    credential_id: Uuid,
+) -> Result<(EncryptedCredentials, CredentialRow), String> {
+    let row: CredentialRow = sqlx::query_as(
+        r#"
+        SELECT encrypted_credentials, encryption_nonce, is_testnet, settings, exchange_name
+        FROM exchange_credentials
+        WHERE id = $1 AND is_active = true
+        "#,
+    )
+    .bind(credential_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("Credential 조회 실패: {}", e))?
+    .ok_or_else(|| "해당 credential을 찾을 수 없습니다.".to_string())?;
+
+    let credentials: EncryptedCredentials = encryptor
+        .decrypt_json(&row.encrypted_credentials, &row.encryption_nonce)
+        .map_err(|e| format!("Credential 복호화 실패: {}", e))?;
+
+    Ok((credentials, row))
+}
+
 /// 거래소 중립적 Provider 생성
 ///
 /// exchange_id에 따라 적절한 ExchangeProvider를 생성합니다.
 /// - mock: MockExchangeProvider (API 키 불필요, DB에서 상태 관리)
 /// - kis: KIS Provider (KR 마켓용)
+/// - upbit, bithumb: 암호화폐 거래소
+/// - db_investment, ls_sec: 국내 증권사
 ///
 /// # Arguments
 ///
 /// * `pool` - DB 연결 풀
-/// * `encryptor` - Credential 암호화/복호화 관리자 (kis 등 실제 거래소용)
+/// * `encryptor` - Credential 암호화/복호화 관리자 (실제 거래소용)
 /// * `credential_id` - Credential UUID
 ///
 /// # Returns
@@ -437,6 +471,43 @@ pub async fn create_provider_for_credential(
                 pool, encryptor, credential_id, None,
             ).await?;
             Ok(provider)
+        }
+        "upbit" => {
+            let (creds, _row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
+            let config = UpbitConfig { access_key: creds.api_key, secret_key: creds.api_secret };
+            let client = Arc::new(UpbitClient::new(config));
+            info!("Upbit Provider 생성 완료: credential_id={}", credential_id);
+            Ok(Arc::new(UpbitProvider::new(client)))
+        }
+        "bithumb" => {
+            let (creds, _row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
+            let config = BithumbConfig { access_key: creds.api_key, secret_key: creds.api_secret };
+            let client = Arc::new(BithumbClient::new(config));
+            info!("Bithumb Provider 생성 완료: credential_id={}", credential_id);
+            Ok(Arc::new(BithumbProvider::new(client)))
+        }
+        "db_investment" => {
+            let (creds, row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
+            let config = DbInvestmentConfig {
+                app_key: creds.api_key,
+                app_secret: creds.api_secret,
+                base_url: "https://openapi.dbsec.co.kr:8443".to_string(),
+                is_virtual: row.is_testnet,
+            };
+            let client = Arc::new(DbInvestmentClient::new(config));
+            info!("DB Investment Provider 생성 완료: credential_id={}", credential_id);
+            Ok(Arc::new(DbInvestmentProvider::new(client)))
+        }
+        "ls_sec" => {
+            let (creds, _row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
+            let config = LsSecConfig {
+                app_key: creds.api_key,
+                app_secret: creds.api_secret,
+                base_url: "https://openapi.ls-sec.co.kr:8080".to_string(),
+            };
+            let client = Arc::new(LsSecClient::new(config));
+            info!("LS Securities Provider 생성 완료: credential_id={}", credential_id);
+            Ok(Arc::new(LsSecProvider::new(client)))
         }
         _ => Err(format!("지원하지 않는 거래소입니다: {}", exchange_id)),
     }
@@ -655,6 +726,59 @@ pub async fn create_provider_bundle(
             // KisProvider는 두 trait 모두 구현
             let provider = Arc::new(KisProvider::new(client));
 
+            Ok(ProviderBundle {
+                exchange: provider.clone(),
+                market_data: provider,
+            })
+        }
+        "upbit" => {
+            let encryptor = encryptor.ok_or("Upbit은 encryptor가 필요합니다.")?;
+            let (creds, _row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
+            let config = UpbitConfig { access_key: creds.api_key, secret_key: creds.api_secret };
+            let client = Arc::new(UpbitClient::new(config));
+            let provider = Arc::new(UpbitProvider::new(client));
+            Ok(ProviderBundle {
+                exchange: provider.clone(),
+                market_data: provider,
+            })
+        }
+        "bithumb" => {
+            let encryptor = encryptor.ok_or("Bithumb은 encryptor가 필요합니다.")?;
+            let (creds, _row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
+            let config = BithumbConfig { access_key: creds.api_key, secret_key: creds.api_secret };
+            let client = Arc::new(BithumbClient::new(config));
+            let provider = Arc::new(BithumbProvider::new(client));
+            Ok(ProviderBundle {
+                exchange: provider.clone(),
+                market_data: provider,
+            })
+        }
+        "db_investment" => {
+            let encryptor = encryptor.ok_or("DB Investment는 encryptor가 필요합니다.")?;
+            let (creds, row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
+            let config = DbInvestmentConfig {
+                app_key: creds.api_key,
+                app_secret: creds.api_secret,
+                base_url: "https://openapi.dbsec.co.kr:8443".to_string(),
+                is_virtual: row.is_testnet,
+            };
+            let client = Arc::new(DbInvestmentClient::new(config));
+            let provider = Arc::new(DbInvestmentProvider::new(client));
+            Ok(ProviderBundle {
+                exchange: provider.clone(),
+                market_data: provider,
+            })
+        }
+        "ls_sec" => {
+            let encryptor = encryptor.ok_or("LS Securities는 encryptor가 필요합니다.")?;
+            let (creds, _row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
+            let config = LsSecConfig {
+                app_key: creds.api_key,
+                app_secret: creds.api_secret,
+                base_url: "https://openapi.ls-sec.co.kr:8080".to_string(),
+            };
+            let client = Arc::new(LsSecClient::new(config));
+            let provider = Arc::new(LsSecProvider::new(client));
             Ok(ProviderBundle {
                 exchange: provider.clone(),
                 market_data: provider,

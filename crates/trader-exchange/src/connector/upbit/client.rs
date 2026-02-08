@@ -41,11 +41,7 @@ impl UpbitConfig {
         }
     }
 
-    pub fn from_env() -> Option<Self> {
-        let access_key = std::env::var("UPBIT_ACCESS_KEY").ok()?;
-        let secret_key = std::env::var("UPBIT_SECRET_KEY").ok()?;
-        Some(Self::new(access_key, secret_key))
-    }
+
 }
 
 // ============================================================================

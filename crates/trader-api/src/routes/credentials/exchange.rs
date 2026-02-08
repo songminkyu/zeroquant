@@ -154,6 +154,110 @@ pub async fn get_supported_exchanges() -> impl IntoResponse {
             is_data_provider: true, // 데이터 제공자 - 활성 계정으로 설정 불가
         },
         SupportedExchange {
+            exchange_id: "upbit".to_string(),
+            display_name: "업비트".to_string(),
+            market_type: "crypto".to_string(),
+            supports_testnet: false,
+            required_fields: vec![
+                CredentialField {
+                    name: "api_key".to_string(),
+                    label: "Access Key".to_string(),
+                    field_type: "password".to_string(),
+                    placeholder: Some("업비트 Open API Access Key".to_string()),
+                    help_text: Some("업비트 개발자 센터에서 발급받은 Access Key".to_string()),
+                },
+                CredentialField {
+                    name: "api_secret".to_string(),
+                    label: "Secret Key".to_string(),
+                    field_type: "password".to_string(),
+                    placeholder: Some("업비트 Open API Secret Key".to_string()),
+                    help_text: Some("API 생성 시 한 번만 표시되는 Secret Key".to_string()),
+                },
+            ],
+            optional_fields: vec![],
+            description: "국내 최대 암호화폐 거래소".to_string(),
+            docs_url: Some("https://docs.upbit.com/".to_string()),
+            is_data_provider: false,
+        },
+        SupportedExchange {
+            exchange_id: "bithumb".to_string(),
+            display_name: "빗썸".to_string(),
+            market_type: "crypto".to_string(),
+            supports_testnet: false,
+            required_fields: vec![
+                CredentialField {
+                    name: "api_key".to_string(),
+                    label: "Access Key".to_string(),
+                    field_type: "password".to_string(),
+                    placeholder: Some("빗썸 Open API Access Key".to_string()),
+                    help_text: Some("빗썸 API 관리에서 발급받은 Access Key".to_string()),
+                },
+                CredentialField {
+                    name: "api_secret".to_string(),
+                    label: "Secret Key".to_string(),
+                    field_type: "password".to_string(),
+                    placeholder: Some("빗썸 Open API Secret Key".to_string()),
+                    help_text: Some("API 생성 시 한 번만 표시되는 Secret Key".to_string()),
+                },
+            ],
+            optional_fields: vec![],
+            description: "국내 주요 암호화폐 거래소".to_string(),
+            docs_url: Some("https://apidocs.bithumb.com/".to_string()),
+            is_data_provider: false,
+        },
+        SupportedExchange {
+            exchange_id: "db_investment".to_string(),
+            display_name: "DB금융투자".to_string(),
+            market_type: "stock_kr".to_string(),
+            supports_testnet: true,
+            required_fields: vec![
+                CredentialField {
+                    name: "api_key".to_string(),
+                    label: "App Key".to_string(),
+                    field_type: "password".to_string(),
+                    placeholder: Some("DB금융투자 Open API App Key".to_string()),
+                    help_text: Some("DB금융투자 Open API에서 발급받은 App Key".to_string()),
+                },
+                CredentialField {
+                    name: "api_secret".to_string(),
+                    label: "App Secret".to_string(),
+                    field_type: "password".to_string(),
+                    placeholder: Some("DB금융투자 Open API App Secret".to_string()),
+                    help_text: Some("DB금융투자 Open API에서 발급받은 App Secret".to_string()),
+                },
+            ],
+            optional_fields: vec![],
+            description: "DB금융투자 Open API (국내/해외 주식)".to_string(),
+            docs_url: Some("https://openapi.dbsec.co.kr:8443".to_string()),
+            is_data_provider: false,
+        },
+        SupportedExchange {
+            exchange_id: "ls_sec".to_string(),
+            display_name: "LS증권".to_string(),
+            market_type: "stock_kr".to_string(),
+            supports_testnet: true,
+            required_fields: vec![
+                CredentialField {
+                    name: "api_key".to_string(),
+                    label: "App Key".to_string(),
+                    field_type: "password".to_string(),
+                    placeholder: Some("LS증권 Open API App Key".to_string()),
+                    help_text: Some("LS증권 Open API에서 발급받은 App Key".to_string()),
+                },
+                CredentialField {
+                    name: "api_secret".to_string(),
+                    label: "App Secret".to_string(),
+                    field_type: "password".to_string(),
+                    placeholder: Some("LS증권 Open API App Secret".to_string()),
+                    help_text: Some("LS증권 Open API에서 발급받은 App Secret".to_string()),
+                },
+            ],
+            optional_fields: vec![],
+            description: "LS증권 Open API (국내/해외 주식)".to_string(),
+            docs_url: Some("https://openapi.ls-sec.co.kr/".to_string()),
+            is_data_provider: false,
+        },
+        SupportedExchange {
             exchange_id: "mock".to_string(),
             display_name: "Mock Exchange (테스트용)".to_string(),
             market_type: "mock".to_string(),
@@ -931,6 +1035,28 @@ pub async fn test_exchange_credential(
                 )
             }
         }
+        "upbit" | "bithumb" => {
+            if credentials.api_key.len() >= 10 && credentials.api_secret.len() >= 10 {
+                (
+                    true,
+                    format!("{} API 키 형식이 유효합니다.", row.exchange_id),
+                    Some(vec!["read".to_string(), "trade".to_string()]),
+                )
+            } else {
+                (false, "API 키 형식이 올바르지 않습니다.".to_string(), None)
+            }
+        }
+        "db_investment" | "ls_sec" => {
+            if credentials.api_key.len() >= 8 && credentials.api_secret.len() >= 8 {
+                (
+                    true,
+                    format!("{} API 키 형식이 유효합니다.", row.exchange_id),
+                    Some(vec!["read".to_string(), "trade".to_string()]),
+                )
+            } else {
+                (false, "API 키 형식이 올바르지 않습니다.".to_string(), None)
+            }
+        }
         "mock" => {
             // Mock 거래소는 항상 성공
             (
@@ -1043,25 +1169,24 @@ pub async fn test_new_exchange_credential(
         ));
     }
 
-    // Exchange-specific connection test (actual API call)
-    // TODO: Replace with actual exchange API calls
+    // 거래소별 API 키 형식 검증
     let (success, message, permissions) = match request.exchange_id.as_str() {
-        "binance" => {
+        "binance" | "upbit" | "bithumb" => {
             if api_key.len() >= 10 && api_secret.len() >= 10 {
                 (
                     true,
-                    "Binance API 키가 유효합니다.".to_string(),
+                    format!("{} API 키가 유효합니다.", request.exchange_id),
                     Some(vec!["read".to_string(), "trade".to_string()]),
                 )
             } else {
                 (false, "API 키 형식이 올바르지 않습니다.".to_string(), None)
             }
         }
-        "kis" => {
+        "kis" | "db_investment" | "ls_sec" => {
             if api_key.len() >= 8 && api_secret.len() >= 8 {
                 (
                     true,
-                    "한국투자증권 API 키가 유효합니다.".to_string(),
+                    format!("{} API 키가 유효합니다.", request.exchange_id),
                     Some(vec!["read".to_string(), "trade".to_string()]),
                 )
             } else {
@@ -1069,12 +1194,11 @@ pub async fn test_new_exchange_credential(
             }
         }
         "krx" => {
-            // KRX Open API 인증키 형식 검증 (최소 16자 이상)
             if api_key.len() >= 16 {
                 (
                     true,
                     "KRX Open API 인증키 형식이 유효합니다.".to_string(),
-                    Some(vec!["read".to_string()]), // 데이터 조회 권한만
+                    Some(vec!["read".to_string()]),
                 )
             } else {
                 (

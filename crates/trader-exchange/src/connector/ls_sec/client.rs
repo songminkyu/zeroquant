@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use chrono::Utc;
@@ -35,6 +35,16 @@ impl std::fmt::Debug for LsSecConfig {
             .field("app_secret", &"***")
             .field("base_url", &self.base_url)
             .finish()
+    }
+}
+
+impl LsSecConfig {
+    pub fn new(app_key: String, app_secret: String, base_url: Option<String>) -> Self {
+        Self {
+            app_key,
+            app_secret,
+            base_url: base_url.unwrap_or_else(|| "https://openapi.ls-sec.co.kr:8080".to_string()),
+        }
     }
 }
 
@@ -148,17 +158,10 @@ struct QuoteOutBlock {
 }
 
 impl LsSecClient {
-    pub fn new(app_key: String, app_secret: String) -> Self {
-        let base_url = std::env::var("LS_BASE_URL")
-            .unwrap_or_else(|_| "https://openapi.ls-sec.co.kr:8080".to_string());
-            
+    pub fn new(config: LsSecConfig) -> Self {
         Self {
             client: Client::new(),
-            config: LsSecConfig {
-                app_key,
-                app_secret,
-                base_url,
-            },
+            config,
             token_manager: Arc::new(Mutex::new(TokenManager {
                 access_token: None,
                 expires_at: Instant::now(),
@@ -169,31 +172,14 @@ impl LsSecClient {
     async fn get_token(&self) -> Result<String, ProviderError> {
         let mut tm = self.token_manager.lock().await;
 
+        // 메모리 캐시 확인
         if let Some(token) = &tm.access_token {
             if Instant::now() < tm.expires_at {
                 return Ok(token.clone());
             }
         }
 
-        let token_file_path = "ls_token.json";
-        if let Ok(file) = std::fs::File::open(token_file_path) {
-             if let Ok(saved_token) = serde_json::from_reader::<_, Value>(file) {
-                 if let Some(token) = saved_token["access_token"].as_str() {
-                     if let Ok(metadata) = std::fs::metadata(token_file_path) {
-                         if let Ok(modified) = metadata.modified() {
-                             if let Ok(duration) = SystemTime::now().duration_since(modified) {
-                                 if duration.as_secs() < 6 * 3600 {
-                                     tm.access_token = Some(token.to_string());
-                                     tm.expires_at = Instant::now() + Duration::from_secs(3600); 
-                                     return Ok(token.to_string());
-                                 }
-                             }
-                         }
-                     }
-                 }
-            }
-        }
-
+        // 만료 시 새 토큰 발급
         let url = format!("{}/oauth2/token", self.config.base_url);
         let params = [
             ("grant_type", "client_credentials"),
@@ -224,17 +210,8 @@ impl LsSecClient {
         
         if let Some(token) = body["access_token"].as_str() {
             let expires_in = body["expires_in"].as_u64().unwrap_or(3600);
-            tm.expires_at = Instant::now() + Duration::from_secs(expires_in.saturating_sub(10));
+            tm.expires_at = Instant::now() + Duration::from_secs(expires_in.saturating_sub(60));
             tm.access_token = Some(token.to_string());
-            
-            let save_data = json!({
-                "access_token": token,
-                "expires_in": expires_in,
-                "timestamp": Utc::now().to_rfc3339()
-            });
-            if let Ok(file) = std::fs::File::create(token_file_path) {
-                let _ = serde_json::to_writer(file, &save_data);
-            }
             
             Ok(token.to_string())
         } else {

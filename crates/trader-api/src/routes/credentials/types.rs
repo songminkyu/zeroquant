@@ -773,8 +773,8 @@ pub(crate) fn mask_api_key(key: &str) -> String {
 /// - `"unknown"`: 알 수 없는 거래소
 pub(crate) fn infer_market_type(exchange_id: &str) -> &'static str {
     match exchange_id {
-        "binance" | "coinbase" | "kraken" => "crypto",
-        "kis" => "stock_kr",
+        "binance" | "coinbase" | "kraken" | "upbit" | "bithumb" => "crypto",
+        "kis" | "db_investment" | "ls_sec" => "stock_kr",
         "interactive_brokers" | "ib" => "stock_us",
         "oanda" => "forex",
         "krx" => "data_provider",
