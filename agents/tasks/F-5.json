@@ -1,0 +1,17 @@
+{
+  "id": "F-5",
+  "title": "Actor Model 전환",
+  "group": "F",
+  "description": "전략별 독립 Tokio Task + mpsc 채널 메시지 기반 통신. StrategyContext의 Arc<RwLock<>> 제거 → 전략 로컬 상태. 락 경합 벤치마크 (전환 전/후 비교).",
+  "relevant_crates": ["trader-strategy", "trader-core", "trader-api"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "전략별 독립 Tokio Task",
+    "mpsc 채널 메시지 기반 통신",
+    "Arc<RwLock<>> 제거 → 로컬 상태",
+    "락 경합 벤치마크",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

@@ -139,7 +139,7 @@ export function Dashboard() {
   // 실행 중인 전략 필터링
   const runningStrategies = () => {
     const all = strategies() || []
-    return all.filter((s: Strategy) => s.status === 'running')
+    return all.filter((s: Strategy) => s.status === 'Running')
   }
 
   // 포지션 데이터 변환

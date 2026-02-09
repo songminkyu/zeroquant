@@ -1,0 +1,18 @@
+{
+  "id": "B-6",
+  "title": "FX 환율 서비스",
+  "group": "B",
+  "description": "FxRateProvider trait 정의 (trader-core/src/domain/). Yahoo Finance/한국은행 API 기반 환율 수집기 구현. Redis 캐시 (TTL 1시간) + DB 히스토리 저장. 포트폴리오 P&L 산출 시 통화 통합 변환 적용.",
+  "relevant_crates": ["trader-core", "trader-data", "trader-analytics"],
+  "has_db_changes": true,
+  "depends_on": [],
+  "checklist": [
+    "FxRateProvider trait 정의",
+    "Yahoo/한국은행 환율 수집기",
+    "Redis 캐시 (TTL 1시간)",
+    "DB 히스토리 저장",
+    "포트폴리오 P&L 통화 변환",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

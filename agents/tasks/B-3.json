@@ -1,0 +1,17 @@
+{
+  "id": "B-3",
+  "title": "생존 편향 방지 (Survivorship Bias)",
+  "group": "B",
+  "description": "symbol_info 테이블에 is_active BOOLEAN DEFAULT TRUE, delisted_date DATE 추가. KRX/Yahoo에서 상폐 종목 정보 수집 로직 추가. 백테스트 유니버스 구성 시 delisted_date > backtest_time 종목 포함. 시뮬레이션 중 delisted_date 도달 시 잔여 포지션 강제 청산 로직.",
+  "relevant_crates": ["trader-data", "trader-collector", "trader-analytics"],
+  "has_db_changes": true,
+  "depends_on": [],
+  "checklist": [
+    "symbol_info 테이블 컬럼 추가 DDL",
+    "상폐 종목 수집 로직",
+    "백테스트 유니버스 delisted_date 필터",
+    "시뮬레이션 강제 청산 로직",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

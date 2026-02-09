@@ -1,0 +1,17 @@
+{
+  "id": "C-2",
+  "title": "실시간 VaR (Value at Risk)",
+  "group": "C",
+  "description": "Parametric VaR — 공분산 행렬 기반 정규분포 가정 (95%, 99%). Historical VaR — TimescaleDB 과거 수익률 시뮬레이션 기반. RiskManager 파이프라인에 VaR 한도 검증 단계 추가. VaR 초과 시 신규 진입 강제 차단.",
+  "relevant_crates": ["trader-risk", "trader-analytics", "trader-api"],
+  "has_db_changes": false,
+  "depends_on": ["B-1", "B-6"],
+  "checklist": [
+    "Parametric VaR 구현 (95%, 99%)",
+    "Historical VaR 구현",
+    "RiskManager VaR 한도 검증 추가",
+    "VaR 초과 시 진입 차단",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

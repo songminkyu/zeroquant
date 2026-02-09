@@ -1,0 +1,17 @@
+{
+  "id": "E-6",
+  "title": "전략 상태 영속화 (Graceful Shutdown)",
+  "group": "E",
+  "description": "StrategyState 직렬화 → DB/파일 저장 (on_shutdown 훅). DCA 그리드 레벨, 트레일링 스톱 고점, 인메모리 상태 대상. 재시작 시 마지막 저장 상태에서 복원.",
+  "relevant_crates": ["trader-strategy", "trader-core"],
+  "has_db_changes": true,
+  "depends_on": [],
+  "checklist": [
+    "StrategyState 직렬화 구현",
+    "on_shutdown 훅 구현",
+    "DCA/트레일링 스톱 상태 저장",
+    "재시작 시 상태 복원",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "G-1",
+  "title": "차트 시각화 강화",
+  "group": "G",
+  "description": "RouteState 구간 시각화 — ATTACK/WAIT/OVERHEAT 배경색 밴드 렌더링. 비매매 지표 마커 — RSI 과매수/과매도, Golden/Dead Cross, TTM Squeeze. 캔들 패턴 라벨 — 48개 패턴 약어 캔들 위 오버레이. 줌 레벨 기반 마커 필터링 — Zoom Out 시 매매만, Zoom In 시 보조 마커 표시.",
+  "relevant_crates": ["frontend"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "RouteState 구간 배경색 밴드 렌더링",
+    "RSI/Cross/TTM 지표 마커",
+    "캔들 패턴 라벨 오버레이",
+    "줌 레벨 기반 마커 필터링"
+  ]
+}

@@ -174,9 +174,13 @@ export function createWebSocket(options: CreateWebSocketOptions = {}) {
     }
   }
 
-  // 심볼 구독 (market:SYMBOL 형식으로 변환)
+  // 심볼 구독 (market:SYMBOL 형식으로 변환, 중복 구독 방지)
   const subscribe = (symbol: string) => {
     const channel = symbolToChannel(symbol)
+
+    // 이미 구독 중이면 스킵 (중복 subscribe 메시지 방지)
+    if (subscribedChannels().has(channel)) return
+
     log('Subscribing:', symbol, '->', channel)
     setSubscribedChannels((prev) => new Set(prev).add(channel))
 

@@ -17,6 +17,15 @@ import { EquityCurve, SyncedChartPanel, KellyVisualization } from '../components
 const MiniCorrelationMatrix = lazy(() =>
   import('../components/charts/CorrelationHeatmap').then(m => ({ default: m.MiniCorrelationMatrix }))
 )
+const IndicatorFilterPanel = lazy(() =>
+  import('../components/charts/IndicatorFilterPanel').then(m => ({ default: m.IndicatorFilterPanel }))
+)
+const VolumeProfile = lazy(() =>
+  import('../components/charts/VolumeProfile').then(m => ({ default: m.VolumeProfile }))
+)
+const VolumeProfileLegend = lazy(() =>
+  import('../components/charts/VolumeProfile').then(m => ({ default: m.VolumeProfileLegend }))
+)
 import {
   Card,
   CardHeader,
@@ -29,7 +38,7 @@ import {
   Button,
   DateInput,
 } from '../components/ui'
-import type { EquityDataPoint, CandlestickDataPoint, TradeMarker, ChartSyncState } from '../components/charts'
+import type { EquityDataPoint, CandlestickDataPoint, TradeMarker, ChartSyncState, IndicatorFilters, PriceVolume } from '../components/charts'
 import {
   startSimulation,
   stopSimulation,
@@ -143,17 +152,60 @@ function convertCandlesToChartData(candles: CandleItem[]): CandlestickDataPoint[
 }
 
 // 시뮬레이션 거래 내역을 차트 마커로 변환
-function convertSimTradesToMarkers(trades: SimulationTrade[]): TradeMarker[] {
+function convertSimTradesToMarkers(trades: SimulationTrade[]): (TradeMarker & { signalType: string; side: string })[] {
   return trades.map(trade => ({
     time: trade.timestamp.split('T')[0].split(' ')[0], // "YYYY-MM-DD" 형식
     type: trade.side === 'Buy' ? 'buy' : 'sell',
     price: parseFloat(trade.price),
     label: trade.side === 'Buy' ? '매수' : '매도',
+    signalType: trade.side === 'Buy' ? 'entry' : 'exit',
+    side: trade.side === 'Buy' ? 'buy' : 'sell',
   })).sort((a, b) =>
     (a.time as string).localeCompare(b.time as string)
   )
 }
 
+// 볼륨 프로파일 계산 (CandleItem[] → PriceVolume[])
+function calculateVolumeProfile(candles: CandleItem[], bucketCount = 25): PriceVolume[] {
+  if (candles.length === 0) return []
+
+  let minPrice = Infinity
+  let maxPrice = -Infinity
+  candles.forEach(c => {
+    const low = parseFloat(c.low)
+    const high = parseFloat(c.high)
+    if (low < minPrice) minPrice = low
+    if (high > maxPrice) maxPrice = high
+  })
+  if (minPrice === maxPrice) return []
+
+  const priceStep = (maxPrice - minPrice) / bucketCount
+  const buckets = new Map<number, number>()
+
+  candles.forEach(c => {
+    const low = parseFloat(c.low)
+    const high = parseFloat(c.high)
+    const volume = parseFloat(c.volume)
+    const candleRange = high - low || 1
+    for (let i = 0; i < bucketCount; i++) {
+      const bucketLow = minPrice + i * priceStep
+      const bucketHigh = bucketLow + priceStep
+      const bucketMid = (bucketLow + bucketHigh) / 2
+      if (high >= bucketLow && low <= bucketHigh) {
+        const overlapLow = Math.max(low, bucketLow)
+        const overlapHigh = Math.min(high, bucketHigh)
+        const overlapRatio = (overlapHigh - overlapLow) / candleRange
+        buckets.set(bucketMid, (buckets.get(bucketMid) || 0) + volume * overlapRatio)
+      }
+    }
+  })
+
+  const result: PriceVolume[] = []
+  buckets.forEach((volume, price) => {
+    result.push({ price, volume })
+  })
+  return result.sort((a, b) => a.price - b.price)
+}
 export function Simulation() {
   // URL 파라미터 읽기 (전략 페이지에서 바로 이동 시)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -207,8 +259,18 @@ export function Simulation() {
 
   // 가격 차트 데이터
   const [candleData, setCandleData] = createSignal<CandlestickDataPoint[]>([])
+  const [rawCandleData, setRawCandleData] = createSignal<CandleItem[]>([])
   const [isLoadingCandles, setIsLoadingCandles] = createSignal(false)
   const [showPriceChart, setShowPriceChart] = createSignal(false)
+
+  // 신호 필터 상태
+  const [signalFilters, setSignalFilters] = createSignal<IndicatorFilters>({ signal_types: [], indicators: [] })
+
+  // 볼륨 프로파일 표시 상태
+  const [showVolumeProfile, setShowVolumeProfile] = createSignal(true)
+
+  // 차트 심볼 선택 (다중 심볼)
+  const [chartSymbol, setChartSymbol] = createSignal<string>('')
 
   // 매매 마커 (trades 변경 시 자동 갱신)
   const tradeMarkers = createMemo(() => convertSimTradesToMarkers(trades()))
@@ -305,6 +367,49 @@ export function Simulation() {
       const markerTime = m.time as string
       return markerTime <= currentSimDateStr
     })
+  })
+
+  // 신호 필터가 적용된 매매 마커
+  const signalFilteredTradeMarkers = createMemo(() => {
+    const markers = filteredTradeMarkers()
+    const filters = signalFilters()
+
+    if (filters.signal_types.length === 0) return markers
+
+    return markers.filter(marker => {
+      if (filters.signal_types.includes('buy') && marker.side === 'buy') return true
+      if (filters.signal_types.includes('sell') && marker.side === 'sell') return true
+      if (filters.signal_types.includes('entry' as any) && marker.signalType === 'entry') return true
+      if (filters.signal_types.includes('exit' as any) && marker.signalType === 'exit') return true
+      return false
+    })
+  })
+
+  // 볼륨 프로파일 데이터 계산
+  const volumeProfileData = createMemo(() => {
+    const raw = rawCandleData()
+    if (raw.length === 0) return []
+    return calculateVolumeProfile(raw, 25)
+  })
+
+  // 현재가 (마지막 종가)
+  const simCurrentPrice = createMemo(() => {
+    const data = filteredCandleData()
+    if (data.length === 0) return 0
+    return data[data.length - 1].close
+  })
+
+  // 차트 가격 범위 (볼륨 프로파일 동기화용)
+  const simChartPriceRange = createMemo((): [number, number] => {
+    const data = filteredCandleData()
+    if (data.length === 0) return [0, 0]
+    let min = Infinity
+    let max = -Infinity
+    data.forEach(c => {
+      if (c.low < min) min = c.low
+      if (c.high > max) max = c.high
+    })
+    return [min, max]
   })
 
   // 자산 곡선 데이터
@@ -529,10 +634,12 @@ export function Simulation() {
 
     setIsLoadingCandles(true)
     try {
-      const symbol = strategy.symbols[0] // 첫 번째 심볼 사용
+      const symbol = chartSymbol() || strategy.symbols[0] // 선택된 심볼 또는 첫 번째 심볼
+      if (!chartSymbol()) setChartSymbol(symbol)
       const data = await fetchCandlesForSimulation(symbol, simStartDate, simEndDate)
       if (data) {
         setCandleData(convertCandlesToChartData(data.candles))
+        setRawCandleData(data.candles)
       }
     } catch (err) {
       logError('캔들 데이터 로드 실패:', err)
@@ -1060,48 +1167,136 @@ export function Simulation() {
         </Card>
       </div>
 
-      {/* Price Chart + Trade Markers */}
+      {/* Price Chart + Trade Markers (Backtest와 동일 패턴) */}
       <Show when={selectedStrategy()}>
-        <Card>
-          <CardContent className="p-0">
-            <details
-              onToggle={(e) => {
-                if ((e.target as HTMLDetailsElement).open) {
-                  setShowPriceChart(true)
-                  loadCandleData()
-                }
-              }}
+        <details
+          class="mt-4"
+          onToggle={(e) => {
+            if ((e.target as HTMLDetailsElement).open) {
+              setShowPriceChart(true)
+              loadCandleData()
+            }
+          }}
+        >
+          <summary class="cursor-pointer text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] flex items-center gap-2">
+            <LineChart class="w-4 h-4" />
+            가격 차트 + 매매 태그
+          </summary>
+          <div class="mt-3 space-y-3">
+            {/* 신호 필터 패널 */}
+            <Suspense fallback={<div class="h-12 bg-gray-100 dark:bg-gray-800 animate-pulse rounded" />}>
+              <IndicatorFilterPanel
+                filters={signalFilters()}
+                onChange={(filters) => setSignalFilters(filters)}
+                defaultCollapsed={true}
+              />
+            </Suspense>
+
+            {/* 다중 심볼인 경우 심볼 선택 탭 표시 */}
+            <Show when={(() => {
+              const strategy = strategies()?.find(s => s.id === selectedStrategy())
+              return strategy?.symbols && strategy.symbols.length > 1
+            })()}>
+              <div class="flex flex-wrap gap-1 p-1 bg-[var(--color-surface-light)]/30 rounded-lg">
+                <For each={(() => {
+                  const strategy = strategies()?.find(s => s.id === selectedStrategy())
+                  return strategy?.symbols || []
+                })()}>
+                  {(symbol) => (
+                    <button
+                      class={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                        chartSymbol() === symbol
+                          ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                          : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-light)] hover:text-[var(--color-text)]'
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setChartSymbol(symbol)
+                        // 심볼 변경 시 캔들 데이터 리로드
+                        setCandleData([])
+                        setRawCandleData([])
+                        loadCandleData()
+                      }}
+                    >
+                      {symbol}
+                    </button>
+                  )}
+                </For>
+              </div>
+            </Show>
+
+            {/* 필터 상태 요약 */}
+            <Show when={signalFilters().signal_types.length > 0}>
+              <div class="text-xs text-[var(--color-text-muted)]">
+                표시 중: {signalFilteredTradeMarkers().length} / {tradeMarkers().length} 마커
+              </div>
+            </Show>
+
+            {/* 볼륨 프로파일 토글 */}
+            <div class="flex items-center gap-2 mb-2">
+              <label class="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showVolumeProfile()}
+                  onChange={(e) => setShowVolumeProfile(e.currentTarget.checked)}
+                  class="w-3.5 h-3.5 rounded border-gray-500 text-blue-500 focus:ring-blue-500"
+                />
+                볼륨 프로파일 표시
+              </label>
+            </div>
+
+            <Show
+              when={!isLoadingCandles() && filteredCandleData().length > 0}
+              fallback={
+                <div class="h-[280px] flex items-center justify-center text-[var(--color-text-muted)]">
+                  {isLoadingCandles() ? (
+                    <div class="flex items-center gap-2">
+                      <RefreshCw class="w-5 h-5 animate-spin" />
+                      <span>차트 데이터 로딩 중...</span>
+                    </div>
+                  ) : (
+                    <span>차트 데이터가 없습니다 (데이터셋을 먼저 다운로드하세요)</span>
+                  )}
+                </div>
+              }
             >
-              <summary class="cursor-pointer text-lg font-semibold text-[var(--color-text)] flex items-center gap-2 p-6">
-                <LineChart class="w-5 h-5" />
-                가격 차트 + 매매 태그
-              </summary>
-              <div class="px-6 pb-6">
-                <Show
-                  when={!isLoadingCandles() && candleData().length > 0}
-                  fallback={
-                    <EmptyState
-                      icon={isLoadingCandles() ? '⏳' : '📊'}
-                      title={isLoadingCandles() ? '차트 데이터 로딩 중...' : '차트 데이터 없음'}
-                      description={isLoadingCandles() ? undefined : '데이터셋을 먼저 다운로드하세요'}
-                      className="h-[280px] flex flex-col items-center justify-center"
-                    />
-                  }
-                >
+              <div class="flex gap-2">
+                {/* 캔들 차트 */}
+                <div class="flex-1">
                   <SyncedChartPanel
                     data={filteredCandleData()}
                     type="candlestick"
-                    mainHeight={280}
-                    markers={filteredTradeMarkers()}
+                    mainHeight={240}
+                    markers={signalFilteredTradeMarkers()}
                     chartId="sim-price"
                     syncState={priceSyncState}
                     onVisibleRangeChange={handlePriceVisibleRangeChange}
                   />
+                </div>
+
+                {/* 볼륨 프로파일 */}
+                <Show when={showVolumeProfile() && volumeProfileData().length > 0}>
+                  <div class="flex flex-col">
+                    <Suspense fallback={<div class="h-[240px] w-[80px] bg-gray-100 dark:bg-gray-800 animate-pulse rounded" />}>
+                      <VolumeProfile
+                        priceVolumes={volumeProfileData()}
+                        currentPrice={simCurrentPrice()}
+                        chartHeight={240}
+                        width={80}
+                        priceRange={simChartPriceRange()}
+                        showPoc={true}
+                        showValueArea={true}
+                      />
+                      <VolumeProfileLegend
+                        class="mt-1"
+                      />
+                    </Suspense>
+                  </div>
                 </Show>
               </div>
-            </details>
-          </CardContent>
-        </Card>
+            </Show>
+          </div>
+        </details>
       </Show>
 
       {/* Equity Curve Chart */}

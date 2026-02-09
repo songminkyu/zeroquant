@@ -1,9 +1,11 @@
 # ZeroQuant Trading Bot - 기술 아키텍처
 
-> 작성일: 2026-02-09
-> 버전: 3.6 (v0.9.0 반영)
+> 작성일: 2026-02-10
+> 버전: 3.7 (v0.9.1 반영)
 >
 > 주요 변경:
+> - Paper Trading 실시간 가격 반영 (Mock 캐시 → 미실현 손익)
+> - MarketStream 다중 거래소 팩토리 (KIS/Mock/Upbit/Bithumb/LS증권)
 > - Mock 거래소 KIS 수준 업그레이드 (VWAP 체결, 호가창, 지정가/스톱 큐)
 > - StrategyContext 통합 아키텍처 (ExchangeProvider + AnalyticsProvider)
 > - 전략 실행 모드 (실거래/페이퍼트레이딩/백테스트) 분리
@@ -123,7 +125,7 @@ d:\Trader\
 │   │   │   ├── portfolio.rs   # 포트폴리오 조회
 │   │   │   └── ...
 │   │   ├── services/          # 서비스 계층 [v0.8.0 신규]
-│   │   │   ├── market_stream.rs    # MarketStreamHandle (Singleton) [v0.8.0]
+│   │   │   ├── market_stream.rs    # MarketStreamHandle (다중 거래소 팩토리) [v0.9.1]
 │   │   │   └── signal_processor.rs # Signal 처리 서비스 [v0.8.0]
 │   │   ├── websocket/         # WebSocket 모듈 [v0.8.0 확장]
 │   │   │   ├── handler.rs     # 세션 관리 + 거래소 스트림 브릿지 [v0.8.0]
@@ -687,10 +689,15 @@ KIS 거래소 WebSocket을 통한 실시간 시세 데이터 흐름입니다.
                     │
                     ▼
 ╔═════════════════════════════════════════════════════════════════╗
-║          MarketStreamHandle (Singleton per credential)           ║
+║     MarketStreamHandle (다중 거래소 팩토리) [v0.9.1]              ║
 ║  services/market_stream.rs                                       ║
 ║                                                                  ║
-║  • get_or_create_market_stream() - Lazy 초기화                   ║
+║  • get_or_create_market_stream(exchange_id) - 거래소별 생성       ║
+║  •   KIS → KisMarketStream                                      ║
+║  •   Mock → MockMarketStream                                    ║
+║  •   Upbit → UpbitMarketStream                                  ║
+║  •   Bithumb → BithumbMarketStream                              ║
+║  •   LsSec → LsSecMarketStream                                  ║
 ║  • subscribe(symbol) - 참조 카운트 기반 구독                      ║
 ║  • unsubscribe(symbol) - 참조 카운트 0이면 실제 해제              ║
 ╚═══════════════════┬═════════════════════════════════════════════╝

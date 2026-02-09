@@ -1,0 +1,18 @@
+{
+  "id": "B-8",
+  "title": "Clock Trait 도입",
+  "group": "B",
+  "description": "Clock trait 정의 (trader-core/src/domain/clock.rs): fn now(&self) -> DateTime<Utc>. SystemClock 구현 (실시간), ManualClock 구현 (백테스트/테스트용). 코드 전반의 Utc::now() 직접 호출을 Clock trait 호출로 교체. 백테스트 엔진에 ManualClock 주입.",
+  "relevant_crates": ["trader-core", "trader-analytics"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "Clock trait 정의 (fn now -> DateTime<Utc>)",
+    "SystemClock 구현",
+    "ManualClock 구현 (Arc<Mutex<DateTime<Utc>>>)",
+    "Utc::now() 호출을 Clock trait 호출로 교체",
+    "백테스트 엔진에 ManualClock 주입",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

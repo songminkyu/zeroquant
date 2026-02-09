@@ -1,0 +1,16 @@
+{
+  "id": "D-5",
+  "title": "통합 테스트 추가",
+  "group": "D",
+  "description": "API → Strategy → Execution → DB 핵심 경로 통합 테스트. 백테스트 엔진 end-to-end 테스트 (알려진 데이터 → 기대 시그널 검증). Paper Trading 세션 생성 → 시그널 처리 → 포지션 확인 흐름.",
+  "relevant_crates": ["trader-api", "trader-strategy", "trader-execution", "trader-analytics"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "API → Strategy → Execution → DB 통합 테스트",
+    "백테스트 E2E 테스트",
+    "Paper Trading 흐름 테스트",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

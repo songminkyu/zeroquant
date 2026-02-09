@@ -1,0 +1,17 @@
+{
+  "id": "F-2",
+  "title": "Collector 헬스 메트릭",
+  "group": "F",
+  "description": "수집 성공/실패 카운트, API 할당량 잔여를 /health/ready JSON에 포함. 수집 주기 이상 감지 시 기존 알림 채널(Telegram/Discord)로 발송.",
+  "relevant_crates": ["trader-collector", "trader-api", "trader-notification"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "/health/ready에 수집 메트릭 포함",
+    "API 할당량 잔여 추적",
+    "수집 주기 이상 감지",
+    "Telegram/Discord 알림 발송",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

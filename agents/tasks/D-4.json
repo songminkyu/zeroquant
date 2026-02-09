@@ -1,0 +1,16 @@
+{
+  "id": "D-4",
+  "title": "백테스트 회귀 테스트",
+  "group": "D",
+  "description": "기준 결과(baseline) 저장 메커니즘. cargo test 시 현재 백테스트 결과 vs baseline 자동 비교. 시그널 변경 감지 시 diff 리포트 출력.",
+  "relevant_crates": ["trader-analytics"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "Baseline 저장 메커니즘",
+    "현재 vs baseline 자동 비교",
+    "시그널 변경 diff 리포트",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

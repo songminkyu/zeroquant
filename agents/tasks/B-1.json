@@ -1,0 +1,19 @@
+{
+  "id": "B-1",
+  "title": "기업 이벤트 처리 (Corporate Action Handler)",
+  "group": "B",
+  "description": "corporate_actions 테이블 신설 (event_type, symbol, ex_date, split_factor, dividend_amount). ohlcv 테이블에 adj_close, split_factor, dividend 컬럼 추가. Backward Adjust 로직 구현. Yahoo Finance/KRX에서 Split/Dividend 이벤트 수집기 추가. CandleProcessor가 보정 데이터를 사용하도록 수정. API: POST /api/v1/data/adjust-corporate-actions, GET /api/v1/data/events/{symbol}.",
+  "relevant_crates": ["trader-data", "trader-collector", "trader-analytics", "trader-api"],
+  "has_db_changes": true,
+  "depends_on": [],
+  "checklist": [
+    "corporate_actions 테이블 DDL",
+    "ohlcv 컬럼 추가 DDL",
+    "Backward Adjust 로직",
+    "Yahoo/KRX 이벤트 수집기",
+    "CandleProcessor 수정",
+    "API 엔드포인트 2개",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "F-1",
+  "title": "분산 트레이싱 (OpenTelemetry)",
+  "group": "F",
+  "description": "opentelemetry + tracing-opentelemetry 의존성 추가. API → Strategy → Exchange → DB 요청 상관관계 추적. Jaeger/Zipkin 연동 설정.",
+  "relevant_crates": ["trader-api", "trader-core"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "opentelemetry 의존성 추가",
+    "tracing-opentelemetry 연동",
+    "API → Strategy → Exchange → DB 추적",
+    "Jaeger/Zipkin 연동 설정",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "B-7",
+  "title": "거래소 중립 마켓 캘린더",
+  "group": "B",
+  "description": "MarketCalendar trait 정의 (trader-core/src/domain/). KRX, NYSE/NASDAQ, Binance 별 구현 (공휴일, 반일 거래, 점검 시간). 전략/수집기에서 is_market_open() 호출을 trait 기반으로 교체.",
+  "relevant_crates": ["trader-core", "trader-strategy", "trader-collector"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "MarketCalendar trait 정의",
+    "KRX 구현 (공휴일, 반일 거래)",
+    "NYSE/NASDAQ 구현",
+    "Binance 구현 (점검 시간)",
+    "is_market_open() trait 기반 교체",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

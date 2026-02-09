@@ -1,7 +1,7 @@
 # ZeroQuant TODO - 통합 로드맵
 
-> **마지막 업데이트**: 2026-02-09
-> **현재 버전**: v0.9.0
+> **마지막 업데이트**: 2026-02-10
+> **현재 버전**: v0.9.1
 
 ---
 
@@ -20,6 +20,21 @@
 # 완료된 작업 아카이브
 
 > 이하 섹션은 완료된 작업들의 기록입니다. 최신순 정렬.
+
+---
+
+## ✅ v0.9.1 — Paper Trading 실시간 가격 + 다중 거래소 MarketStream + 차트 강화 (2026-02-10)
+
+| 항목 | 상태 |
+|------|:----:|
+| Paper Trading 포지션 평가액/미실현 손익 실시간 캐시 가격 계산 | ✅ |
+| Mock→MarketStream→WebSocket 파이프라인 자동 연결 | ✅ |
+| MarketStream 다중 거래소 팩토리 (KIS/Mock/Upbit/Bithumb/LS증권) | ✅ |
+| exchange_id 기반 MarketStream 생성 분기 | ✅ |
+| UpbitMarketStream, BithumbMarketStream, LsSecMarketStream 신규 | ✅ |
+| 프론트엔드 WebSocket 실시간 가격 + 캔들 차트 + 매매 태그 | ✅ |
+| Kelly Criterion 시각화 + 상관관계 히트맵 + 볼륨 프로파일 | ✅ |
+| 중복 구독 방지 + 전략 상태 필터 대소문자 수정 | ✅ |
 
 ---
 

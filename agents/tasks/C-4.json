@@ -1,0 +1,17 @@
+{
+  "id": "C-4",
+  "title": "성과 기여도 분석 (Attribution)",
+  "group": "C",
+  "description": "Brinson Model — 자산배분 효과 vs 종목선정 효과 분해. Beta 분석 — 벤치마크(KOSPI/SPY) 대비 민감도 + 상관계수. 섹터 기여도 — 섹터 비중 확대/축소로 인한 손익 분해. API: GET /api/v1/portfolio/attribution.",
+  "relevant_crates": ["trader-analytics", "trader-api"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "Brinson Model 구현",
+    "Beta 분석 (KOSPI/SPY 벤치마크)",
+    "섹터 기여도 분석",
+    "GET /api/v1/portfolio/attribution API",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "E-1",
+  "title": "스마트 주문 집행 (Algo Execution)",
+  "group": "E",
+  "description": "ExecutionAlgo trait 정의 (trader-execution/src/algo/). TWAP — 시간 분할 매매 (duration, slice_count). Iceberg — 빙산 주문 (visible_qty, variance). POV — 거래량 연동 (participation_rate). Parent Order → Child Order 분할 + 순차 전송 로직.",
+  "relevant_crates": ["trader-execution", "trader-core"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "ExecutionAlgo trait 정의",
+    "TWAP 구현 (시간 분할 매매)",
+    "Iceberg 구현 (빙산 주문)",
+    "POV 구현 (거래량 연동)",
+    "Parent → Child Order 분할 로직",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

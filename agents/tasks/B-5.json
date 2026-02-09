@@ -1,0 +1,17 @@
+{
+  "id": "B-5",
+  "title": "Collector 복원력 강화",
+  "group": "B",
+  "description": "Dead-letter 큐 (실패 심볼 재시도) 구현. 재시도 정책: 지수 백오프, 최대 3회, 실패 시 알림 발송. Collector 헬스 상태를 /health/ready 응답에 통합 (마지막 실행 시각, 성공/실패 카운트).",
+  "relevant_crates": ["trader-collector", "trader-api"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "Dead-letter 큐 구현",
+    "지수 백오프 재시도 정책",
+    "실패 시 알림 발송",
+    "/health/ready에 Collector 상태 통합",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

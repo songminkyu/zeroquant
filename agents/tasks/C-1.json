@@ -1,0 +1,20 @@
+{
+  "id": "C-1",
+  "title": "포트폴리오 최적화 (Global Optimizer)",
+  "group": "C",
+  "description": "trader-analytics/src/optimizer/ 모듈 신규. Mean-Variance Optimization (샤프 비율 최대화, argmin 크레이트). Risk Parity (리스크 균등 기여 비중). Minimum Variance (포트폴리오 변동성 최소화). 입력: 자산별 기대 수익률 벡터 + 공분산 행렬 (FX 변환 적용). API: POST /api/v1/portfolio/optimize, GET /api/v1/portfolio/efficient-frontier. AssetAllocation 전략과 최적 비중 벡터 연동.",
+  "relevant_crates": ["trader-analytics", "trader-api", "trader-strategy"],
+  "has_db_changes": false,
+  "depends_on": ["B-1", "B-6"],
+  "checklist": [
+    "optimizer 모듈 구조 생성",
+    "Mean-Variance Optimization (argmin)",
+    "Risk Parity 구현",
+    "Minimum Variance 구현",
+    "POST /api/v1/portfolio/optimize API",
+    "GET /api/v1/portfolio/efficient-frontier API",
+    "AssetAllocation 전략 연동",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

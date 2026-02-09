@@ -5,6 +5,35 @@
 
 ---
 
+## [0.9.1] - 2026-02-10
+
+> **Paper Trading 실시간 가격 + 다중 거래소 MarketStream + 차트 강화**: 포지션 평가액/미실현 손익을 Mock 실시간 캐시 가격으로 계산하고, MarketStream을 다중 거래소 팩토리로 리팩토링했습니다. 프론트엔드에 WebSocket 실시간 시세, 캔들 차트+매매 태그, Kelly Criterion, 상관관계 히트맵, 볼륨 프로파일을 추가했습니다.
+
+### Added
+
+#### Paper Trading 실시간 가격 반영
+- `paper_trading.rs` — Mock 실시간 캐시 가격 기반 미실현 손익/평가액 계산
+- Paper Trading 시작 시 Mock→MarketStream→WebSocket 파이프라인 자동 연결
+
+#### 다중 거래소 MarketStream 팩토리
+- `market_stream.rs` — exchange_id 기반 MarketStream 생성 분기 (KIS/Mock/Upbit/Bithumb/LS증권)
+- `strategies.rs` — exchange_id 기반 MarketStream 생성 로직
+- `stream.rs` — UpbitMarketStream, BithumbMarketStream, LsSecMarketStream 신규
+
+#### 프론트엔드 Paper Trading 강화
+- `PaperTrading.tsx` — WebSocket 실시간 가격 업데이트 + 캔들 차트 + 매매 태그
+- `PaperTrading.tsx` — Kelly Criterion 시각화 + 상관관계 히트맵 + 볼륨 프로파일
+- `Simulation.tsx` — 신호 필터, 볼륨 프로파일, 다중 심볼 선택
+- `createWebSocket.ts` — 중복 구독 방지 로직
+
+### Changed
+- `client.ts` — MockStreamingConfigRequest 타입 추가
+
+### Fixed
+- `Dashboard.tsx` — 전략 상태 필터 대소문자 수정 (`running` → `Running`)
+
+---
+
 ## [0.9.0] - 2026-02-09
 
 > **Mock 거래소 KIS 수준 업그레이드**: Paper Trading을 Yahoo Finance D1 폴링 + 즉시 체결에서 1분봉 틱 보간/랜덤 워크 가격 스트리밍 + 호가창 기반 VWAP 체결로 업그레이드했습니다. 지정가/스톱 주문 미체결 큐와 잔고 예약 시스템을 도입하여 실전과 유사한 페이퍼 트레이딩 환경을 구축했습니다.

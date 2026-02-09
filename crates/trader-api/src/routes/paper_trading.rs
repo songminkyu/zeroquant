@@ -27,6 +27,24 @@ use uuid::Uuid;
 use crate::state::AppState;
 use trader_exchange::provider::{MockConfig, MockExchangeProvider};
 
+/// Mock 프로바이더의 latest_tickers 캐시에서 실시간 가격을 조회합니다.
+///
+/// 캐시에 없으면 fallback 가격(진입가)을 반환합니다.
+async fn get_realtime_price(
+    state: &AppState,
+    credential_id: Uuid,
+    symbol: &str,
+    fallback_price: Decimal,
+) -> Decimal {
+    let providers = state.mock_providers.read().await;
+    if let Some(provider) = providers.get(&credential_id) {
+        if let Some(ticker) = provider.get_latest_ticker(symbol).await {
+            return ticker.last;
+        }
+    }
+    fallback_price
+}
+
 // ==================== 응답 타입 ====================
 
 /// Paper Trading 계정 정보.
@@ -398,18 +416,28 @@ pub async fn list_accounts(
         let initial_bal_dec: Decimal = initial_balance.parse().unwrap_or(Decimal::ZERO);
         let current_balance = row.current_balance.unwrap_or(initial_bal_dec);
 
-        // 포지션 평가액 조회
-        let position_value: Decimal = sqlx::query_scalar!(
+        // 포지션 평가액 조회 (실시간 가격 기반)
+        let pos_rows = sqlx::query!(
             r#"
-            SELECT COALESCE(SUM(quantity * entry_price), 0) as "value!"
+            SELECT symbol, quantity, entry_price, side
             FROM mock_positions
             WHERE credential_id = $1
             "#,
             row.id
         )
-        .fetch_one(pool)
+        .fetch_all(pool)
         .await
-        .unwrap_or(Decimal::ZERO);
+        .unwrap_or_default();
+
+        let mut position_value = Decimal::ZERO;
+        let mut unrealized_pnl_total = Decimal::ZERO;
+        for pos in &pos_rows {
+            let current_price = get_realtime_price(&state, row.id, &pos.symbol, pos.entry_price).await;
+            let mv = pos.quantity * current_price;
+            position_value += mv;
+            let pnl = (current_price - pos.entry_price) * pos.quantity;
+            unrealized_pnl_total += pnl;
+        }
 
         // 실현 손익 조회
         let realized_pnl: Decimal = sqlx::query_scalar!(
@@ -443,7 +471,7 @@ pub async fn list_accounts(
             current_balance: current_balance.to_string(),
             position_value: position_value.to_string(),
             total_equity: total_equity.to_string(),
-            unrealized_pnl: "0".to_string(), // 실시간 계산 필요
+            unrealized_pnl: unrealized_pnl_total.to_string(),
             realized_pnl: realized_pnl.to_string(),
             return_pct: return_pct.to_string(),
             strategy_count: row.strategy_count.unwrap_or(0) as i32,
@@ -541,18 +569,27 @@ pub async fn get_account(
     let initial_bal_dec: Decimal = initial_balance.parse().unwrap_or(Decimal::ZERO);
     let current_balance = row.current_balance.unwrap_or(initial_bal_dec);
 
-    // 포지션 평가액 및 미실현 손익 계산 (실시간 시세 적용 가능)
-    let position_value: Decimal = sqlx::query_scalar!(
+    // 포지션 평가액 및 미실현 손익 계산 (실시간 시세 적용)
+    let pos_rows = sqlx::query!(
         r#"
-        SELECT COALESCE(SUM(quantity * entry_price), 0) as "value!"
+        SELECT symbol, quantity, entry_price, side
         FROM mock_positions
         WHERE credential_id = $1
         "#,
         credential_id
     )
-    .fetch_one(pool)
+    .fetch_all(pool)
     .await
-    .unwrap_or(Decimal::ZERO);
+    .unwrap_or_default();
+
+    let mut position_value = Decimal::ZERO;
+    let mut unrealized_pnl_total = Decimal::ZERO;
+    for pos in &pos_rows {
+        let current_price = get_realtime_price(&state, credential_id, &pos.symbol, pos.entry_price).await;
+        let mv = pos.quantity * current_price;
+        position_value += mv;
+        unrealized_pnl_total += (current_price - pos.entry_price) * pos.quantity;
+    }
 
     let realized_pnl: Decimal = sqlx::query_scalar!(
         r#"
@@ -584,7 +621,7 @@ pub async fn get_account(
         current_balance: current_balance.to_string(),
         position_value: position_value.to_string(),
         total_equity: total_equity.to_string(),
-        unrealized_pnl: "0".to_string(),
+        unrealized_pnl: unrealized_pnl_total.to_string(),
         realized_pnl: realized_pnl.to_string(),
         return_pct: return_pct.to_string(),
         strategy_count: row.strategy_count.unwrap_or(0) as i32,
@@ -647,10 +684,10 @@ pub async fn get_positions(
     let mut total_unrealized_pnl = Decimal::ZERO;
 
     for row in rows {
-        // 현재가는 진입가로 대체 (실시간 시세 조회는 비용이 크므로)
-        let current_price = row.entry_price;
+        // 실시간 가격 조회 (latest_tickers 캐시 활용)
+        let current_price = get_realtime_price(&state, credential_id, &row.symbol, row.entry_price).await;
         let market_value = row.quantity * current_price;
-        let unrealized_pnl = Decimal::ZERO; // 실시간 계산 필요 시 Yahoo Finance 호출
+        let unrealized_pnl = (current_price - row.entry_price) * row.quantity;
 
         total_value += market_value;
         total_unrealized_pnl += unrealized_pnl;
@@ -973,33 +1010,50 @@ pub async fn list_paper_trading_sessions(
         )
     })?;
 
-    let sessions: Vec<PaperTradingSessionResponse> = rows
-        .into_iter()
-        .map(|row| {
-            let initial_bal = row.initial_balance;
-            let current_bal = row.current_balance;
-            let realized_pnl = row.realized_pnl.unwrap_or(Decimal::ZERO);
-            let return_pct = if initial_bal > Decimal::ZERO {
-                ((current_bal - initial_bal) / initial_bal * Decimal::from(100)).round_dp(2)
-            } else {
-                Decimal::ZERO
-            };
+    let mut sessions: Vec<PaperTradingSessionResponse> = Vec::new();
+    for row in rows {
+        let initial_bal = row.initial_balance;
+        let current_bal = row.current_balance;
+        let realized_pnl = row.realized_pnl.unwrap_or(Decimal::ZERO);
 
-            PaperTradingSessionResponse {
-                strategy_id: row.strategy_id,
-                credential_id: row.credential_id.to_string(),
-                status: row.status,
-                initial_balance: initial_bal.to_string(),
-                current_balance: current_bal.to_string(),
-                position_count: row.position_count.unwrap_or(0) as i32,
-                trade_count: row.trade_count.unwrap_or(0) as i32,
-                realized_pnl: realized_pnl.to_string(),
-                unrealized_pnl: "0".to_string(), // TODO: 실시간 계산
-                return_pct: return_pct.to_string(),
-                started_at: row.started_at.map(|t| t.to_rfc3339()),
-            }
-        })
-        .collect();
+        // 미실현 손익 계산 (실시간 가격)
+        let pos_rows = sqlx::query!(
+            r#"SELECT symbol, quantity, entry_price FROM mock_positions WHERE strategy_id = $1"#,
+            row.strategy_id
+        )
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+        let mut unrealized_pnl = Decimal::ZERO;
+        for pos in &pos_rows {
+            let current_price = get_realtime_price(
+                &state, row.credential_id, &pos.symbol, pos.entry_price
+            ).await;
+            unrealized_pnl += (current_price - pos.entry_price) * pos.quantity;
+        }
+
+        let total_equity = current_bal + unrealized_pnl;
+        let return_pct = if initial_bal > Decimal::ZERO {
+            ((total_equity - initial_bal) / initial_bal * Decimal::from(100)).round_dp(2)
+        } else {
+            Decimal::ZERO
+        };
+
+        sessions.push(PaperTradingSessionResponse {
+            strategy_id: row.strategy_id,
+            credential_id: row.credential_id.to_string(),
+            status: row.status,
+            initial_balance: initial_bal.to_string(),
+            current_balance: current_bal.to_string(),
+            position_count: row.position_count.unwrap_or(0) as i32,
+            trade_count: row.trade_count.unwrap_or(0) as i32,
+            realized_pnl: realized_pnl.to_string(),
+            unrealized_pnl: unrealized_pnl.to_string(),
+            return_pct: return_pct.to_string(),
+            started_at: row.started_at.map(|t| t.to_rfc3339()),
+        });
+    }
 
     Ok(Json(serde_json::json!({
         "sessions": sessions,
@@ -1063,8 +1117,27 @@ pub async fn get_paper_trading_status(
             let initial_bal = row.initial_balance;
             let current_bal = row.current_balance;
             let realized_pnl = row.realized_pnl.unwrap_or(Decimal::ZERO);
+
+            // 미실현 손익 계산 (실시간 가격)
+            let pos_rows = sqlx::query!(
+                r#"SELECT symbol, quantity, entry_price FROM mock_positions WHERE strategy_id = $1"#,
+                strategy_id
+            )
+            .fetch_all(pool)
+            .await
+            .unwrap_or_default();
+
+            let mut unrealized_pnl = Decimal::ZERO;
+            for pos in &pos_rows {
+                let current_price = get_realtime_price(
+                    &state, row.credential_id, &pos.symbol, pos.entry_price
+                ).await;
+                unrealized_pnl += (current_price - pos.entry_price) * pos.quantity;
+            }
+
+            let total_equity = current_bal + unrealized_pnl;
             let return_pct = if initial_bal > Decimal::ZERO {
-                ((current_bal - initial_bal) / initial_bal * Decimal::from(100)).round_dp(2)
+                ((total_equity - initial_bal) / initial_bal * Decimal::from(100)).round_dp(2)
             } else {
                 Decimal::ZERO
             };
@@ -1078,7 +1151,7 @@ pub async fn get_paper_trading_status(
                 position_count: row.position_count.unwrap_or(0) as i32,
                 trade_count: row.trade_count.unwrap_or(0) as i32,
                 realized_pnl: realized_pnl.to_string(),
-                unrealized_pnl: "0".to_string(),
+                unrealized_pnl: unrealized_pnl.to_string(),
                 return_pct: return_pct.to_string(),
                 started_at: row.started_at.map(|t| t.to_rfc3339()),
             }))
@@ -1250,11 +1323,59 @@ pub async fn start_paper_trading(
                 tracing::info!("Mock 확장 스트리밍 시작 (계정: {}): {:?}", credential_id, symbols);
             }
         } else {
-            // 기존 Yahoo Legacy 모드 (하위 호환)
-            if let Err(e) = mock_provider.start_streaming(symbols.clone(), 5).await {
-                tracing::warn!("Mock 스트리밍 시작 실패: {:?}", e);
+            // streaming_config 없으면 기본 RandomWalk 모드 사용 (Yahoo Legacy 아님)
+            use trader_exchange::provider::{MockPriceMode, MockStreamingConfig};
+
+            let default_config = MockStreamingConfig {
+                mode: MockPriceMode::RandomWalk,
+                tick_interval_ms: 1000,
+                market_type: market_type.to_string(),
+                spread_multiplier: Decimal::ONE,
+                orderbook_base_volume: Decimal::from(100),
+                replay_speed: 1.0,
+            };
+
+            if let Err(e) = mock_provider.start_streaming_with_config(symbols.clone(), default_config).await {
+                tracing::warn!("Mock 기본 스트리밍 시작 실패: {:?}", e);
             } else {
-                tracing::info!("Mock 스트리밍 시작 (계정: {}): {:?}", credential_id, symbols);
+                tracing::info!("Mock RandomWalk 스트리밍 시작 (계정: {}): {:?}", credential_id, symbols);
+            }
+        }
+    }
+
+    // MarketStream 표준 파이프라인 연결 (Mock → Aggregator → WebSocket)
+    {
+        use crate::services::get_or_create_market_stream;
+
+        match get_or_create_market_stream(
+            &state.market_streams,
+            "mock",
+            Some(pool),
+            state.encryptor.as_deref(),
+            &state.kis_oauth_cache,
+            &state.mock_providers,
+            credential_id,
+            state.subscriptions.as_ref(),
+        )
+        .await
+        {
+            Ok(handle) => {
+                // 모든 활성 심볼을 MarketStream에도 구독
+                for symbol in &symbols {
+                    if let Err(e) = handle.subscribe(symbol).await {
+                        tracing::warn!("MarketStream 심볼 구독 실패: {} - {}", symbol, e);
+                    }
+                }
+                tracing::info!(
+                    "Mock MarketStream 파이프라인 연결 완료 (계정: {}, 심볼: {}개)",
+                    credential_id, symbols.len()
+                );
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "Mock MarketStream 파이프라인 연결 실패 (스트리밍은 계속됨): {}",
+                    e
+                );
             }
         }
     }
@@ -1350,6 +1471,10 @@ pub async fn stop_paper_trading(
                 provider.stop_streaming().await;
                 tracing::info!("Mock 스트리밍 중지 (계정: {})", credential_id);
             }
+
+            // MarketStream 핸들도 제거 (더 이상 필요 없음)
+            state.market_streams.write().await.remove(&credential_id);
+            tracing::info!("MarketStream 핸들 제거 (계정: {})", credential_id);
         }
     }
 
@@ -1484,13 +1609,30 @@ pub async fn get_strategy_positions(
         )
     })?;
 
+    // 세션에서 credential_id 조회 (실시간 가격 조회용)
+    let session_credential_id: Option<Uuid> = sqlx::query_scalar!(
+        r#"SELECT credential_id FROM paper_trading_sessions WHERE strategy_id = $1"#,
+        strategy_id
+    )
+    .fetch_optional(pool)
+    .await
+    .ok()
+    .flatten();
+
     let mut positions = Vec::new();
     let mut total_value = Decimal::ZERO;
+    let mut total_unrealized_pnl = Decimal::ZERO;
 
     for row in rows {
-        let current_price = row.entry_price; // TODO: 실시간 시세 조회
+        let current_price = if let Some(cred_id) = session_credential_id {
+            get_realtime_price(&state, cred_id, &row.symbol, row.entry_price).await
+        } else {
+            row.entry_price
+        };
         let market_value = row.quantity * current_price;
+        let unrealized_pnl = (current_price - row.entry_price) * row.quantity;
         total_value += market_value;
+        total_unrealized_pnl += unrealized_pnl;
 
         let return_pct = if row.entry_price > Decimal::ZERO {
             ((current_price - row.entry_price) / row.entry_price * Decimal::from(100)).round_dp(2)
@@ -1505,7 +1647,7 @@ pub async fn get_strategy_positions(
             entry_price: row.entry_price.to_string(),
             current_price: current_price.to_string(),
             market_value: market_value.to_string(),
-            unrealized_pnl: "0".to_string(),
+            unrealized_pnl: unrealized_pnl.to_string(),
             return_pct: return_pct.to_string(),
             entry_time: row.entry_time.to_rfc3339(),
         });
@@ -1515,7 +1657,7 @@ pub async fn get_strategy_positions(
         total: positions.len(),
         positions,
         total_value: total_value.to_string(),
-        total_unrealized_pnl: "0".to_string(),
+        total_unrealized_pnl: total_unrealized_pnl.to_string(),
     }))
 }
 

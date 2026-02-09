@@ -1,0 +1,17 @@
+{
+  "id": "E-3",
+  "title": "Smart Order Router",
+  "group": "E",
+  "description": "전략 → Intent (무엇을, 몇 주, 긴급도) 발행. SOR → Intent → 실제 Order[] 변환 (알고리즘 선택/분할). LiveExecutor에서 의사결정/집행 로직 분리.",
+  "relevant_crates": ["trader-execution", "trader-core"],
+  "has_db_changes": false,
+  "depends_on": ["E-1"],
+  "checklist": [
+    "Intent 타입 정의",
+    "SOR Intent → Order[] 변환",
+    "알고리즘 선택 로직",
+    "LiveExecutor 의사결정/집행 분리",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

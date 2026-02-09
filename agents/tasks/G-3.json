@@ -1,0 +1,15 @@
+{
+  "id": "G-3",
+  "title": "시스템 UX 개선",
+  "group": "G",
+  "description": "UTC → KST 타임존 변환 유틸리티 + 사용자 설정 연동. 다크/라이트 테마 토글 (TailwindCSS dark: 활성화 + localStorage). 페이지 레벨 ErrorBoundary + 로딩 스켈레톤 시스템. 모바일 반응형 레이아웃 검증 + 뷰포트 대응.",
+  "relevant_crates": ["frontend"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "UTC → KST 타임존 변환 유틸리티",
+    "다크/라이트 테마 토글",
+    "ErrorBoundary + 로딩 스켈레톤",
+    "모바일 반응형 레이아웃"
+  ]
+}

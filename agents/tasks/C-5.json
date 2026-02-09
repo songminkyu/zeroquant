@@ -1,0 +1,17 @@
+{
+  "id": "C-5",
+  "title": "거래 비용 분석 (TCA)",
+  "group": "C",
+  "description": "reality_check 테이블에 theory_price, exec_price, slippage_bps 컬럼 추가. Implementation Shortfall 계산: (신호 시점 중간가) - (실제 평균 체결가). Slippage 분류: 호가 공백 손실 vs 통신 지연 손실. Market Impact 측정: 주문 직후 호가 변동 분석.",
+  "relevant_crates": ["trader-analytics", "trader-execution", "trader-api"],
+  "has_db_changes": true,
+  "depends_on": [],
+  "checklist": [
+    "reality_check 테이블 컬럼 추가 DDL",
+    "Implementation Shortfall 계산",
+    "Slippage 분류 로직",
+    "Market Impact 측정",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

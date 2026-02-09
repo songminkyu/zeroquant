@@ -1,0 +1,14 @@
+{
+  "id": "G-2",
+  "title": "툴팁 & 인터랙션 강화",
+  "group": "G",
+  "description": "매매 마커 호버 시 RSI/MACD/RouteState/Score 컨텍스트 툴팁. SignalDetailPopup 확장 — 진입 근거 + 당시 지표 값 표시.",
+  "relevant_crates": ["frontend"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "매매 마커 호버 툴팁 (RSI/MACD/RouteState/Score)",
+    "SignalDetailPopup 확장",
+    "진입 근거 + 지표 값 표시"
+  ]
+}

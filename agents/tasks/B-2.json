@@ -1,0 +1,17 @@
+{
+  "id": "B-2",
+  "title": "시점 데이터 관리 (Point-in-Time)",
+  "group": "B",
+  "description": "symbol_fundamental 테이블에 announce_date DATE, report_period VARCHAR(10) 추가. 펀더멘털 수집기에 공시일 파싱 로직 추가. 백테스트 쿼리에 WHERE announce_date <= backtest_time 조건 강제. 기존 펀더멘털 데이터에 대한 announce_date 백필(backfill) 스크립트 작성.",
+  "relevant_crates": ["trader-data", "trader-collector", "trader-analytics"],
+  "has_db_changes": true,
+  "depends_on": [],
+  "checklist": [
+    "symbol_fundamental 테이블 컬럼 추가 DDL",
+    "펀더멘털 수집기 공시일 파싱",
+    "백테스트 쿼리 announce_date 조건",
+    "백필 스크립트",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

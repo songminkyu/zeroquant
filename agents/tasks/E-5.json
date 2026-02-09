@@ -1,0 +1,18 @@
+{
+  "id": "E-5",
+  "title": "세금 Lot 추적",
+  "group": "E",
+  "description": "FIFO/LIFO/특정 Lot 지정 방식의 취득원가 계산 모듈. 기존 GET /api/v1/journal/cost-basis/{symbol} 확장. 연간 양도소득세 리포트 생성 API.",
+  "relevant_crates": ["trader-analytics", "trader-api"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "FIFO 취득원가 계산",
+    "LIFO 취득원가 계산",
+    "특정 Lot 지정 방식",
+    "cost-basis API 확장",
+    "연간 양도소득세 리포트 API",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "D-1",
+  "title": "전략 파라미터 버전 관리",
+  "group": "D",
+  "description": "strategy_run_snapshots 테이블 신설 (strategy_id, version, params_json, started_at). 라이브/페이퍼 실행 시작 시 현재 파라미터 자동 스냅샷 저장. API: GET /api/v1/strategies/{id}/history — 과거 실행 파라미터 조회.",
+  "relevant_crates": ["trader-strategy", "trader-api"],
+  "has_db_changes": true,
+  "depends_on": [],
+  "checklist": [
+    "strategy_run_snapshots 테이블 DDL",
+    "파라미터 자동 스냅샷 저장 로직",
+    "GET /api/v1/strategies/{id}/history API",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

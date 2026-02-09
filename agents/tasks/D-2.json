@@ -1,0 +1,17 @@
+{
+  "id": "D-2",
+  "title": "전략 파라미터 최적화",
+  "group": "D",
+  "description": "ParameterGrid 러너 — 파라미터 조합 생성 + 순차 백테스트 실행. Bayesian 최적화 (선택적 — argmin 활용). 최적화 결과 비교 테이블 + 상위 N개 설정 추천. API: POST /api/v1/backtest/optimize.",
+  "relevant_crates": ["trader-analytics", "trader-strategy", "trader-api"],
+  "has_db_changes": false,
+  "depends_on": ["B-8"],
+  "checklist": [
+    "ParameterGrid 러너 구현",
+    "Bayesian 최적화 (argmin)",
+    "최적화 결과 비교 테이블",
+    "POST /api/v1/backtest/optimize API",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "E-2",
+  "title": "내부 상계 시스템 (Internal Netting)",
+  "group": "E",
+  "description": "중앙 OrderManager 신규 — 전략별 신호 주기적 수집 (예: 1분). 동일 심볼 매수/매도 상계 처리 후 순 주문만 거래소 전송. 상계 로그 기록 (절감 수수료/슬리피지 추적).",
+  "relevant_crates": ["trader-execution", "trader-core"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "중앙 OrderManager 구현",
+    "전략별 신호 주기적 수집",
+    "동일 심볼 매수/매도 상계 처리",
+    "순 주문만 거래소 전송",
+    "상계 로그 기록",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "E-4",
+  "title": "불변 감사 로그 (Audit Trail)",
+  "group": "E",
+  "description": "audit_log append-only 테이블 (INSERT만 허용, UPDATE/DELETE 차단). 모든 주문 생성/체결/취소 이벤트 자동 기록. 감사 로그 조회 API: GET /api/v1/audit/trades.",
+  "relevant_crates": ["trader-execution", "trader-api"],
+  "has_db_changes": true,
+  "depends_on": [],
+  "checklist": [
+    "audit_log 테이블 DDL (append-only)",
+    "UPDATE/DELETE 차단 트리거",
+    "주문 이벤트 자동 기록",
+    "GET /api/v1/audit/trades API",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

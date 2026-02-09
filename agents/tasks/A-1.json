@@ -1,0 +1,17 @@
+{
+  "id": "A-1",
+  "title": "API 인증 체계 구축",
+  "group": "A",
+  "description": "전체 API 라우트에 JWT AuthUser extractor 적용. WebSocket 핸드셰이크 시 토큰 검증 미들웨어 추가. Axum RequestBodyLimit 미들웨어 적용 (DoS 방지). config/default.toml 기본 시크릿 제거 후 환경변수 필수화.",
+  "relevant_crates": ["trader-api"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "JWT AuthUser extractor 구현 및 전체 라우트 적용",
+    "WebSocket 핸드셰이크 토큰 검증 미들웨어",
+    "Axum RequestBodyLimit 미들웨어 적용",
+    "config/default.toml 기본 시크릿 제거 → 환경변수 필수화",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

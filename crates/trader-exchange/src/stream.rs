@@ -51,6 +51,9 @@ use crate::connector::kis::{
     KrRealtimeOrderbook, KrRealtimeTrade, UsRealtimeMessage, UsRealtimeOrderbook, UsRealtimeTrade,
     WsCommand, UsWsCommand,
 };
+use crate::connector::upbit::websocket::{UpbitWebSocket, UpbitWsCommand, UpbitWsMessage};
+use crate::connector::bithumb::websocket::{BithumbWebSocket, BithumbWsCommand, BithumbWsMessage};
+use crate::connector::ls_sec::websocket::{LsSecWebSocket, LsWsCommand, LsWsMessage};
 use crate::traits::{ExchangeResult, MarketEvent, MarketStream};
 use crate::ExchangeError;
 
@@ -654,6 +657,381 @@ impl MarketStream for KisUsMarketStream {
 }
 
 // ============================================================================
+// Upbit MarketStream
+// ============================================================================
+
+/// Upbit WebSocket을 MarketStream trait으로 래핑하는 어댑터.
+pub struct UpbitMarketStream {
+    ws: Arc<RwLock<UpbitWebSocket>>,
+    rx: Option<mpsc::Receiver<UpbitWsMessage>>,
+    cmd_tx: mpsc::Sender<UpbitWsCommand>,
+    subscribed_symbols: Vec<String>,
+    started: bool,
+}
+
+impl UpbitMarketStream {
+    pub fn new() -> Self {
+        let mut ws = UpbitWebSocket::new();
+        let rx = ws.take_receiver();
+        let cmd_tx = ws.command_sender();
+        Self {
+            ws: Arc::new(RwLock::new(ws)),
+            rx,
+            cmd_tx,
+            subscribed_symbols: Vec::new(),
+            started: false,
+        }
+    }
+
+    fn quote_to_ticker(quote: &trader_core::QuoteData) -> Ticker {
+        Ticker {
+            ticker: quote.symbol.clone(),
+            bid: quote.current_price - dec!(1),
+            ask: quote.current_price + dec!(1),
+            last: quote.current_price,
+            volume_24h: quote.volume,
+            high_24h: quote.high,
+            low_24h: quote.low,
+            change_24h: quote.price_change,
+            change_24h_percent: quote.change_percent,
+            timestamp: quote.timestamp,
+        }
+    }
+}
+
+#[async_trait]
+impl MarketStream for UpbitMarketStream {
+    async fn start(&mut self) -> ExchangeResult<()> {
+        if self.started { return Ok(()); }
+        let ws = self.ws.clone();
+        self.started = true;
+        tokio::spawn(async move {
+            let mut ws_guard = ws.write().await;
+            ws_guard.connect().await;
+        });
+        info!("Upbit MarketStream 시작됨");
+        Ok(())
+    }
+
+    fn is_started(&self) -> bool { self.started }
+
+    async fn subscribe_ticker(&mut self, symbol: &str) -> ExchangeResult<()> {
+        let code = symbol.to_string();
+        if !self.subscribed_symbols.contains(&code) {
+            self.subscribed_symbols.push(code.clone());
+        }
+        if self.started {
+            self.cmd_tx.send(UpbitWsCommand::SubscribeTicker(vec![code.clone()]))
+                .await
+                .map_err(|e| ExchangeError::NetworkError(format!("Upbit 구독 전송 실패: {}", e)))?;
+            info!("Upbit 티커 동적 구독: {}", code);
+        }
+        Ok(())
+    }
+
+    async fn subscribe_kline(&mut self, _symbol: &str, _timeframe: Timeframe) -> ExchangeResult<()> {
+        Err(ExchangeError::NotSupported("Upbit does not support real-time kline streaming".to_string()))
+    }
+
+    async fn subscribe_order_book(&mut self, _symbol: &str) -> ExchangeResult<()> {
+        // TODO: Upbit orderbook 구독 구현
+        warn!("Upbit 호가 구독은 아직 지원되지 않습니다");
+        Ok(())
+    }
+
+    async fn subscribe_trades(&mut self, symbol: &str) -> ExchangeResult<()> {
+        self.subscribe_ticker(symbol).await
+    }
+
+    async fn unsubscribe(&mut self, symbol: &str) -> ExchangeResult<()> {
+        let code = symbol.to_string();
+        self.subscribed_symbols.retain(|s| s != &code);
+        if self.started {
+            self.cmd_tx.send(UpbitWsCommand::UnsubscribeTicker(vec![code.clone()]))
+                .await
+                .map_err(|e| ExchangeError::NetworkError(format!("Upbit 구독 해제 실패: {}", e)))?;
+            info!("Upbit 구독 해제: {}", code);
+        }
+        Ok(())
+    }
+
+    async fn next_event(&mut self) -> Option<MarketEvent> {
+        let rx = self.rx.as_mut()?;
+        match rx.recv().await {
+            Some(UpbitWsMessage::Ticker(quote)) => {
+                debug!("Upbit Ticker: {} @ {}", quote.symbol, quote.current_price);
+                Some(MarketEvent::Ticker(Self::quote_to_ticker(&quote)))
+            }
+            Some(UpbitWsMessage::Orderbook(_ob)) => {
+                // TODO: OrderBook 변환 구현
+                None
+            }
+            Some(UpbitWsMessage::Error(msg)) => {
+                error!("Upbit WebSocket 에러: {}", msg);
+                Some(MarketEvent::Error(msg))
+            }
+            None => None,
+        }
+    }
+}
+
+// ============================================================================
+// Bithumb MarketStream
+// ============================================================================
+
+/// Bithumb WebSocket을 MarketStream trait으로 래핑하는 어댑터.
+pub struct BithumbMarketStream {
+    ws: Arc<RwLock<BithumbWebSocket>>,
+    rx: Option<mpsc::Receiver<BithumbWsMessage>>,
+    cmd_tx: mpsc::Sender<BithumbWsCommand>,
+    subscribed_symbols: Vec<String>,
+    started: bool,
+}
+
+impl BithumbMarketStream {
+    pub fn new() -> Self {
+        let mut ws = BithumbWebSocket::new();
+        let rx = ws.take_receiver();
+        let cmd_tx = ws.command_sender();
+        Self {
+            ws: Arc::new(RwLock::new(ws)),
+            rx,
+            cmd_tx,
+            subscribed_symbols: Vec::new(),
+            started: false,
+        }
+    }
+
+    fn quote_to_ticker(quote: &trader_core::QuoteData) -> Ticker {
+        Ticker {
+            ticker: quote.symbol.clone(),
+            bid: quote.current_price - dec!(1),
+            ask: quote.current_price + dec!(1),
+            last: quote.current_price,
+            volume_24h: quote.volume,
+            high_24h: quote.high,
+            low_24h: quote.low,
+            change_24h: quote.price_change,
+            change_24h_percent: quote.change_percent,
+            timestamp: quote.timestamp,
+        }
+    }
+}
+
+#[async_trait]
+impl MarketStream for BithumbMarketStream {
+    async fn start(&mut self) -> ExchangeResult<()> {
+        if self.started { return Ok(()); }
+        let ws = self.ws.clone();
+        self.started = true;
+        tokio::spawn(async move {
+            let mut ws_guard = ws.write().await;
+            ws_guard.connect().await;
+        });
+        info!("Bithumb MarketStream 시작됨");
+        Ok(())
+    }
+
+    fn is_started(&self) -> bool { self.started }
+
+    async fn subscribe_ticker(&mut self, symbol: &str) -> ExchangeResult<()> {
+        let code = symbol.to_string();
+        if !self.subscribed_symbols.contains(&code) {
+            self.subscribed_symbols.push(code.clone());
+        }
+        if self.started {
+            self.cmd_tx.send(BithumbWsCommand::SubscribeTicker(vec![code.clone()]))
+                .await
+                .map_err(|e| ExchangeError::NetworkError(format!("Bithumb 구독 전송 실패: {}", e)))?;
+            info!("Bithumb 티커 동적 구독: {}", code);
+        }
+        Ok(())
+    }
+
+    async fn subscribe_kline(&mut self, _symbol: &str, _timeframe: Timeframe) -> ExchangeResult<()> {
+        Err(ExchangeError::NotSupported("Bithumb does not support real-time kline streaming".to_string()))
+    }
+
+    async fn subscribe_order_book(&mut self, _symbol: &str) -> ExchangeResult<()> {
+        // TODO: Bithumb orderbook 구독 구현
+        warn!("Bithumb 호가 구독은 아직 지원되지 않습니다");
+        Ok(())
+    }
+
+    async fn subscribe_trades(&mut self, symbol: &str) -> ExchangeResult<()> {
+        self.subscribe_ticker(symbol).await
+    }
+
+    async fn unsubscribe(&mut self, symbol: &str) -> ExchangeResult<()> {
+        let code = symbol.to_string();
+        self.subscribed_symbols.retain(|s| s != &code);
+        if self.started {
+            self.cmd_tx.send(BithumbWsCommand::UnsubscribeTicker(vec![code.clone()]))
+                .await
+                .map_err(|e| ExchangeError::NetworkError(format!("Bithumb 구독 해제 실패: {}", e)))?;
+            info!("Bithumb 구독 해제: {}", code);
+        }
+        Ok(())
+    }
+
+    async fn next_event(&mut self) -> Option<MarketEvent> {
+        let rx = self.rx.as_mut()?;
+        match rx.recv().await {
+            Some(BithumbWsMessage::Ticker(quote)) => {
+                debug!("Bithumb Ticker: {} @ {}", quote.symbol, quote.current_price);
+                Some(MarketEvent::Ticker(Self::quote_to_ticker(&quote)))
+            }
+            Some(BithumbWsMessage::Error(msg)) => {
+                error!("Bithumb WebSocket 에러: {}", msg);
+                Some(MarketEvent::Error(msg))
+            }
+            None => None,
+        }
+    }
+}
+
+// ============================================================================
+// LS증권 MarketStream
+// ============================================================================
+
+/// LS증권 WebSocket을 MarketStream trait으로 래핑하는 어댑터.
+pub struct LsSecMarketStream {
+    ws: Arc<RwLock<LsSecWebSocket>>,
+    rx: Option<mpsc::Receiver<LsWsMessage>>,
+    cmd_tx: mpsc::Sender<LsWsCommand>,
+    subscribed_symbols: Vec<String>,
+    started: bool,
+}
+
+impl LsSecMarketStream {
+    pub fn new(token: String) -> Self {
+        let mut ws = LsSecWebSocket::new(token);
+        let rx = ws.take_receiver();
+        let cmd_tx = ws.command_sender();
+        Self {
+            ws: Arc::new(RwLock::new(ws)),
+            rx,
+            cmd_tx,
+            subscribed_symbols: Vec::new(),
+            started: false,
+        }
+    }
+
+    fn quote_to_ticker(quote: &trader_core::QuoteData) -> Ticker {
+        Ticker {
+            ticker: quote.symbol.clone(),
+            bid: quote.current_price - dec!(10),
+            ask: quote.current_price + dec!(10),
+            last: quote.current_price,
+            volume_24h: quote.volume,
+            high_24h: quote.high,
+            low_24h: quote.low,
+            change_24h: quote.price_change,
+            change_24h_percent: quote.change_percent,
+            timestamp: quote.timestamp,
+        }
+    }
+}
+
+#[async_trait]
+impl MarketStream for LsSecMarketStream {
+    async fn start(&mut self) -> ExchangeResult<()> {
+        if self.started { return Ok(()); }
+        let ws = self.ws.clone();
+        self.started = true;
+        tokio::spawn(async move {
+            let mut ws_guard = ws.write().await;
+            ws_guard.connect().await;
+        });
+        info!("LS증권 MarketStream 시작됨");
+        Ok(())
+    }
+
+    fn is_started(&self) -> bool { self.started }
+
+    async fn subscribe_ticker(&mut self, symbol: &str) -> ExchangeResult<()> {
+        let code = symbol.to_string();
+        if !self.subscribed_symbols.contains(&code) {
+            self.subscribed_symbols.push(code.clone());
+        }
+        if self.started {
+            // LS 국내 체결가: H1_, 해외 체결가: HDF
+            let tr_cd = if UnifiedMarketStream::is_korean_symbol(symbol) {
+                "H1_".to_string()
+            } else {
+                "HDF".to_string()
+            };
+            self.cmd_tx.send(LsWsCommand::Subscribe { tr_cd, tr_key: code.clone() })
+                .await
+                .map_err(|e| ExchangeError::NetworkError(format!("LS 구독 전송 실패: {}", e)))?;
+            info!("LS증권 티커 동적 구독: {}", code);
+        }
+        Ok(())
+    }
+
+    async fn subscribe_kline(&mut self, _symbol: &str, _timeframe: Timeframe) -> ExchangeResult<()> {
+        Err(ExchangeError::NotSupported("LS증권 does not support real-time kline streaming".to_string()))
+    }
+
+    async fn subscribe_order_book(&mut self, symbol: &str) -> ExchangeResult<()> {
+        let code = symbol.to_string();
+        if self.started {
+            // LS 국내 호가: H2_ (호가 잔량)
+            let tr_cd = if UnifiedMarketStream::is_korean_symbol(symbol) {
+                "H2_".to_string()
+            } else {
+                "HDF".to_string() // 해외는 동일 TR로 처리
+            };
+            self.cmd_tx.send(LsWsCommand::Subscribe { tr_cd, tr_key: code.clone() })
+                .await
+                .map_err(|e| ExchangeError::NetworkError(format!("LS 호가 구독 전송 실패: {}", e)))?;
+            info!("LS증권 호가 동적 구독: {}", code);
+        }
+        Ok(())
+    }
+
+    async fn subscribe_trades(&mut self, symbol: &str) -> ExchangeResult<()> {
+        self.subscribe_ticker(symbol).await
+    }
+
+    async fn unsubscribe(&mut self, symbol: &str) -> ExchangeResult<()> {
+        let code = symbol.to_string();
+        self.subscribed_symbols.retain(|s| s != &code);
+        if self.started {
+            let tr_cd = if UnifiedMarketStream::is_korean_symbol(symbol) {
+                "H1_".to_string()
+            } else {
+                "HDF".to_string()
+            };
+            self.cmd_tx.send(LsWsCommand::Unsubscribe { tr_cd, tr_key: code.clone() })
+                .await
+                .map_err(|e| ExchangeError::NetworkError(format!("LS 구독 해제 실패: {}", e)))?;
+            info!("LS증권 구독 해제: {}", code);
+        }
+        Ok(())
+    }
+
+    async fn next_event(&mut self) -> Option<MarketEvent> {
+        let rx = self.rx.as_mut()?;
+        match rx.recv().await {
+            Some(LsWsMessage::Trade(quote)) => {
+                debug!("LS Trade: {} @ {}", quote.symbol, quote.current_price);
+                Some(MarketEvent::Ticker(Self::quote_to_ticker(&quote)))
+            }
+            Some(LsWsMessage::Orderbook(_ob)) => {
+                // TODO: LS증권 OrderBook 변환 구현
+                None
+            }
+            Some(LsWsMessage::Error(msg)) => {
+                error!("LS증권 WebSocket 에러: {}", msg);
+                Some(MarketEvent::Error(msg))
+            }
+            None => None,
+        }
+    }
+}
+
+// ============================================================================
 // 통합 MarketStream (여러 거래소 지원)
 // ============================================================================
 
@@ -969,26 +1347,36 @@ impl MarketStream for UnifiedMarketStream {
         let cmd = StreamCommand::Subscribe { symbol: symbol.to_string() };
 
         if self.started {
-            // bridge 태스크에 명령 전송
-            if Self::is_korean_symbol(symbol) {
-                if let Some(ref cmd_tx) = self.kr_cmd_tx {
-                    cmd_tx.send(cmd).await.map_err(|e|
-                        ExchangeError::NetworkError(format!("KR 구독 명령 전송 실패: {}", e)))?;
-                    return Ok(());
-                }
-            } else if let Some(ref cmd_tx) = self.us_cmd_tx {
+            // bridge 태스크에 명령 전송 (1차 라우팅 실패 시 fallback)
+            let (primary, fallback) = if Self::is_korean_symbol(symbol) {
+                (&self.kr_cmd_tx, &self.us_cmd_tx)
+            } else {
+                (&self.us_cmd_tx, &self.kr_cmd_tx)
+            };
+            if let Some(ref cmd_tx) = primary {
                 cmd_tx.send(cmd).await.map_err(|e|
-                    ExchangeError::NetworkError(format!("US 구독 명령 전송 실패: {}", e)))?;
+                    ExchangeError::NetworkError(format!("구독 명령 전송 실패: {}", e)))?;
+                return Ok(());
+            } else if let Some(ref cmd_tx) = fallback {
+                cmd_tx.send(cmd).await.map_err(|e|
+                    ExchangeError::NetworkError(format!("구독 명령 전송 실패 (fallback): {}", e)))?;
                 return Ok(());
             }
         } else {
-            // start() 전: 직접 하위 스트림에 구독
-            if Self::is_korean_symbol(symbol) {
+            // start() 전: 직접 하위 스트림에 구독 (fallback 포함)
+            let is_kr = Self::is_korean_symbol(symbol);
+            if is_kr {
                 if let Some(ref mut kr) = self.kr_stream {
                     return kr.subscribe_ticker(symbol).await;
+                } else if let Some(ref mut us) = self.us_stream {
+                    return us.subscribe_ticker(symbol).await;
                 }
-            } else if let Some(ref mut us) = self.us_stream {
-                return us.subscribe_ticker(symbol).await;
+            } else {
+                if let Some(ref mut us) = self.us_stream {
+                    return us.subscribe_ticker(symbol).await;
+                } else if let Some(ref mut kr) = self.kr_stream {
+                    return kr.subscribe_ticker(symbol).await;
+                }
             }
         }
         Err(ExchangeError::NotSupported(format!(
@@ -1028,24 +1416,34 @@ impl MarketStream for UnifiedMarketStream {
         let cmd = StreamCommand::SubscribeOrderBook { symbol: symbol.to_string() };
 
         if self.started {
-            if Self::is_korean_symbol(symbol) {
-                if let Some(ref cmd_tx) = self.kr_cmd_tx {
-                    cmd_tx.send(cmd).await.map_err(|e|
-                        ExchangeError::NetworkError(format!("KR 호가 구독 명령 전송 실패: {}", e)))?;
-                    return Ok(());
-                }
-            } else if let Some(ref cmd_tx) = self.us_cmd_tx {
+            let (primary, fallback) = if Self::is_korean_symbol(symbol) {
+                (&self.kr_cmd_tx, &self.us_cmd_tx)
+            } else {
+                (&self.us_cmd_tx, &self.kr_cmd_tx)
+            };
+            if let Some(ref cmd_tx) = primary {
                 cmd_tx.send(cmd).await.map_err(|e|
-                    ExchangeError::NetworkError(format!("US 호가 구독 명령 전송 실패: {}", e)))?;
+                    ExchangeError::NetworkError(format!("호가 구독 명령 전송 실패: {}", e)))?;
+                return Ok(());
+            } else if let Some(ref cmd_tx) = fallback {
+                cmd_tx.send(cmd).await.map_err(|e|
+                    ExchangeError::NetworkError(format!("호가 구독 명령 전송 실패 (fallback): {}", e)))?;
                 return Ok(());
             }
         } else {
-            if Self::is_korean_symbol(symbol) {
+            let is_kr = Self::is_korean_symbol(symbol);
+            if is_kr {
                 if let Some(ref mut kr) = self.kr_stream {
                     return kr.subscribe_order_book(symbol).await;
+                } else if let Some(ref mut us) = self.us_stream {
+                    return us.subscribe_order_book(symbol).await;
                 }
-            } else if let Some(ref mut us) = self.us_stream {
-                return us.subscribe_order_book(symbol).await;
+            } else {
+                if let Some(ref mut us) = self.us_stream {
+                    return us.subscribe_order_book(symbol).await;
+                } else if let Some(ref mut kr) = self.kr_stream {
+                    return kr.subscribe_order_book(symbol).await;
+                }
             }
         }
         Err(ExchangeError::NotSupported(format!(
@@ -1077,22 +1475,32 @@ impl MarketStream for UnifiedMarketStream {
         let cmd = StreamCommand::Unsubscribe { symbol: symbol.to_string() };
 
         if self.started {
-            if Self::is_korean_symbol(symbol) {
-                if let Some(ref cmd_tx) = self.kr_cmd_tx {
-                    cmd_tx.send(cmd).await.map_err(|e|
-                        ExchangeError::NetworkError(format!("KR 구독 해제 명령 전송 실패: {}", e)))?;
-                }
-            } else if let Some(ref cmd_tx) = self.us_cmd_tx {
+            let (primary, fallback) = if Self::is_korean_symbol(symbol) {
+                (&self.kr_cmd_tx, &self.us_cmd_tx)
+            } else {
+                (&self.us_cmd_tx, &self.kr_cmd_tx)
+            };
+            if let Some(ref cmd_tx) = primary {
                 cmd_tx.send(cmd).await.map_err(|e|
-                    ExchangeError::NetworkError(format!("US 구독 해제 명령 전송 실패: {}", e)))?;
+                    ExchangeError::NetworkError(format!("구독 해제 명령 전송 실패: {}", e)))?;
+            } else if let Some(ref cmd_tx) = fallback {
+                cmd_tx.send(cmd).await.map_err(|e|
+                    ExchangeError::NetworkError(format!("구독 해제 명령 전송 실패 (fallback): {}", e)))?;
             }
         } else {
-            if Self::is_korean_symbol(symbol) {
+            let is_kr = Self::is_korean_symbol(symbol);
+            if is_kr {
                 if let Some(ref mut kr) = self.kr_stream {
                     return kr.unsubscribe(symbol).await;
+                } else if let Some(ref mut us) = self.us_stream {
+                    return us.unsubscribe(symbol).await;
                 }
-            } else if let Some(ref mut us) = self.us_stream {
-                return us.unsubscribe(symbol).await;
+            } else {
+                if let Some(ref mut us) = self.us_stream {
+                    return us.unsubscribe(symbol).await;
+                } else if let Some(ref mut kr) = self.kr_stream {
+                    return kr.unsubscribe(symbol).await;
+                }
             }
         }
         Ok(())

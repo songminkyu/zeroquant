@@ -2840,9 +2840,18 @@ export interface PaperTradingSessionsResponse {
 }
 
 /** Paper Trading 시작 요청 */
+export interface MockStreamingConfigRequest {
+  mode?: string;
+  tickIntervalMs?: number;
+  replaySpeed?: number;
+  spreadMultiplier?: number;
+  orderbookBaseVolume?: number;
+}
+
 export interface PaperTradingStartRequest {
   credentialId: string;
   initialBalance?: number;
+  streamingConfig?: MockStreamingConfigRequest;
 }
 
 /** Paper Trading 액션 응답 */

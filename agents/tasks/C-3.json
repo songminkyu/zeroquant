@@ -1,0 +1,17 @@
+{
+  "id": "C-3",
+  "title": "섹터/팩터 노출 제한",
+  "group": "C",
+  "description": "RiskConfig에 max_sector_weight, factor_tilt_limit 필드 추가. 포트폴리오 레벨 섹터 비중 검증 로직 (RiskManager::validate_order() 확장). 특정 팩터(모멘텀, 가치 등) 쏠림 제한.",
+  "relevant_crates": ["trader-risk"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "RiskConfig에 max_sector_weight 필드 추가",
+    "RiskConfig에 factor_tilt_limit 필드 추가",
+    "RiskManager::validate_order() 섹터 비중 검증",
+    "팩터 쏠림 제한 로직",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

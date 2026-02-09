@@ -24,7 +24,11 @@ use uuid::Uuid;
 
 use trader_core::crypto::CredentialEncryptor;
 use trader_exchange::connector::kis::{KisConfig, KisOAuth};
-use trader_exchange::stream::{KisKrMarketStream, KisUsMarketStream, UnifiedMarketStream};
+use trader_exchange::provider::MockExchangeProvider;
+use trader_exchange::stream::{
+    KisKrMarketStream, KisUsMarketStream, UnifiedMarketStream,
+    UpbitMarketStream, BithumbMarketStream, LsSecMarketStream,
+};
 use trader_exchange::traits::MarketStream;
 
 use crate::websocket::aggregator::MarketDataAggregator;
@@ -121,16 +125,20 @@ impl MarketStreamHandle {
 /// # Arguments
 ///
 /// * `market_streams` - 스트림 핸들 캐시
-/// * `pool` - DB 연결 풀
-/// * `encryptor` - 자격증명 복호화기
-/// * `kis_oauth_cache` - OAuth 토큰 캐시
+/// * `exchange_id` - 거래소 ID ("kis", "mock", "upbit", "bithumb", "ls_sec")
+/// * `pool` - DB 연결 풀 (KIS 등 실거래소에서 credential 조회 필요)
+/// * `encryptor` - 자격증명 복호화기 (KIS 등 실거래소에서 필요)
+/// * `kis_oauth_cache` - OAuth 토큰 캐시 (KIS 전용)
+/// * `mock_providers` - Mock 거래소 프로바이더 캐시
 /// * `credential_id` - 거래소 자격증명 ID
 /// * `subscriptions` - WebSocket 구독 관리자 (이벤트 브로드캐스트용)
 pub async fn get_or_create_market_stream(
     market_streams: &Arc<RwLock<HashMap<Uuid, Arc<MarketStreamHandle>>>>,
-    pool: &sqlx::PgPool,
-    encryptor: &CredentialEncryptor,
+    exchange_id: &str,
+    pool: Option<&sqlx::PgPool>,
+    encryptor: Option<&CredentialEncryptor>,
     kis_oauth_cache: &Arc<RwLock<HashMap<String, Arc<KisOAuth>>>>,
+    mock_providers: &Arc<RwLock<HashMap<Uuid, Arc<MockExchangeProvider>>>>,
     credential_id: Uuid,
     subscriptions: Option<&SharedSubscriptionManager>,
 ) -> Result<Arc<MarketStreamHandle>, String> {
@@ -142,41 +150,74 @@ pub async fn get_or_create_market_stream(
         }
     }
 
-    // 2. DB에서 자격증명 로드 → KisConfig 생성
-    let kis_config = load_kis_config_from_credential(pool, encryptor, credential_id).await?;
+    // 2. exchange_id에 따라 UnifiedMarketStream 생성
+    let mut stream = match exchange_id {
+        "kis" => {
+            let pool = pool.ok_or("KIS 스트림에 DB 풀이 필요합니다")?;
+            let encryptor = encryptor.ok_or("KIS 스트림에 encryptor가 필요합니다")?;
 
-    // 3. OAuth 생성 (KR/US 각각 별도 OAuth 인스턴스)
-    let oauth_kr = create_oauth_instance(kis_oauth_cache, &kis_config, "kr").await?;
-    let oauth_us = create_oauth_instance(kis_oauth_cache, &kis_config, "us").await?;
+            let kis_config =
+                load_kis_config_from_credential(pool, encryptor, credential_id).await?;
+            let oauth_kr =
+                create_oauth_instance(kis_oauth_cache, &kis_config, "kr").await?;
+            let oauth_us =
+                create_oauth_instance(kis_oauth_cache, &kis_config, "us").await?;
 
-    // 4. UnifiedMarketStream 생성
-    let kr_stream = KisKrMarketStream::new(oauth_kr);
-    let us_stream = KisUsMarketStream::new(oauth_us);
+            let kr_stream = KisKrMarketStream::new(oauth_kr);
+            let us_stream = KisUsMarketStream::new(oauth_us);
 
-    let mut stream = UnifiedMarketStream::new()
-        .with_kr_stream(kr_stream)
-        .with_us_stream(us_stream);
+            UnifiedMarketStream::new()
+                .with_kr_stream(kr_stream)
+                .with_us_stream(us_stream)
+        }
+        "mock" => {
+            let providers = mock_providers.read().await;
+            let provider = providers.get(&credential_id).ok_or_else(|| {
+                format!("Mock 프로바이더를 찾을 수 없습니다: {}", credential_id)
+            })?;
+            let mock_stream = provider.create_market_stream().await;
 
-    // 5. 스트림 시작
+            let mut unified = UnifiedMarketStream::new().with_mock_stream(mock_stream);
+            unified.set_mock_mode(true);
+            unified
+        }
+        "upbit" => {
+            let upbit_stream = UpbitMarketStream::new();
+            UnifiedMarketStream::new().with_kr_stream(upbit_stream)
+        }
+        "bithumb" => {
+            let bithumb_stream = BithumbMarketStream::new();
+            UnifiedMarketStream::new().with_kr_stream(bithumb_stream)
+        }
+        "ls_sec" => {
+            let pool = pool.ok_or("LS증권 스트림에 DB 풀이 필요합니다")?;
+            let encryptor = encryptor.ok_or("LS증권 스트림에 encryptor가 필요합니다")?;
+            let token = load_ls_sec_token(pool, encryptor, credential_id).await?;
+            let ls_stream = LsSecMarketStream::new(token);
+            UnifiedMarketStream::new().with_kr_stream(ls_stream)
+        }
+        other => {
+            return Err(format!("지원하지 않는 거래소: {}", other));
+        }
+    };
+
+    // 3. 스트림 시작
     stream
         .start()
         .await
         .map_err(|e| format!("MarketStream 시작 실패: {}", e))?;
 
-    // 6. Aggregator 연결 (stream → WebSocket 브로드캐스트)
-    // stream의 이벤트를 SubscriptionManager로 전달하는 bridge 태스크를 spawn합니다.
-    // 동적 구독/해제를 위해 stream은 Arc<RwLock>으로 래핑되므로,
-    // bridge 태스크에서 주기적으로 next_event()를 호출합니다.
+    // 4. Aggregator 연결 (stream → WebSocket 브로드캐스트)
     let stream = Arc::new(RwLock::new(stream));
 
     if let Some(subs) = subscriptions {
         let subs = subs.clone();
         let stream_for_aggregator = stream.clone();
         let cred_id = credential_id;
+        let ex_id = exchange_id.to_string();
         tokio::spawn(async move {
-            info!(credential_id = %cred_id, "MarketStream aggregator bridge 시작");
+            info!(credential_id = %cred_id, exchange_id = %ex_id, "MarketStream aggregator bridge 시작");
             let aggregator = MarketDataAggregator::new(subs);
-            // Arc<RwLock<UnifiedMarketStream>>에서 이벤트를 꺼내 aggregator로 전달
             loop {
                 let event = {
                     let mut stream = stream_for_aggregator.write().await;
@@ -187,7 +228,7 @@ pub async fn get_or_create_market_stream(
                         aggregator.handle_event(event);
                     }
                     None => {
-                        warn!(credential_id = %cred_id, "MarketStream 이벤트 스트림 종료");
+                        warn!(credential_id = %cred_id, exchange_id = %ex_id, "MarketStream 이벤트 스트림 종료");
                         break;
                     }
                 }
@@ -195,20 +236,20 @@ pub async fn get_or_create_market_stream(
         });
     }
 
-    // 7. 핸들 생성
+    // 5. 핸들 생성
     let handle = Arc::new(MarketStreamHandle {
         stream,
         subscribed_symbols: Arc::new(RwLock::new(HashMap::new())),
         credential_id,
     });
 
-    // 8. 캐시에 저장
+    // 6. 캐시에 저장
     market_streams
         .write()
         .await
         .insert(credential_id, handle.clone());
 
-    info!(credential_id = %credential_id, "MarketStream 생성 및 시작 완료");
+    info!(credential_id = %credential_id, exchange_id = %exchange_id, "MarketStream 생성 및 시작 완료");
 
     Ok(handle)
 }
@@ -273,6 +314,34 @@ async fn create_oauth_instance(
     _suffix: &str,
 ) -> Result<KisOAuth, String> {
     KisOAuth::new(config.clone()).map_err(|e| format!("OAuth 생성 실패: {}", e))
+}
+
+/// DB에서 LS증권 자격증명을 로드하여 WebSocket 접근 토큰을 반환합니다.
+async fn load_ls_sec_token(
+    pool: &sqlx::PgPool,
+    encryptor: &CredentialEncryptor,
+    credential_id: Uuid,
+) -> Result<String, String> {
+    let row: Option<CredentialDbRow> = sqlx::query_as(
+        "SELECT encrypted_credentials, encryption_nonce, is_testnet, settings, exchange_name \
+         FROM exchange_credentials \
+         WHERE id = $1 AND exchange_id = 'ls_sec' AND is_active = true",
+    )
+    .bind(credential_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("DB 조회 실패: {}", e))?;
+
+    let row = row.ok_or_else(|| {
+        format!("활성 LS증권 자격증명을 찾을 수 없습니다: {}", credential_id)
+    })?;
+
+    let credentials: DecryptedCredentials = encryptor
+        .decrypt_json(&row.encrypted_credentials, &row.encryption_nonce)
+        .map_err(|e| format!("자격증명 복호화 실패: {}", e))?;
+
+    // LS증권은 api_key를 접근 토큰으로 사용
+    Ok(credentials.api_key)
 }
 
 // ============================================================================

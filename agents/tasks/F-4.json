@@ -1,0 +1,17 @@
+{
+  "id": "F-4",
+  "title": "에러 트래커 영속화",
+  "group": "F",
+  "description": "인메모리 DashMap → DB 영속 저장 병행. 에러 이력 조회 API + 재시작 후에도 이력 유지.",
+  "relevant_crates": ["trader-api", "trader-data"],
+  "has_db_changes": true,
+  "depends_on": [],
+  "checklist": [
+    "에러 이력 DB 테이블 DDL",
+    "DashMap → DB 영속 저장 병행",
+    "에러 이력 조회 API",
+    "재시작 후 이력 유지 검증",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

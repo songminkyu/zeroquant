@@ -1021,12 +1021,40 @@ async fn subscribe_strategy_symbols_to_stream(
         }
     };
 
+    // 2-1. credential_id에서 exchange_id 조회
+    let exchange_id: String = match sqlx::query_scalar(
+        "SELECT exchange_id FROM exchange_credentials WHERE id = $1 AND is_active = true",
+    )
+    .bind(credential_id)
+    .fetch_optional(pool)
+    .await
+    {
+        Ok(Some(id)) => id,
+        Ok(None) => {
+            tracing::warn!(
+                credential_id = %credential_id,
+                "활성 자격증명을 찾을 수 없음, 스트림 구독 스킵"
+            );
+            return;
+        }
+        Err(e) => {
+            tracing::warn!(
+                credential_id = %credential_id,
+                error = %e,
+                "exchange_id 조회 실패, 스트림 구독 스킵"
+            );
+            return;
+        }
+    };
+
     // 3. MarketStream 핸들 가져오기 (없으면 생성)
     let handle = match get_or_create_market_stream(
         &state.market_streams,
-        pool,
-        encryptor.as_ref(),
+        &exchange_id,
+        Some(pool),
+        Some(encryptor.as_ref()),
         &state.kis_oauth_cache,
+        &state.mock_providers,
         credential_id,
         state.subscriptions.as_ref(),
     )

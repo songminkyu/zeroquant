@@ -1,0 +1,18 @@
+{
+  "id": "F-6",
+  "title": "Event Bus (Pub/Sub)",
+  "group": "F",
+  "description": "시스템 이벤트 정의: MarketEvent, SignalEvent, OrderEvent, SystemAlert. 전략 → SignalEvent 발행, OrderExecutor 구독 처리. Audit Logger, Dashboard 등 신규 컨슈머를 구독만으로 추가.",
+  "relevant_crates": ["trader-core", "trader-strategy", "trader-execution", "trader-api"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "시스템 이벤트 타입 정의 (MarketEvent, SignalEvent, OrderEvent, SystemAlert)",
+    "Event Bus 구현 (Pub/Sub)",
+    "전략 → SignalEvent 발행",
+    "OrderExecutor 구독 처리",
+    "컨슈머 구독 패턴",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "F-3",
+  "title": "DB 연결풀 & 슬로우 쿼리 모니터링",
+  "group": "F",
+  "description": "연결풀 사용률(active/idle/max)을 /health/ready JSON에 포함. pg_stat_statements 기반 슬로우 쿼리 자동 감지 + 알림. Redis maxmemory 환경변수화 (docker-compose.yml).",
+  "relevant_crates": ["trader-api", "trader-data"],
+  "has_db_changes": false,
+  "depends_on": [],
+  "checklist": [
+    "/health/ready에 연결풀 사용률 포함",
+    "pg_stat_statements 슬로우 쿼리 감지",
+    "슬로우 쿼리 알림 (Telegram/Discord)",
+    "Redis maxmemory 환경변수화",
+    "cargo build 성공",
+    "cargo test 통과"
+  ]
+}
