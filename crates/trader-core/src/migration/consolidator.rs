@@ -18,6 +18,8 @@ pub struct ConsolidationGroup {
     pub description: String,
     /// 포함할 원본 파일 패턴 (순서대로)
     pub source_patterns: Vec<String>,
+    /// 원본 파일 없이 직접 포함할 SQL (신규 스키마 등)
+    pub static_content: Option<String>,
 }
 
 impl Default for ConsolidationGroup {
@@ -26,6 +28,7 @@ impl Default for ConsolidationGroup {
             name: String::new(),
             description: String::new(),
             source_patterns: Vec::new(),
+            static_content: None,
         }
     }
 }
@@ -37,44 +40,90 @@ pub fn default_consolidation_groups() -> Vec<ConsolidationGroup> {
             name: "01_core_foundation".to_string(),
             description: "Extensions, ENUM, symbols, credentials".to_string(),
             source_patterns: vec!["01_".to_string()],
+            static_content: None,
         },
         ConsolidationGroup {
             name: "02_data_management".to_string(),
             description: "symbol_info, ohlcv, fundamental, v_symbol_with_fundamental".to_string(),
             source_patterns: vec!["02_".to_string(), "18_".to_string()],
+            static_content: None,
         },
         ConsolidationGroup {
             name: "03_trading_analytics".to_string(),
             description: "trade_executions, position_snapshots, 분석 뷰".to_string(),
             source_patterns: vec!["03_".to_string()],
+            static_content: None,
         },
         ConsolidationGroup {
             name: "04_strategy_signals".to_string(),
             description: "signal_marker, alert_rule, alert_history".to_string(),
             source_patterns: vec!["04_".to_string(), "14_".to_string(), "15_".to_string(), "16_".to_string()],
+            static_content: None,
         },
         ConsolidationGroup {
             name: "05_evaluation_ranking".to_string(),
             description: "global_score, reality_check, score_history".to_string(),
             source_patterns: vec!["05_".to_string()],
+            static_content: None,
         },
         ConsolidationGroup {
             name: "06_user_settings".to_string(),
             description: "watchlist, preset, notification, checkpoint".to_string(),
             source_patterns: vec!["06_".to_string(), "11_".to_string(), "12_".to_string(), "17_".to_string()],
+            static_content: None,
         },
         ConsolidationGroup {
             name: "07_performance_optimization".to_string(),
             description: "인덱스, MV, Hypertable 정책".to_string(),
             source_patterns: vec!["07_".to_string(), "08_".to_string(), "19_".to_string()],
+            static_content: None,
         },
         ConsolidationGroup {
             name: "08_paper_trading".to_string(),
             description: "Mock 거래소, 전략-계정 연결, Paper Trading 세션".to_string(),
             source_patterns: vec!["20_".to_string(), "21_".to_string(), "22_".to_string()],
+            static_content: None,
+        },
+        ConsolidationGroup {
+            name: "09_strategy_watched_tickers".to_string(),
+            description: "전략별 관심 종목, Collector 우선순위 연동".to_string(),
+            source_patterns: vec![],
+            static_content: Some(STRATEGY_WATCHED_TICKERS_SQL.to_string()),
+        },
+        ConsolidationGroup {
+            name: "10_symbol_cascade".to_string(),
+            description: "Symbol 연쇄 삭제 + 고아 데이터 정리 DB 함수".to_string(),
+            source_patterns: vec!["23_".to_string()],
+            static_content: None,
         },
     ]
 }
+
+/// 09_strategy_watched_tickers 정적 SQL (원본 마이그레이션에 없는 신규 스키마)
+const STRATEGY_WATCHED_TICKERS_SQL: &str = r#"-- 전략이 관심을 가지는 종목 목록.
+-- 고정 티커(config)와 동적 티커(스크리닝/유니버스)를 모두 지원합니다.
+-- Collector가 이 테이블을 읽어 해당 종목의 OHLCV/지표/스코어 데이터를
+-- 우선적으로 업데이트합니다.
+CREATE TABLE IF NOT EXISTS strategy_watched_tickers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    strategy_id VARCHAR(100) NOT NULL,
+    ticker VARCHAR(50) NOT NULL,
+    source VARCHAR(20) NOT NULL DEFAULT 'config',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT strategy_watched_tickers_unique UNIQUE (strategy_id, ticker)
+);
+
+CREATE INDEX IF NOT EXISTS idx_strategy_watched_tickers_strategy
+    ON strategy_watched_tickers(strategy_id);
+
+CREATE INDEX IF NOT EXISTS idx_strategy_watched_tickers_ticker
+    ON strategy_watched_tickers(ticker);
+
+COMMENT ON TABLE strategy_watched_tickers IS '전략별 관심 종목 (Collector 우선순위 연동)';
+COMMENT ON COLUMN strategy_watched_tickers.strategy_id IS '전략 ID';
+COMMENT ON COLUMN strategy_watched_tickers.ticker IS '종목 코드';
+COMMENT ON COLUMN strategy_watched_tickers.source IS '출처: config(고정), dynamic(스크리닝/유니버스)';"#;
 
 /// 마이그레이션 통합기
 pub struct MigrationConsolidator {
@@ -173,6 +222,16 @@ impl MigrationConsolidator {
                     sources,
                     content: combined_content,
                 });
+            } else if let Some(static_sql) = &group.static_content {
+                // 원본 파일 없이 정적 콘텐츠로 생성 (신규 스키마)
+                combined_content.push_str(static_sql);
+                combined_content.push('\n');
+                plan.files.push(ConsolidationFile {
+                    name: format!("{}.sql", group.name),
+                    description: group.description.clone(),
+                    sources: vec![("(static)".to_string(), vec![static_sql.clone()])],
+                    content: combined_content,
+                });
             }
         }
 
@@ -255,12 +314,33 @@ impl MigrationConsolidator {
                 }
             }
             StatementType::CreateType => {
-                // DO $$ ... END $$; 래퍼로 감싸기
+                // pg_type 존재 확인 + ALTER TYPE ADD VALUE IF NOT EXISTS 패턴
                 if !sql.to_uppercase().contains("DO $$") && !stmt.if_not_exists {
-                    return format!(
-                        "DO $$ BEGIN\n    {};\nEXCEPTION WHEN duplicate_object THEN NULL;\nEND $$",
-                        sql.trim_end_matches(';')
-                    );
+                    return self.generate_enum_idempotent_sql(&sql, &stmt.object_name);
+                }
+            }
+            StatementType::CreateView => {
+                // CREATE VIEW → CREATE OR REPLACE VIEW
+                let sql_upper = sql.to_uppercase();
+                if !sql_upper.contains("OR REPLACE") {
+                    if let Some(pos) = sql_upper.find("CREATE VIEW") {
+                        let insert_pos = pos + "CREATE".len();
+                        let mut modified = sql.clone();
+                        modified.insert_str(insert_pos, " OR REPLACE");
+                        return modified;
+                    }
+                }
+            }
+            StatementType::CreateFunction => {
+                // CREATE FUNCTION → CREATE OR REPLACE FUNCTION
+                let sql_upper = sql.to_uppercase();
+                if !sql_upper.contains("OR REPLACE") {
+                    if let Some(pos) = sql_upper.find("CREATE FUNCTION") {
+                        let insert_pos = pos + "CREATE".len();
+                        let mut modified = sql.clone();
+                        modified.insert_str(insert_pos, " OR REPLACE");
+                        return modified;
+                    }
                 }
             }
             StatementType::CreateExtension => {
@@ -278,6 +358,53 @@ impl MigrationConsolidator {
         }
 
         sql
+    }
+
+    /// ENUM 타입의 멱등성 SQL 생성
+    /// pg_type으로 존재 확인 후 CREATE, 그리고 ALTER TYPE ADD VALUE IF NOT EXISTS
+    fn generate_enum_idempotent_sql(&self, sql: &str, type_name: &str) -> String {
+        let create_sql = sql.trim_end_matches(';');
+
+        // ENUM 값 추출 시도
+        let enum_values = self.extract_enum_values(sql);
+
+        let mut result = format!(
+            "DO $$\nBEGIN\n    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '{}') THEN\n        {};\n    END IF;\nEND $$;",
+            type_name, create_sql
+        );
+
+        // ENUM 값이 있으면 ALTER TYPE ADD VALUE IF NOT EXISTS 추가
+        if !enum_values.is_empty() {
+            result.push_str("\n\n-- Ensure all values exist (for upgrades)");
+            for val in &enum_values {
+                result.push_str(&format!(
+                    "\nALTER TYPE {} ADD VALUE IF NOT EXISTS '{}';",
+                    type_name, val
+                ));
+            }
+        }
+
+        result
+    }
+
+    /// SQL에서 ENUM 값 추출
+    fn extract_enum_values(&self, sql: &str) -> Vec<String> {
+        // "AS ENUM ('val1', 'val2', ...)" 패턴에서 값 추출
+        let sql_upper = sql.to_uppercase();
+        if let Some(enum_pos) = sql_upper.find("AS ENUM") {
+            let after_enum = &sql[enum_pos..];
+            if let Some(paren_start) = after_enum.find('(') {
+                if let Some(paren_end) = after_enum.find(')') {
+                    let values_str = &after_enum[paren_start + 1..paren_end];
+                    return values_str
+                        .split(',')
+                        .map(|v| v.trim().trim_matches('\'').trim().to_string())
+                        .filter(|v| !v.is_empty())
+                        .collect();
+                }
+            }
+        }
+        Vec::new()
     }
 
     /// 통합 파일을 디렉토리에 저장
@@ -555,21 +682,89 @@ mod tests {
     fn test_ensure_idempotency() {
         let consolidator = MigrationConsolidator::new();
 
+        // CREATE TABLE → IF NOT EXISTS
         let stmt = SqlStatement::new(
             StatementType::CreateTable,
             "users".to_string(),
             "CREATE TABLE users (id INT);".to_string(),
             1,
         );
-
         let result = consolidator.ensure_idempotency(&stmt);
         assert!(result.contains("IF NOT EXISTS"));
+
+        // CREATE TYPE (ENUM) → pg_type check + ALTER TYPE ADD VALUE IF NOT EXISTS
+        let stmt = SqlStatement::new(
+            StatementType::CreateType,
+            "market_type".to_string(),
+            "CREATE TYPE market_type AS ENUM ('KOSPI', 'KOSDAQ', 'ETF')".to_string(),
+            1,
+        );
+        let result = consolidator.ensure_idempotency(&stmt);
+        assert!(result.contains("pg_type"), "should use pg_type check");
+        assert!(result.contains("IF NOT EXISTS (SELECT 1 FROM pg_type"), "should check pg_type");
+        assert!(result.contains("ALTER TYPE market_type ADD VALUE IF NOT EXISTS 'KOSPI'"));
+        assert!(result.contains("ALTER TYPE market_type ADD VALUE IF NOT EXISTS 'KOSDAQ'"));
+        assert!(result.contains("ALTER TYPE market_type ADD VALUE IF NOT EXISTS 'ETF'"));
+        assert!(!result.contains("EXCEPTION"), "should not use DO/EXCEPTION pattern");
+
+        // CREATE VIEW → OR REPLACE
+        let stmt = SqlStatement::new(
+            StatementType::CreateView,
+            "v_test".to_string(),
+            "CREATE VIEW v_test AS SELECT 1".to_string(),
+            1,
+        );
+        let result = consolidator.ensure_idempotency(&stmt);
+        assert!(result.contains("OR REPLACE"), "should use OR REPLACE for views");
+
+        // CREATE FUNCTION → OR REPLACE
+        let stmt = SqlStatement::new(
+            StatementType::CreateFunction,
+            "my_func".to_string(),
+            "CREATE FUNCTION my_func() RETURNS void AS $$ BEGIN END; $$ LANGUAGE plpgsql".to_string(),
+            1,
+        );
+        let result = consolidator.ensure_idempotency(&stmt);
+        assert!(result.contains("OR REPLACE"), "should use OR REPLACE for functions");
     }
 
     #[test]
     fn test_default_groups() {
         let groups = default_consolidation_groups();
-        assert_eq!(groups.len(), 7);
+        assert_eq!(groups.len(), 10);
         assert_eq!(groups[0].name, "01_core_foundation");
+        assert_eq!(groups[8].name, "09_strategy_watched_tickers");
+        assert!(groups[8].static_content.is_some(), "group 09 should have static content");
+        assert_eq!(groups[9].name, "10_symbol_cascade");
+        assert_eq!(groups[9].source_patterns, vec!["23_"]);
+    }
+
+    #[test]
+    fn test_static_content_group() {
+        let consolidator = MigrationConsolidator::new();
+
+        // Plan with no matching source files — static content should still generate
+        let files: Vec<MigrationFile> = vec![];
+        let plan = consolidator.plan(&files);
+
+        // Group 09 has static content, should still appear even with no source files
+        let group09 = plan.files.iter().find(|f| f.name.contains("09_"));
+        assert!(group09.is_some(), "group 09 should be generated from static content");
+        let g09 = group09.unwrap();
+        assert!(g09.content.contains("strategy_watched_tickers"));
+    }
+
+    #[test]
+    fn test_extract_enum_values() {
+        let consolidator = MigrationConsolidator::new();
+
+        let values = consolidator.extract_enum_values(
+            "CREATE TYPE market_type AS ENUM ('KOSPI', 'KOSDAQ', 'ETF', 'GLOBAL', 'CRYPTO')",
+        );
+        assert_eq!(values, vec!["KOSPI", "KOSDAQ", "ETF", "GLOBAL", "CRYPTO"]);
+
+        // Empty case
+        let values = consolidator.extract_enum_values("CREATE TYPE custom_type AS (x INT, y INT)");
+        assert!(values.is_empty());
     }
 }

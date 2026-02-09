@@ -79,15 +79,17 @@ impl<'a> MigrationValidator<'a> {
         }
     }
 
-    /// DROP CASCADE 사용 검사
+    /// DROP CASCADE 사용 검사 (FK ON DELETE CASCADE는 의도된 설계이므로 제외)
     fn check_cascade_usage(&self, report: &mut ValidationReport) {
         for file in self.files {
             for stmt in &file.statements {
+                // DDL CASCADE (DROP ... CASCADE) 만 보고
                 if stmt.cascade {
                     let severity = if stmt.statement_type.is_drop() {
                         // DROP ... CASCADE는 데이터 손실 위험
                         Severity::Warning
                     } else {
+                        // DO $$ 블록 내 DROP ... CASCADE 등
                         Severity::Info
                     };
 
@@ -107,6 +109,7 @@ impl<'a> MigrationValidator<'a> {
 
                     report.add_issue(issue);
                 }
+                // FK ON DELETE/UPDATE CASCADE는 의도된 참조 무결성 설계이므로 보고하지 않음
             }
         }
     }
@@ -540,6 +543,7 @@ mod tests {
             1,
         );
         stmt.cascade = true;
+        stmt.fk_cascade = false;
 
         let files = vec![create_test_file("01", 1, vec![stmt])];
 
@@ -547,6 +551,27 @@ mod tests {
         let report = validator.validate();
 
         assert!(report.issues.iter().any(|i| i.code == "CASC001"));
+    }
+
+    #[test]
+    fn test_fk_cascade_not_reported() {
+        let mut stmt = SqlStatement::new(
+            StatementType::CreateTable,
+            "child_table".to_string(),
+            "CREATE TABLE child_table (id UUID, parent_id UUID REFERENCES parent(id) ON DELETE CASCADE)".to_string(),
+            1,
+        );
+        stmt.cascade = false;
+        stmt.fk_cascade = true;
+        stmt.if_not_exists = true;
+
+        let files = vec![create_test_file("01", 1, vec![stmt])];
+
+        let validator = MigrationValidator::new(&files);
+        let report = validator.validate();
+
+        // FK CASCADE는 CASC001로 보고되지 않아야 함
+        assert!(!report.issues.iter().any(|i| i.code == "CASC001"));
     }
 
     #[test]

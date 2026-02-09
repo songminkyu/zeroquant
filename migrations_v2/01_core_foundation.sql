@@ -14,35 +14,61 @@ CREATE EXTENSION IF NOT EXISTS timescaledb;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- ENUM 타입 생성 (없으면 생성, 있으면 누락된 값만 추가)
 DO $$ BEGIN
-    CREATE TYPE market_type AS ENUM ('crypto', 'stock', 'forex', 'futures');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'market_type') THEN
+        CREATE TYPE market_type AS ENUM ('crypto', 'stock', 'forex', 'futures');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_side') THEN
+        CREATE TYPE order_side AS ENUM ('buy', 'sell');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_type') THEN
+        CREATE TYPE order_type AS ENUM ('market', 'limit', 'stop', 'stop_limit', 'trailing_stop');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status') THEN
+        CREATE TYPE order_status AS ENUM ('pending', 'open', 'partially_filled', 'filled', 'cancelled', 'rejected', 'expired');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_time_in_force') THEN
+        CREATE TYPE order_time_in_force AS ENUM ('gtc', 'ioc', 'fok', 'day');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'signal_type') THEN
+        CREATE TYPE signal_type AS ENUM ('entry', 'exit', 'add_to_position', 'reduce_position', 'scale');
+    END IF;
+END $$;
 
-DO $$ BEGIN
-    CREATE TYPE order_side AS ENUM ('buy', 'sell');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$
+-- 기존 ENUM에 누락된 값 보장 (이미 있으면 무시)
+ALTER TYPE market_type ADD VALUE IF NOT EXISTS 'crypto';
+ALTER TYPE market_type ADD VALUE IF NOT EXISTS 'stock';
+ALTER TYPE market_type ADD VALUE IF NOT EXISTS 'forex';
+ALTER TYPE market_type ADD VALUE IF NOT EXISTS 'futures';
 
-DO $$ BEGIN
-    CREATE TYPE order_type AS ENUM ('market', 'limit', 'stop', 'stop_limit', 'trailing_stop');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$
+ALTER TYPE order_side ADD VALUE IF NOT EXISTS 'buy';
+ALTER TYPE order_side ADD VALUE IF NOT EXISTS 'sell';
 
-DO $$ BEGIN
-    CREATE TYPE order_status AS ENUM ('pending', 'open', 'partially_filled', 'filled', 'cancelled', 'rejected', 'expired');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$
+ALTER TYPE order_type ADD VALUE IF NOT EXISTS 'market';
+ALTER TYPE order_type ADD VALUE IF NOT EXISTS 'limit';
+ALTER TYPE order_type ADD VALUE IF NOT EXISTS 'stop';
+ALTER TYPE order_type ADD VALUE IF NOT EXISTS 'stop_limit';
+ALTER TYPE order_type ADD VALUE IF NOT EXISTS 'trailing_stop';
 
-DO $$ BEGIN
-    CREATE TYPE order_time_in_force AS ENUM ('gtc', 'ioc', 'fok', 'day');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$
+ALTER TYPE order_status ADD VALUE IF NOT EXISTS 'pending';
+ALTER TYPE order_status ADD VALUE IF NOT EXISTS 'open';
+ALTER TYPE order_status ADD VALUE IF NOT EXISTS 'partially_filled';
+ALTER TYPE order_status ADD VALUE IF NOT EXISTS 'filled';
+ALTER TYPE order_status ADD VALUE IF NOT EXISTS 'cancelled';
+ALTER TYPE order_status ADD VALUE IF NOT EXISTS 'rejected';
+ALTER TYPE order_status ADD VALUE IF NOT EXISTS 'expired';
 
-DO $$ BEGIN
-    CREATE TYPE signal_type AS ENUM ('entry', 'exit', 'add_to_position', 'reduce_position', 'scale');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$
+ALTER TYPE order_time_in_force ADD VALUE IF NOT EXISTS 'gtc';
+ALTER TYPE order_time_in_force ADD VALUE IF NOT EXISTS 'ioc';
+ALTER TYPE order_time_in_force ADD VALUE IF NOT EXISTS 'fok';
+ALTER TYPE order_time_in_force ADD VALUE IF NOT EXISTS 'day';
+
+ALTER TYPE signal_type ADD VALUE IF NOT EXISTS 'entry';
+ALTER TYPE signal_type ADD VALUE IF NOT EXISTS 'exit';
+ALTER TYPE signal_type ADD VALUE IF NOT EXISTS 'add_to_position';
+ALTER TYPE signal_type ADD VALUE IF NOT EXISTS 'reduce_position';
+ALTER TYPE signal_type ADD VALUE IF NOT EXISTS 'scale';
 
 CREATE TABLE IF NOT EXISTS symbols (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -481,36 +507,6 @@ SELECT add_retention_policy('credential_access_logs', INTERVAL '90 days', if_not
 COMMENT ON TABLE credential_access_logs IS '자격증명 접근 감사 로그 (TimescaleDB Hypertable, 90일 보존)';
 
 COMMENT ON COLUMN credential_access_logs.action IS '접근 유형: create, read, update, delete, verify, use';
-
-CREATE TABLE IF NOT EXISTS watchlist (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    symbol VARCHAR(50) NOT NULL,                    -- 종목 코드
-    market VARCHAR(10) NOT NULL,                    -- 시장: 'KR', 'US', 'crypto'
-    display_name VARCHAR(100),                      -- 표시 이름
-    sort_order INT DEFAULT 0,                       -- 정렬 순서
-    is_active BOOLEAN DEFAULT true,                 -- 활성화 여부
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(symbol, market)                          -- 동일 시장에서 중복 방지
-);
-
-CREATE INDEX IF NOT EXISTS idx_watchlist_active ON watchlist(is_active) WHERE is_active = true;
-
-CREATE INDEX IF NOT EXISTS idx_watchlist_sort ON watchlist(sort_order);
-
-COMMENT ON TABLE watchlist IS '사용자 관심 종목 관리';
-
-COMMENT ON COLUMN watchlist.market IS '시장 구분: KR(한국), US(미국), crypto(암호화폐)';
-
-COMMENT ON COLUMN watchlist.display_name IS 'WebSocket 표시용 이름 (하이픈 사용)';
-
-INSERT INTO watchlist (symbol, market, display_name, sort_order) VALUES
-    ('069500', 'KR', 'KODEX-200', 1),
-    ('122630', 'KR', 'KODEX-레버리지', 2),
-    ('SPY', 'US', 'SPY', 3),
-    ('QQQ', 'US', 'QQQ', 4),
-    ('TQQQ', 'US', 'TQQQ', 5)
-ON CONFLICT (symbol, market) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS app_settings (
     setting_key VARCHAR(100) PRIMARY KEY,           -- 설정 키

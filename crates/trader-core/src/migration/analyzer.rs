@@ -255,7 +255,23 @@ impl MigrationAnalyzer {
         // 옵션 플래그 검출
         stmt.if_not_exists = sql_upper.contains("IF NOT EXISTS");
         stmt.if_exists = sql_upper.contains("IF EXISTS");
-        stmt.cascade = sql_upper.contains("CASCADE");
+
+        // CASCADE 구분: DDL CASCADE (DROP ... CASCADE) vs FK CASCADE (ON DELETE/UPDATE CASCADE)
+        if sql_upper.contains("CASCADE") {
+            let has_fk_cascade = sql_upper.contains("ON DELETE CASCADE")
+                || sql_upper.contains("ON UPDATE CASCADE");
+            // DDL CASCADE: DROP ... CASCADE 또는 함수/블록 내 DROP ... CASCADE
+            // FK CASCADE가 아닌 CASCADE 사용이 있는지 확인
+            let cascade_without_fk = {
+                let mut temp = sql_upper.clone();
+                // FK CASCADE 패턴 제거 후에도 CASCADE가 남으면 DDL CASCADE
+                temp = temp.replace("ON DELETE CASCADE", "");
+                temp = temp.replace("ON UPDATE CASCADE", "");
+                temp.contains("CASCADE")
+            };
+            stmt.cascade = cascade_without_fk;
+            stmt.fk_cascade = has_fk_cascade;
+        }
 
         // 참조 객체 추출
         stmt.references = self.extract_references(sql);
@@ -832,6 +848,7 @@ mod tests {
             if_not_exists: true,
             if_exists: false,
             cascade: false,
+            fk_cascade: false,
             references: Vec::new(),
         });
 
@@ -845,6 +862,7 @@ mod tests {
             if_not_exists: true,
             if_exists: false,
             cascade: false,
+            fk_cascade: false,
             references: vec!["users".to_string()],
         });
 

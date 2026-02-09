@@ -71,80 +71,6 @@ INSERT INTO schema_migrations (version, filename, success, applied_at) VALUES
 (34, '034_signal_alert_rules.sql', true, NOW())
 ON CONFLICT (version) DO NOTHING;
 
-CREATE TABLE IF NOT EXISTS watchlist (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-
-    name VARCHAR(100) NOT NULL,                      -- 그룹 이름 (예: "모멘텀 종목", "저평가 주")
-    description TEXT,                                -- 설명
-
-    sort_order INTEGER NOT NULL DEFAULT 0,           -- 표시 순서
-
-    color VARCHAR(20),                               -- 색상 코드 (#FF5733)
-    icon VARCHAR(50),                                -- 아이콘 이름 (star, chart, etc)
-
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-
-    CONSTRAINT unique_watchlist_name UNIQUE (name)
-);
-
-CREATE INDEX IF NOT EXISTS idx_watchlist_sort ON watchlist(sort_order);
-
-COMMENT ON TABLE watchlist IS '관심종목 그룹 (Phase 3.1)';
-
-COMMENT ON COLUMN watchlist.name IS '그룹 이름';
-
-COMMENT ON COLUMN watchlist.sort_order IS '표시 순서 (낮을수록 먼저)';
-
-CREATE TABLE IF NOT EXISTS watchlist_item (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-
-    watchlist_id UUID NOT NULL REFERENCES watchlist(id) ON DELETE CASCADE,
-
-    symbol VARCHAR(20) NOT NULL,                     -- 종목 코드 (005930, AAPL)
-    market VARCHAR(20) NOT NULL DEFAULT 'KR',        -- 시장 (KR, US)
-
-    memo TEXT,                                       -- 사용자 메모
-
-    target_price NUMERIC(20, 4),                     -- 목표가
-    stop_price NUMERIC(20, 4),                       -- 손절가
-    alert_enabled BOOLEAN DEFAULT false,             -- 알림 활성화
-
-    sort_order INTEGER NOT NULL DEFAULT 0,
-
-    added_price NUMERIC(20, 4),                      -- 추가 시점 가격
-
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-
-    CONSTRAINT unique_watchlist_symbol UNIQUE (watchlist_id, symbol, market)
-);
-
-CREATE INDEX IF NOT EXISTS idx_watchlist_item_watchlist ON watchlist_item(watchlist_id);
-
-CREATE INDEX IF NOT EXISTS idx_watchlist_item_symbol ON watchlist_item(symbol, market);
-
-CREATE INDEX IF NOT EXISTS idx_watchlist_item_sort ON watchlist_item(watchlist_id, sort_order);
-
-COMMENT ON TABLE watchlist_item IS '관심종목 아이템 (Phase 3.1)';
-
-COMMENT ON COLUMN watchlist_item.symbol IS '종목 코드';
-
-COMMENT ON COLUMN watchlist_item.market IS '시장 (KR/US)';
-
-COMMENT ON COLUMN watchlist_item.target_price IS '목표가';
-
-COMMENT ON COLUMN watchlist_item.stop_price IS '손절가';
-
-COMMENT ON COLUMN watchlist_item.added_price IS '추가 시점 가격';
-
-INSERT INTO watchlist (name, description, sort_order, icon, color)
-VALUES
-    ('기본', '기본 관심종목 목록', 0, 'star', '#FFD700'),
-    ('모멘텀', '모멘텀 상위 종목', 1, 'trending-up', '#10B981'),
-    ('가치주', '저평가 가치 종목', 2, 'search', '#3B82F6')
-ON CONFLICT (name) DO NOTHING;
-
 INSERT INTO schema_migrations (version, filename, success, applied_at)
 VALUES (13, '13_watchlist.sql', true, NOW())
 ON CONFLICT (version) DO NOTHING;
@@ -261,10 +187,6 @@ COMMENT ON FUNCTION cleanup_expired_kis_tokens IS '만료된 KIS 토큰 정리 (
 -- Source: 11_fix_watchlist_schema
 -- ---------------------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS watchlist_backup AS SELECT * FROM watchlist;
-
-ALTER TABLE IF EXISTS watchlist_item DROP CONSTRAINT IF EXISTS watchlist_item_watchlist_id_fkey;
-
 CREATE TABLE IF NOT EXISTS watchlist (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,              -- 그룹 이름
@@ -313,21 +235,6 @@ VALUES
     ('모멘텀', '모멘텀 전략 종목', '#10B981', 'trending-up', 1),
     ('배당주', '배당 수익 종목', '#F59E0B', 'dollar-sign', 2)
 ON CONFLICT (name) DO NOTHING;
-
-DO $$
-DECLARE
-    default_group_id UUID;
-BEGIN
-    SELECT id INTO default_group_id FROM watchlist WHERE name = '관심종목' LIMIT 1;
-
-    IF default_group_id IS NOT NULL AND EXISTS (SELECT 1 FROM watchlist_backup LIMIT 1) THEN
-        INSERT INTO watchlist_item (watchlist_id, symbol, market, sort_order)
-        SELECT default_group_id, symbol, market, sort_order
-        FROM watchlist_backup
-        WHERE symbol IS NOT NULL AND market IS NOT NULL
-        ON CONFLICT (watchlist_id, symbol, market) DO NOTHING;
-    END IF;
-END $$;
 
 -- ---------------------------------------------------------------------------
 -- Source: 12_sync_checkpoint
@@ -457,14 +364,6 @@ COMMENT ON COLUMN sms_settings.encrypted_account_sid IS 'AES-256-GCM으로 암�
 COMMENT ON COLUMN sms_settings.encrypted_auth_token IS 'AES-256-GCM으로 암호화된 Twilio Auth Token';
 
 COMMENT ON COLUMN sms_settings.to_numbers IS '수신자 전화번호 배열 (JSON, E.164 형식)';
-
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
 
 CREATE TRIGGER update_email_settings_updated_at
     BEFORE UPDATE ON email_settings

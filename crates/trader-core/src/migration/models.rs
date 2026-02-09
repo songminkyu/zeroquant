@@ -94,8 +94,10 @@ pub struct SqlStatement {
     pub if_not_exists: bool,
     /// IF EXISTS 사용 여부
     pub if_exists: bool,
-    /// CASCADE 사용 여부
+    /// CASCADE 사용 여부 (DROP ... CASCADE 등 DDL CASCADE)
     pub cascade: bool,
+    /// FK ON DELETE/UPDATE CASCADE 사용 여부
+    pub fk_cascade: bool,
     /// 참조하는 다른 객체들 (FROM, JOIN, REFERENCES 등에서 추출)
     pub references: Vec<String>,
 }
@@ -117,6 +119,7 @@ impl SqlStatement {
             if_not_exists: false,
             if_exists: false,
             cascade: false,
+            fk_cascade: false,
             references: Vec::new(),
         }
     }
