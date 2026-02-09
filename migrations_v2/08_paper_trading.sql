@@ -3,7 +3,7 @@
 -- Mock 거래소, 전략-계정 연결, Paper Trading 세션
 -- =============================================================================
 -- 통합 마이그레이션 파일 (자동 생성)
--- 원본 파일: ["20_", "21_", "22_"]
+-- 원본 파일: ["20_", "21_", "22_", "24_"]
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
@@ -105,4 +105,39 @@ COMMENT ON COLUMN mock_positions.strategy_id IS '포지션을 생성한 전략 I
 COMMENT ON COLUMN mock_executions.strategy_id IS '체결을 생성한 전략 ID';
 
 COMMENT ON TABLE paper_trading_sessions IS 'Paper Trading 전략별 세션 상태';
+
+-- ---------------------------------------------------------------------------
+-- Source: 24_mock_pending_orders
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS mock_pending_orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    credential_id UUID NOT NULL REFERENCES exchange_credentials(id) ON DELETE CASCADE,
+    strategy_id VARCHAR(100) NOT NULL,
+    order_id VARCHAR(100) NOT NULL UNIQUE,
+    symbol VARCHAR(50) NOT NULL,
+    side VARCHAR(10) NOT NULL,
+    order_type VARCHAR(30) NOT NULL,
+    quantity DECIMAL(20, 8) NOT NULL,
+    remaining_quantity DECIMAL(20, 8) NOT NULL,
+    price DECIMAL(20, 8),
+    stop_price DECIMAL(20, 8),
+    reserved_amount DECIMAL(20, 8) NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL
+);
+
+ALTER TABLE paper_trading_sessions
+ADD COLUMN IF NOT EXISTS reserved_balance DECIMAL(20, 8) NOT NULL DEFAULT 0;
+
+CREATE INDEX IF NOT EXISTS idx_mock_pending_orders_credential ON mock_pending_orders(credential_id);
+
+CREATE INDEX IF NOT EXISTS idx_mock_pending_orders_strategy ON mock_pending_orders(strategy_id);
+
+CREATE INDEX IF NOT EXISTS idx_mock_pending_orders_symbol ON mock_pending_orders(symbol);
+
+COMMENT ON TABLE mock_pending_orders IS 'Mock 거래소 미체결 주문 (지정가/스톱)';
+
+COMMENT ON COLUMN mock_pending_orders.reserved_amount IS '주문에 예약된 잔고 금액';
+
+COMMENT ON COLUMN paper_trading_sessions.reserved_balance IS '전략의 총 예약 잔고 (미체결 지정가 주문)';
 

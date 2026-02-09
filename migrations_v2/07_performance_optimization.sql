@@ -127,6 +127,9 @@ ON symbol_global_score(grade, overall_score DESC);
 CREATE INDEX IF NOT EXISTS idx_global_score_market_score
 ON symbol_global_score(market, overall_score DESC);
 
+CREATE INDEX IF NOT EXISTS idx_global_score_calculated
+ON symbol_global_score(calculated_at DESC);
+
 CREATE MATERIALIZED VIEW mv_symbol_screening AS
 SELECT
     si.id AS symbol_info_id,

@@ -68,7 +68,7 @@ E + F (C/D 진행 중 또는 이후)
 ### B-5: Collector 복원력 강화
 - [ ] Dead-letter 큐 (실패 심볼 재시도) 구현 (`trader-collector/`)
 - [ ] 재시도 정책: 지수 백오프, 최대 3회, 실패 시 알림 발송
-- [ ] Collector 헬스 메트릭 Prometheus 노출 (수집 성공/실패 카운트, API 할당량 잔여)
+- [ ] Collector 헬스 상태를 `/health/ready` 응답에 통합 (마지막 실행 시각, 성공/실패 카운트)
 
 ### B-6: FX 환율 서비스
 - [ ] `FxRateProvider` trait 정의 (`trader-core/src/domain/`)
@@ -159,12 +159,6 @@ E + F (C/D 진행 중 또는 이후)
 - [ ] 백테스트 엔진 end-to-end 테스트 (알려진 데이터 → 기대 시그널 검증)
 - [ ] Paper Trading 세션 생성 → 시그널 처리 → 포지션 확인 흐름
 
-### D-6: 최소 CI 파이프라인
-- [ ] `.github/workflows/ci.yml` 생성
-- [ ] `cargo fmt --check` + `cargo clippy -- -D warnings` + `cargo test`
-- [ ] 프론트엔드: `npm run lint` + `npm run build`
-- [ ] PR 머지 게이트로 설정
-
 ---
 
 ## [E] 실행 계층 & 컴플라이언스
@@ -217,12 +211,12 @@ E + F (C/D 진행 중 또는 이후)
 - [ ] Jaeger/Zipkin 연동 설정
 
 ### F-2: Collector 헬스 메트릭
-- [ ] 수집 성공/실패 카운트, API 할당량 잔여 Prometheus 게이지
-- [ ] 수집 주기 이상 감지 알림 (AlertManager 룰)
+- [ ] 수집 성공/실패 카운트, API 할당량 잔여를 `/health/ready` JSON에 포함
+- [ ] 수집 주기 이상 감지 시 기존 알림 채널(Telegram/Discord)로 발송
 
 ### F-3: DB 연결풀 & 슬로우 쿼리 모니터링
-- [ ] 연결풀 사용률 Prometheus 메트릭 노출
-- [ ] `pg_stat_statements` 기반 슬로우 쿼리 자동 감지 + 알림
+- [ ] 연결풀 사용률(active/idle/max)을 `/health/ready` JSON에 포함
+- [ ] `pg_stat_statements` 기반 슬로우 쿼리 자동 감지 + 알림 (Telegram/Discord)
 - [ ] Redis `maxmemory` 환경변수화 (`docker-compose.yml`)
 
 ### F-4: 에러 트래커 영속화
@@ -271,7 +265,7 @@ E + F (C/D 진행 중 또는 이후)
 | 1 | **B** 데이터 | A, G와 동시 | Large |
 | 1 | **G** 프론트엔드 | A, B와 동시 | Medium |
 | 2 | **C** 포트폴리오 | D와 동시 | Large |
-| 2 | **D** 전략 라이프사이클 | C와 동시 (D-6 CI는 1단계로 조기 착수) | Large |
+| 2 | **D** 전략 라이프사이클 | C와 동시 | Large |
 | 3 | **E** 실행 & 컴플라이언스 | E4~E6 라이브 시 즉시, E1~E3 AUM 기반 | Medium-Large |
 | 4 | **F** 관측성 & 아키텍처 | F1~F4 조기 가능, F5~F6 후반 | Large |
 

@@ -8,6 +8,7 @@ license.workspace = true
 
 [dependencies]
 trader-core = { path = "../trader-core" }
+trader-data = { path = "../trader-data" }
 trader-execution = { path = "../trader-execution" }
 
 # Async runtime

@@ -34,7 +34,7 @@
 
 ZeroQuant는 암호화폐와 주식 시장에서 **24/7 자동화된 거래**를 수행하는 트레이딩 시스템입니다.
 
-검증된 **16가지 통합 전략**과 **50개 ML 패턴 인식** (캔들스틱 26개 + 차트 패턴 24개)을 통해 **그리드 트레이딩**, **자산배분**, **모멘텀** 등 다양한 투자 방법론을 지원합니다. 웹 대시보드에서 실시간 모니터링과 전략 제어가 가능하며, 리스크 관리 시스템이 자동으로 자산을 보호합니다.
+검증된 **16가지 통합 전략**과 **59개 ML 패턴 인식** (캔들스틱 35개 + 차트 패턴 24개)을 통해 **그리드 트레이딩**, **자산배분**, **모멘텀** 등 다양한 투자 방법론을 지원합니다. 웹 대시보드에서 실시간 모니터링과 전략 제어가 가능하며, 리스크 관리 시스템이 자동으로 자산을 보호합니다.
 
 > ⚠️ **v0.8.3 쿼리 최적화, 백테스트 타임프레임 폴백, UI 성능**: OHLCV 배치 쿼리를 LATERAL JOIN + TimescaleDB 청크 프루닝으로 ~70% 최적화하고, 백테스트/CLI에 전략 기본 타임프레임 자동 폴백을 도입했습니다. 스크리닝 가상 스크롤(11,000+ 행 60fps), 상태/등급/점수 정렬, 매매일지 상세 통계가 추가되었습니다.
 
@@ -44,7 +44,9 @@ ZeroQuant는 암호화폐와 주식 시장에서 **24/7 자동화된 거래**를
 | 시장 | 거래소 | 기능 |
 |------|--------|------|
 | 암호화폐 | Binance | 현물 거래, WebSocket 실시간 시세 |
+| 암호화폐 (KR) | Upbit, Bithumb | 원화 마켓, WebSocket 실시간 시세 |
 | 한국/미국 주식 | 한국투자증권 (KIS) | 국내/해외 주식, WebSocket 실시간 시세, 모의투자 지원 |
+| 한국 주식 | DB금융투자, LS증권 | 국내 주식, WebSocket 실시간 시세 |
 
 ### 📝 Paper Trading (v0.8.0)
 - **가상 계좌 시뮬레이션**: 실시간 시세 기반 가상 거래 실행
@@ -67,7 +69,7 @@ ZeroQuant는 암호화폐와 주식 시장에서 **24/7 자동화된 거래**를
 - **과거 데이터**: TimescaleDB 시계열 저장, 백테스팅 지원
 - **데이터셋 관리**: Yahoo Finance 데이터 다운로드, 캔들 데이터 CRUD
 - **백그라운드 수집**: 펀더멘털 데이터 자동 수집, 심볼 자동 동기화 (KRX/Binance/Yahoo)
-- **ML 패턴 인식**: 캔들스틱 26개 + 차트 패턴 24개 (ONNX 추론)
+- **ML 패턴 인식**: 캔들스틱 35개 + 차트 패턴 24개 (ONNX 추론)
 - **ML 모델 훈련**: XGBoost, LightGBM, RandomForest, 앙상블 지원
 - **성과 지표**: Sharpe Ratio, MDD, Win Rate, CAGR 등
 
@@ -183,7 +185,7 @@ ZeroQuant는 암호화폐와 주식 시장에서 **24/7 자동화된 거래**를
                   ▼
 ┌─────────────────────────────────────────┐
 │  SignalProcessor (교체 가능)             │
-│  • OrderExecutor (실제 주문)             │
+│  • LiveExecutor (실제 주문)              │
 │  • SimulatedExecutor (가상 체결)         │
 └─────────────────────────────────────────┘
 ```
@@ -192,7 +194,7 @@ ZeroQuant는 암호화폐와 주식 시장에서 **24/7 자동화된 거래**를
 
 | 데이터 소스 | Signal 처리 | 결과 |
 |------------|-------------|------|
-| ExchangeProvider | OrderExecutor | **실거래** |
+| ExchangeProvider | LiveExecutor | **실거래** |
 | ExchangeProvider | SimulatedExecutor | **페이퍼 트레이딩** |
 | BacktestEngine | SimulatedExecutor | **백테스트** |
 
@@ -328,6 +330,10 @@ pub trait MarketDataProvider: Send + Sync {
 |----------|------|------|
 | `KisExchangeProvider` | `provider/kis.rs` | KIS 한국/미국 주식 (통합) |
 | `BinanceExchangeProvider` | `provider/binance.rs` | Binance 암호화폐 |
+| `UpbitExchangeProvider` | `provider/upbit.rs` | Upbit 암호화폐 (원화 마켓) |
+| `BithumbExchangeProvider` | `provider/bithumb.rs` | Bithumb 암호화폐 (원화 마켓) |
+| `DbInvestmentExchangeProvider` | `provider/db_investment.rs` | DB금융투자 국내 주식 |
+| `LsSecExchangeProvider` | `provider/ls_sec.rs` | LS증권 국내 주식 |
 | `MockExchangeProvider` | `provider/mock.rs` | 개발/테스트, Paper Trading |
 
 ### MarketStream 실시간 스트림 (v0.8.0)
@@ -691,9 +697,14 @@ zeroquant/
 ├── crates/
 │   ├── trader-core/         # 도메인 모델, 공통 유틸리티
 │   │   └── domain/          # Account, ExchangeTypes, Signal, Context [v0.8.0]
-│   ├── trader-exchange/     # 거래소 연동 (Binance, KIS) [v0.8.0 통합]
-│   │   ├── provider/        # ExchangeProvider (KIS 통합, Mock)
-│   │   ├── connector/kis/   # KIS 커넥터 (WebSocket 동적 구독)
+│   ├── trader-exchange/     # 거래소 연동 (KIS, Binance, Upbit, Bithumb, DB금융투자, LS증권)
+│   │   ├── provider/        # ExchangeProvider (KIS, Binance, Upbit, Bithumb, DB금투, LS증권, Mock)
+│   │   ├── connector/       # 거래소 커넥터
+│   │   │   ├── kis/         # KIS 커넥터 (WebSocket 동적 구독)
+│   │   │   ├── upbit/       # Upbit 커넥터
+│   │   │   ├── bithumb/     # Bithumb 커넥터
+│   │   │   ├── db_investment/ # DB금융투자 커넥터
+│   │   │   └── ls_sec/      # LS증권 커넥터
 │   │   ├── stream.rs        # UnifiedMarketStream (Bridge Task 패턴)
 │   │   └── simulated/       # 시뮬레이션 거래소
 │   ├── trader-strategy/     # 전략 엔진, 16개 통합 전략
@@ -746,7 +757,7 @@ zeroquant/
 | Database | PostgreSQL (TimescaleDB), Redis |
 | Frontend | SolidJS, TypeScript, Vite |
 | ML | ONNX Runtime, XGBoost, LightGBM, RandomForest |
-| Exchange | KIS (KR/US 통합), Binance, Mock Provider |
+| Exchange | KIS (KR/US 통합), Binance, Upbit, Bithumb, DB금융투자, LS증권, Mock Provider |
 | Testing | Playwright (E2E), pytest (ML) |
 | Infrastructure | Podman/Docker, TimescaleDB, Redis |
 

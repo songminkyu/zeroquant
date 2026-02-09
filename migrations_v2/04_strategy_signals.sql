@@ -10,24 +10,22 @@
 -- Source: 04_strategy_signals
 -- ---------------------------------------------------------------------------
 
--- route_state ENUM 타입 생성 (없으면 생성, 있으면 누락된 값만 추가)
-DO $$ BEGIN
+DO $$
+BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'route_state') THEN
         CREATE TYPE route_state AS ENUM (
-            'ATTACK',                               -- 진입 적기 (강한 매수 신호)
-            'ARMED',                                -- 대기 준비 (조건 충족 임박)
-            'WAIT',                                 -- 관찰 중 (중립)
-            'OVERHEAT',                             -- 과열 (매수 회피)
-            'NEUTRAL'                               -- 중립 (기본값)
-        );
+    'ATTACK',                                       -- 진입 적기 (강한 매수 신호)
+    'ARMED',                                        -- 대기 준비 (조건 충족 임박)
+    'WAIT',                                         -- 관찰 중 (중립)
+    'OVERHEAT',                                     -- 과열 (매수 회피)
+    'NEUTRAL'                                       -- 중립 (기본값)
+);
     END IF;
 END $$;
 
+-- Ensure all values exist (for upgrades)
 ALTER TYPE route_state ADD VALUE IF NOT EXISTS 'ATTACK';
-ALTER TYPE route_state ADD VALUE IF NOT EXISTS 'ARMED';
-ALTER TYPE route_state ADD VALUE IF NOT EXISTS 'WAIT';
-ALTER TYPE route_state ADD VALUE IF NOT EXISTS 'OVERHEAT';
-ALTER TYPE route_state ADD VALUE IF NOT EXISTS 'NEUTRAL';
+ALTER TYPE route_state ADD VALUE IF NOT EXISTS '-- 진입 적기 (강한 매수 신호';
 
 COMMENT ON TYPE route_state IS '전략 진입 상태: ATTACK(진입 적기), ARMED(대기), WAIT(관찰), OVERHEAT(과열), NEUTRAL(중립)';
 
@@ -92,6 +90,48 @@ ON symbol_fundamental(regime)
 WHERE regime IS NOT NULL;
 
 COMMENT ON COLUMN symbol_fundamental.regime IS '시장 레짐: STRONG_UPTREND, CORRECTION, SIDEWAYS, BOTTOM_BOUNCE, DOWNTREND';
+
+CREATE OR REPLACE VIEW v_symbol_with_fundamental AS
+SELECT
+    si.id,
+    si.ticker,
+    si.name,
+    si.name_en,
+    si.market,
+    si.exchange,
+    si.sector,
+    si.yahoo_symbol,
+    si.is_active,
+    sf.market_cap,
+    sf.per,
+    sf.pbr,
+    sf.eps,
+    sf.bps,
+    sf.dividend_yield,
+    sf.roe,
+    sf.roa,
+    sf.operating_margin,
+    sf.debt_ratio,
+    sf.week_52_high,
+    sf.week_52_low,
+    sf.avg_volume_10d,
+    sf.revenue,
+    sf.operating_income,
+    sf.net_income,
+    sf.revenue_growth_yoy,
+    sf.earnings_growth_yoy,
+    sf.route_state,
+    sf.ttm_squeeze,
+    sf.ttm_squeeze_cnt,
+    sf.regime,
+    sf.data_source AS fundamental_source,
+    sf.fetched_at AS fundamental_fetched_at,
+    sf.updated_at AS fundamental_updated_at
+FROM symbol_info si
+LEFT JOIN symbol_fundamental sf ON si.id = sf.symbol_info_id
+WHERE si.is_active = true;
+
+COMMENT ON VIEW v_symbol_with_fundamental IS '심볼 기본정보와 펀더멘털 통합 조회용 뷰 (route_state, ttm_squeeze, regime 포함)';
 
 CREATE TABLE IF NOT EXISTS signal_marker (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

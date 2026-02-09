@@ -81,7 +81,7 @@ pub fn default_consolidation_groups() -> Vec<ConsolidationGroup> {
         ConsolidationGroup {
             name: "08_paper_trading".to_string(),
             description: "Mock 거래소, 전략-계정 연결, Paper Trading 세션".to_string(),
-            source_patterns: vec!["20_".to_string(), "21_".to_string(), "22_".to_string()],
+            source_patterns: vec!["20_".to_string(), "21_".to_string(), "22_".to_string(), "24_".to_string()],
             static_content: None,
         },
         ConsolidationGroup {

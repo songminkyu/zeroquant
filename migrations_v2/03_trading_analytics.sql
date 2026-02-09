@@ -251,7 +251,7 @@ COMMENT ON COLUMN backtest_results.trades IS '거래 내역 JSON 배열: [{symbo
 
 COMMENT ON COLUMN backtest_results.deleted_at IS '소프트 삭제 시간. NULL이면 활성 상태';
 
-CREATE VIEW public.journal_current_positions AS
+CREATE OR REPLACE VIEW public.journal_current_positions AS
  SELECT DISTINCT ON (position_snapshots.credential_id, position_snapshots.symbol) position_snapshots.id,
     position_snapshots.credential_id,
     position_snapshots.snapshot_time,
@@ -276,7 +276,7 @@ CREATE VIEW public.journal_current_positions AS
   WHERE (position_snapshots.quantity > (0)::numeric)
   ORDER BY position_snapshots.credential_id, position_snapshots.symbol, position_snapshots.snapshot_time DESC;
 
-CREATE VIEW public.portfolio_daily_equity AS
+CREATE OR REPLACE VIEW public.portfolio_daily_equity AS
  SELECT portfolio_equity_history.credential_id,
     (date_trunc('day'::text, portfolio_equity_history.snapshot_time))::date AS date,
     (array_agg(portfolio_equity_history.total_equity ORDER BY portfolio_equity_history.snapshot_time DESC))[1] AS closing_equity,
@@ -290,7 +290,7 @@ CREATE VIEW public.portfolio_daily_equity AS
    FROM public.portfolio_equity_history
   GROUP BY portfolio_equity_history.credential_id, ((date_trunc('day'::text, portfolio_equity_history.snapshot_time))::date);
 
-CREATE VIEW public.portfolio_monthly_returns AS
+CREATE OR REPLACE VIEW public.portfolio_monthly_returns AS
  WITH monthly_data AS (
          SELECT portfolio_equity_history.credential_id,
             (date_trunc('month'::text, portfolio_equity_history.snapshot_time))::date AS month,
@@ -309,7 +309,7 @@ CREATE VIEW public.portfolio_monthly_returns AS
         END AS return_pct
    FROM monthly_data;
 
-CREATE VIEW public.v_strategy_monthly_performance AS
+CREATE OR REPLACE VIEW public.v_strategy_monthly_performance AS
  SELECT ec.credential_id,
     COALESCE(te.strategy_id, 'manual'::character varying) AS strategy_id,
     COALESCE(te.strategy_name, '수동 거래'::character varying) AS strategy_name,
@@ -326,7 +326,7 @@ CREATE VIEW public.v_strategy_monthly_performance AS
 
 COMMENT ON VIEW public.v_strategy_monthly_performance IS '전략별 월간 성과 추이 뷰';
 
-CREATE VIEW public.v_strategy_performance AS
+CREATE OR REPLACE VIEW public.v_strategy_performance AS
  SELECT ec.credential_id,
     COALESCE(te.strategy_id, 'manual'::character varying) AS strategy_id,
     COALESCE(te.strategy_name, '수동 거래'::character varying) AS strategy_name,
@@ -360,7 +360,7 @@ CREATE VIEW public.v_strategy_performance AS
 
 COMMENT ON VIEW public.v_strategy_performance IS '전략별 성과 분석 뷰';
 
-CREATE VIEW public.v_symbol_pnl AS
+CREATE OR REPLACE VIEW public.v_symbol_pnl AS
  SELECT ec.credential_id,
     ec.symbol,
     max((ec.normalized_symbol)::text) AS symbol_name,
@@ -379,7 +379,7 @@ CREATE VIEW public.v_symbol_pnl AS
 
 COMMENT ON VIEW public.v_symbol_pnl IS '종목별 손익 집계 뷰';
 
-CREATE VIEW public.v_total_pnl AS
+CREATE OR REPLACE VIEW public.v_total_pnl AS
  SELECT ec.credential_id,
     COALESCE(sum(te.realized_pnl), (0)::numeric) AS total_realized_pnl,
     COALESCE(sum(ec.fee), (0)::numeric) AS total_fees,
@@ -397,7 +397,7 @@ CREATE VIEW public.v_total_pnl AS
 
 COMMENT ON VIEW public.v_total_pnl IS '전체 PnL 요약 뷰';
 
-CREATE VIEW public.v_trading_insights AS
+CREATE OR REPLACE VIEW public.v_trading_insights AS
  SELECT ec.credential_id,
     count(*) AS total_trades,
     count(*) FILTER (WHERE ((ec.side)::text = 'buy'::text)) AS buy_trades,
@@ -429,7 +429,7 @@ CREATE VIEW public.v_trading_insights AS
 
 COMMENT ON VIEW public.v_trading_insights IS '투자 인사이트 통계 뷰';
 
-CREATE VIEW v_journal_executions AS
+CREATE OR REPLACE VIEW v_journal_executions AS
 SELECT
     ec.id,
     ec.credential_id,
@@ -553,7 +553,7 @@ GROUP BY ec.credential_id,
 
 COMMENT ON VIEW v_yearly_pnl IS '연도별 거래 요약 뷰';
 
-CREATE VIEW v_cumulative_pnl AS
+CREATE OR REPLACE VIEW v_cumulative_pnl AS
 WITH daily AS (
     SELECT
         credential_id,

@@ -1,51 +1,11 @@
 # ZeroQuant TODO - 통합 로드맵
 
-> **마지막 업데이트**: 2026-02-08
-> **현재 버전**: v0.8.3
+> **마지막 업데이트**: 2026-02-09
+> **현재 버전**: v0.9.0
 
 ---
 
 ## 남은 작업
-
-### Mock 거래소 KIS 수준 업그레이드 (v0.9.0)
-
-#### Phase 1: 현실적 가격 스트리밍 (`mock_streaming.rs` 신규)
-- [ ] MockPriceMode enum (HistoricalReplay / RandomWalk / YahooLegacy)
-- [ ] MockStreamingConfig 설정 구조체
-- [ ] HistoricalReplayGenerator (DB 1분봉 → 틱 보간 재생)
-- [ ] RandomWalkGenerator (ATR 기반 정규분포 + 평균 회귀 + 호가 단위 라운딩)
-- [ ] MockOrderBookGenerator (KR 10단계 호가, US 1단계 호가)
-
-#### Phase 5: 주문 매칭 엔진 (`mock_order_engine.rs` 신규)
-- [ ] MockOrderEngine 구조체 (미체결 큐 + 매칭 로직)
-- [ ] 시장가 즉시 체결 (OrderBook VWAP)
-- [ ] 지정가 주문 매칭 (Limit Buy: ask ≤ limit, Limit Sell: bid ≥ limit)
-- [ ] 스톱 주문 (StopLoss/TakeProfit/StopLossLimit/TakeProfitLimit)
-- [ ] 부분 체결 (OrderBook 호가 잔량 기반)
-- [ ] 주문 취소/정정
-
-#### Phase 2+6: MockExchangeProvider 통합 (`mock.rs` 수정)
-- [ ] StrategyState에 reserved_balance 추가 (잔고 예약 시스템)
-- [ ] MockState에 order_engine 추가
-- [ ] place_order() 재구현 (Market=즉시, Limit/Stop=큐)
-- [ ] cancel_order() / modify_order() 재구현
-- [ ] fetch_pending_orders() 실제 미체결 주문 반환
-- [ ] start_streaming_with_config() (기존 start_streaming 위임)
-- [ ] 스트리밍 루프에 주문 매칭 통합 (매 틱마다 on_price_tick)
-- [ ] 최신 시세/호가 캐시 (latest_tickers, latest_order_books)
-
-#### Phase 3: 모듈 등록 (`mod.rs`)
-- [ ] mock_streaming, mock_order_engine 모듈 등록 + export
-
-#### Phase 4: Paper Trading API 통합 (`paper_trading.rs`)
-- [ ] PaperTradingStartRequest에 streaming_config 추가
-- [ ] kline 데이터 로드 (모드별: 1분봉/D1/None)
-
-#### DB 마이그레이션
-- [ ] mock_pending_orders 테이블 생성
-- [ ] load_state() 미체결 주문 복원
-
----
 
 ### 프론트엔드 통합 및 테스트
 
@@ -60,6 +20,35 @@
 # 완료된 작업 아카이브
 
 > 이하 섹션은 완료된 작업들의 기록입니다. 최신순 정렬.
+
+---
+
+## ✅ v0.9.0 — Mock 거래소 KIS 수준 업그레이드 (2026-02-09)
+
+| 항목 | 상태 |
+|------|:----:|
+| `mock_streaming.rs` 신규 — MockPriceMode, RandomWalkGenerator, HistoricalReplayGenerator, MockOrderBookGenerator | ✅ |
+| `mock_order_engine.rs` 신규 — VWAP 시장가 체결, 지정가/스톱 큐, 부분 체결, 취소/정정, 잔고 예약 | ✅ |
+| MockExchangeProvider 통합 — order_engine, latest_tickers/order_books, start_streaming_with_config() | ✅ |
+| StrategyState reserved_balance + available_balance() 잔고 예약 시스템 | ✅ |
+| Paper Trading API — MockStreamingConfigDto, streaming_config 지원 | ✅ |
+| DB 마이그레이션 — mock_pending_orders 테이블 + reserved_balance 컬럼 | ✅ |
+| load_state() / save_strategy_state() 미체결 주문 영속화 + 복원 | ✅ |
+| 모듈 등록 (mod.rs) + RawPendingOrder export | ✅ |
+| 17개 단위 테스트 통과 (streaming 4 + order engine 8 + mock 5) | ✅ |
+
+---
+
+## ✅ 한국 거래소 통합 + 마이그레이션 수정 (2026-02-09)
+
+| 항목 | 상태 |
+|------|:----:|
+| Upbit Provider + Client + WebSocket | ✅ |
+| Bithumb Provider + Client + WebSocket | ✅ |
+| DB금융투자 Provider + Client + WebSocket | ✅ |
+| LS증권 Provider + Client + WebSocket | ✅ |
+| Provider Factory 연결 + lib.rs 통합 | ✅ |
+| 마이그레이션 도구 수정 (ENUM 멱등성) | ✅ |
 
 ---
 

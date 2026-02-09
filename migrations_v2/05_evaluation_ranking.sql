@@ -391,3 +391,38 @@ INSERT INTO schema_migrations (version, filename, success, applied_at)
 VALUES (12, '12_ranking_system.sql', true, NOW())
 ON CONFLICT (version) DO NOTHING;
 
+CREATE TABLE IF NOT EXISTS score_history (
+    id SERIAL PRIMARY KEY,
+    symbol VARCHAR(20) NOT NULL,
+    score_date DATE NOT NULL,
+    global_score DECIMAL(5,2),
+    route_state VARCHAR(20),
+    rank INTEGER,
+    component_scores JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(symbol, score_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_score_history_symbol_date 
+ON score_history(symbol, score_date DESC);
+
+CREATE INDEX IF NOT EXISTS idx_score_history_date 
+ON score_history(score_date DESC);
+
+CREATE INDEX IF NOT EXISTS idx_score_history_score 
+ON score_history(score_date, global_score DESC);
+
+COMMENT ON TABLE score_history IS '종목별 Global Score, RouteState, 순위의 일별 히스토리';
+
+COMMENT ON COLUMN score_history.symbol IS '종목 코드';
+
+COMMENT ON COLUMN score_history.score_date IS '점수 계산 날짜';
+
+COMMENT ON COLUMN score_history.global_score IS 'Global Score (0-100)';
+
+COMMENT ON COLUMN score_history.route_state IS 'RouteState (Attack/Armed/Watch/Wait/Danger)';
+
+COMMENT ON COLUMN score_history.rank IS '해당 날짜의 순위';
+
+COMMENT ON COLUMN score_history.component_scores IS '7 Factor 개별 점수 (JSON)';
+

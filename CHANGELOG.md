@@ -1,6 +1,56 @@
 # Changelog
 
 
+## [Unreleased]
+
+---
+
+## [0.9.0] - 2026-02-09
+
+> **Mock 거래소 KIS 수준 업그레이드**: Paper Trading을 Yahoo Finance D1 폴링 + 즉시 체결에서 1분봉 틱 보간/랜덤 워크 가격 스트리밍 + 호가창 기반 VWAP 체결로 업그레이드했습니다. 지정가/스톱 주문 미체결 큐와 잔고 예약 시스템을 도입하여 실전과 유사한 페이퍼 트레이딩 환경을 구축했습니다.
+
+### Added
+
+#### 현실적 가격 스트리밍 (`mock_streaming.rs`)
+- `MockPriceGenerator` trait — 3가지 모드 지원 (HistoricalReplay / RandomWalk / YahooLegacy)
+- `HistoricalReplayGenerator` — DB 1분봉 → 12단계 틱 보간 (O→H→L→C 경로)
+- `RandomWalkGenerator` — ATR 기반 정규분포 + 평균 회귀 + 호가 단위 라운딩
+- `MockOrderBookGenerator` — KR 10단계 / US 5단계 / Crypto 20단계 합성 호가창
+
+#### 주문 매칭 엔진 (`mock_order_engine.rs`)
+- `MockOrderEngine` — 호가창 기반 VWAP 체결 + 지정가/스톱 주문 미체결 큐
+- 시장가 즉시 체결: OrderBook ask/bid 레벨 순서대로 VWAP 가중평균
+- 지정가 주문: 즉시 체결 가능이면 체결, 아니면 큐 등록 + 잔고 예약
+- 스톱 주문: stop_price 도달 시 시장가로 전환
+- 부분 체결: OrderBook 물량 부족 시 가능한 만큼만 체결
+- 주문 취소/정정 + 예약금 자동 해제/재계산
+
+#### MockExchangeProvider 통합
+- `StrategyState.reserved_balance` — 지정가 주문 자금 예약 시스템
+- `start_streaming_with_config()` — 모드별 Generator 생성 + 백그라운드 스트리밍
+- `place_order()` 재구현: Market→VWAP, Limit/Stop→큐 + 잔고 예약
+- `fetch_pending_orders()` — 실제 미체결 주문 반환 (빈 배열 → 실시간)
+- 최신 시세/호가 캐시 (`latest_tickers`, `latest_order_books`)
+
+#### Paper Trading API 확장
+- `MockStreamingConfigDto` — 모드, 틱 간격, 재생 속도 설정
+- `PaperTradingStartRequest.streaming_config` — 스트리밍 모드 선택 API
+
+#### DB 마이그레이션
+- `mock_pending_orders` 테이블 — 미체결 주문 영속화
+- `paper_trading_sessions.reserved_balance` 컬럼 — 예약 잔고 추적
+- `load_state()` / `save_strategy_state()` 미체결 주문 복원/저장
+
+### Changed
+- 한국 거래소 4개 통합 (Upbit, Bithumb, DB금융투자, LS증권)
+  - Provider + Client + WebSocket 커넥터 구현
+  - Provider Factory 연결 및 lib.rs re-export 통합
+
+### Fixed
+- 마이그레이션 도구: 누락된 그룹 추가 + ENUM 멱등성 패턴 수정
+
+---
+
 ## [0.8.3] - 2026-02-08
 
 > **OHLCV 쿼리 최적화, 백테스트 타임프레임 폴백, 스크리닝 UI 성능**: OHLCV 배치 쿼리를 LATERAL JOIN + TimescaleDB 청크 프루닝으로 ~70% 최적화(1.04s → 306ms)하고, 백테스트/CLI에 전략 기본 타임프레임 자동 폴백을 도입했습니다. 스크리닝 화면에 네이티브 가상 스크롤(11,000+ 행 60fps)과 상태/등급/점수 정렬을 추가하고, 매매일지에 상세 거래 통계를 제공합니다.

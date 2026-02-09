@@ -172,6 +172,44 @@ COMMENT ON COLUMN symbol_fundamental.revenue_growth_yoy IS '매출 성장률 YoY
 
 COMMENT ON COLUMN symbol_fundamental.earnings_growth_yoy IS '이익 성장률 YoY % - 적자→흑자 전환 시 극단값 허용';
 
+CREATE OR REPLACE VIEW v_symbol_with_fundamental AS
+SELECT
+    si.id,
+    si.ticker,
+    si.name,
+    si.name_en,
+    si.market,
+    si.exchange,
+    si.sector,
+    si.yahoo_symbol,
+    si.is_active,
+    sf.market_cap,
+    sf.per,
+    sf.pbr,
+    sf.eps,
+    sf.bps,
+    sf.dividend_yield,
+    sf.roe,
+    sf.roa,
+    sf.operating_margin,
+    sf.debt_ratio,
+    sf.week_52_high,
+    sf.week_52_low,
+    sf.avg_volume_10d,
+    sf.revenue,
+    sf.operating_income,
+    sf.net_income,
+    sf.revenue_growth_yoy,
+    sf.earnings_growth_yoy,
+    sf.data_source AS fundamental_source,
+    sf.fetched_at AS fundamental_fetched_at,
+    sf.updated_at AS fundamental_updated_at
+FROM symbol_info si
+LEFT JOIN symbol_fundamental sf ON si.id = sf.symbol_info_id
+WHERE si.is_active = true;
+
+COMMENT ON VIEW v_symbol_with_fundamental IS '심볼 기본정보와 펀더멘털 통합 조회용 뷰';
+
 CREATE OR REPLACE VIEW v_symbol_fetch_failures AS
 SELECT
     si.id,

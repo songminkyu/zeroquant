@@ -15,6 +15,8 @@ mod db_investment;
 mod kis;
 mod ls_sec;
 mod mock;
+pub mod mock_order_engine;
+pub mod mock_streaming;
 mod upbit;
 
 pub use binance::{BinanceExchangeProvider, BinanceProvider};
@@ -23,4 +25,6 @@ pub use db_investment::{DbInvestmentExchangeProvider, DbInvestmentProvider};
 pub use kis::{KisExchangeProvider, KisProvider};
 pub use ls_sec::{LsSecExchangeProvider, LsSecProvider};
 pub use mock::{MockConfig, MockExchangeProvider, MockMarketStream};
+pub use mock_order_engine::{MockOrderEngine, RawPendingOrder};
+pub use mock_streaming::{MockOrderBookGenerator, MockPriceGenerator, MockPriceMode, MockStreamingConfig};
 pub use upbit::{UpbitExchangeProvider, UpbitProvider};

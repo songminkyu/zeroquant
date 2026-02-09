@@ -837,6 +837,30 @@ pub async fn reset_account(
 
 // ==================== 전략 기반 Paper Trading API ====================
 
+/// Mock 스트리밍 설정 DTO.
+#[derive(Debug, serde::Deserialize, ToSchema, TS)]
+#[ts(export, export_to = "paper_trading/")]
+pub struct MockStreamingConfigDto {
+    /// 가격 생성 모드 ("random_walk" | "historical_replay" | "yahoo_legacy")
+    pub mode: Option<String>,
+    /// 틱 발생 간격 (밀리초, 기본 1000)
+    #[serde(rename = "tickIntervalMs")]
+    #[ts(optional, type = "number")]
+    pub tick_interval_ms: Option<u64>,
+    /// 재생 속도 (HistoricalReplay 전용, 기본 1.0)
+    #[serde(rename = "replaySpeed")]
+    #[ts(optional, type = "number")]
+    pub replay_speed: Option<f64>,
+    /// 스프레드 배율 (기본 1.0)
+    #[serde(rename = "spreadMultiplier")]
+    #[ts(optional, type = "number")]
+    pub spread_multiplier: Option<f64>,
+    /// 호가창 기본 잔량 (기본 100)
+    #[serde(rename = "orderbookBaseVolume")]
+    #[ts(optional, type = "number")]
+    pub orderbook_base_volume: Option<f64>,
+}
+
 /// Paper Trading 시작 요청.
 #[derive(Debug, serde::Deserialize, ToSchema, TS)]
 #[ts(export, export_to = "paper_trading/")]
@@ -848,6 +872,10 @@ pub struct PaperTradingStartRequest {
     #[serde(rename = "initialBalance")]
     #[ts(optional, type = "number")]
     pub initial_balance: Option<f64>,
+    /// 스트리밍 설정 (옵션, 없으면 YahooLegacy 모드)
+    #[serde(rename = "streamingConfig")]
+    #[ts(optional)]
+    pub streaming_config: Option<MockStreamingConfigDto>,
 }
 
 /// Paper Trading 세션 상태 응답.
@@ -1194,11 +1222,40 @@ pub async fn start_paper_trading(
 
     // 스트리밍 시작 (아직 시작되지 않은 경우)
     if !symbols.is_empty() && !mock_provider.is_streaming() {
-        // 5초 간격으로 가격 스트리밍 시작
-        if let Err(e) = mock_provider.start_streaming(symbols.clone(), 5).await {
-            tracing::warn!("Mock 스트리밍 시작 실패: {:?}", e);
+        if let Some(ref config_dto) = request.streaming_config {
+            // 확장 스트리밍 모드
+            use trader_exchange::provider::{MockPriceMode, MockStreamingConfig};
+
+            let mode = match config_dto.mode.as_deref() {
+                Some("random_walk") => MockPriceMode::RandomWalk,
+                Some("historical_replay") => MockPriceMode::HistoricalReplay,
+                Some("yahoo_legacy") => MockPriceMode::YahooLegacy,
+                _ => MockPriceMode::RandomWalk, // 기본값
+            };
+
+            let streaming_config = MockStreamingConfig {
+                mode,
+                tick_interval_ms: config_dto.tick_interval_ms.unwrap_or(1000),
+                market_type: market_type.to_string(),
+                spread_multiplier: Decimal::try_from(config_dto.spread_multiplier.unwrap_or(1.0))
+                    .unwrap_or(Decimal::ONE),
+                orderbook_base_volume: Decimal::try_from(config_dto.orderbook_base_volume.unwrap_or(100.0))
+                    .unwrap_or(Decimal::from(100)),
+                replay_speed: config_dto.replay_speed.unwrap_or(1.0),
+            };
+
+            if let Err(e) = mock_provider.start_streaming_with_config(symbols.clone(), streaming_config).await {
+                tracing::warn!("Mock 확장 스트리밍 시작 실패: {:?}", e);
+            } else {
+                tracing::info!("Mock 확장 스트리밍 시작 (계정: {}): {:?}", credential_id, symbols);
+            }
         } else {
-            tracing::info!("Mock 스트리밍 시작 (계정: {}): {:?}", credential_id, symbols);
+            // 기존 Yahoo Legacy 모드 (하위 호환)
+            if let Err(e) = mock_provider.start_streaming(symbols.clone(), 5).await {
+                tracing::warn!("Mock 스트리밍 시작 실패: {:?}", e);
+            } else {
+                tracing::info!("Mock 스트리밍 시작 (계정: {}): {:?}", credential_id, symbols);
+            }
         }
     }
 

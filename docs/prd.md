@@ -1,6 +1,6 @@
 # ZeroQuant Trading Bot - PRD (Product Requirements Document)
 
-> 버전: 8.0 | 마지막 업데이트: 2026-02-07
+> 버전: 9.0 | 마지막 업데이트: 2026-02-09
 
 ---
 
@@ -915,7 +915,15 @@ trader-analytics/src/indicators/
 | 캐시 | Redis |
 | 컨테이너 | Docker/Podman |
 
-### 3.4 확장성
+### 3.4 관측성
+| 항목 | 요구사항 |
+|------|---------|
+| 헬스 체크 | `/health` (liveness), `/health/ready` (readiness + 컴포넌트 상태) |
+| 시스템 메트릭 | `/metrics` 엔드포인트 (HTTP/주문/포지션/WebSocket 카운터) |
+| 모니터링 방침 | 외부 Prometheus/Grafana 스택 불필요. 자체 /health + 기존 알림 채널 활용 |
+| 알림 | 장애/이상 감지 시 Telegram/Discord 기존 알림 채널로 발송 |
+
+### 3.5 확장성
 | 항목 | 요구사항 |
 |------|---------|
 | 전략 추가 | 새로운 전략 플러그인 구조 |
@@ -932,7 +940,7 @@ trader-analytics/src/indicators/
 | Database | PostgreSQL + TimescaleDB | 시계열 데이터 저장 |
 | Cache | Redis | 세션, 실시간 데이터 캐시 |
 | Frontend | SolidJS, TypeScript, Vite | 반응형 SPA |
-| Exchange | KIS (KR/US 통합), Binance, Mock | 거래소 연동 (v0.8.0 통합) |
+| Exchange | KIS (KR/US 통합), Binance, Upbit, Bithumb, DB금융투자, LS증권, Mock | 거래소 연동 |
 | WebSocket | tokio-tungstenite, mpsc | 실시간 시세 연동 (v0.8.0) |
 | ML | ONNX Runtime, Python | 모델 추론, 훈련 |
 | Infra | Podman/Docker | 컨테이너화된 인프라 |
@@ -958,12 +966,32 @@ trader-analytics/src/indicators/
   - Bridge Task 기반 KR/US 동시 수신
   - DB 기반 자격증명 관리 (환경변수 의존 제거)
 
-### 5.3 Mock Exchange ⭐ v0.8.0 신규 → v0.9.0 KIS 수준 업그레이드
+### 5.3 Upbit
+- **시장**: 암호화폐 (원화 마켓)
+- **기능**: 잔고 조회, 주문 실행, 체결 내역, WebSocket 실시간 시세
+- **인증**: API Key + Secret
+
+### 5.4 Bithumb
+- **시장**: 암호화폐 (원화 마켓)
+- **기능**: 잔고 조회, 주문 실행, 체결 내역, WebSocket 실시간 시세
+- **인증**: API Key + Secret
+
+### 5.5 DB금융투자
+- **시장**: 국내 주식
+- **기능**: 잔고 조회, 주문 실행, 체결 내역 조회, WebSocket 실시간 시세
+- **인증**: OAuth 2.0 (App Key, App Secret, 계좌번호)
+
+### 5.6 LS증권
+- **시장**: 국내 주식
+- **기능**: 잔고 조회, 주문 실행, 체결 내역 조회, WebSocket 실시간 시세
+- **인증**: OAuth 2.0 (App Key, App Secret, 계좌번호)
+
+### 5.7 Mock Exchange ⭐ v0.8.0 신규 → v0.9.0 KIS 수준 업그레이드
 
 - **용도**: 개발/테스트용 가상 거래소 (24시간 페이퍼 트레이딩)
 - **구현**: `ExchangeProvider` + `OrderExecutionProvider` trait 완전 구현 (`provider/mock.rs`)
 
-#### 5.3.1 현실적 가격 스트리밍 (v0.9.0)
+#### 5.7.1 현실적 가격 스트리밍 (v0.9.0)
 
 장외 시간에도 현실적인 가격 변동을 WebSocket으로 제공:
 
@@ -981,7 +1009,7 @@ trader-analytics/src/indicators/
 
 구현 파일: `provider/mock_streaming.rs` (신규)
 
-#### 5.3.2 주문 매칭 엔진 (v0.9.0)
+#### 5.7.2 주문 매칭 엔진 (v0.9.0)
 
 KIS 거래소 수준의 주문 실행 시뮬레이션:
 
@@ -1009,13 +1037,13 @@ KIS 거래소 수준의 주문 실행 시뮬레이션:
 
 구현 파일: `provider/mock_order_engine.rs` (신규)
 
-#### 5.3.3 기존 기능 (v0.8.0, 하위 호환)
+#### 5.7.3 기존 기능 (v0.8.0, 하위 호환)
 
 - 가상 잔고/포지션 관리 (전략별 독립)
 - `process_signal()` 즉시 체결 경로 유지 (SimulatedExecutor용)
 - Yahoo D1 기반 스트리밍 (YahooLegacy 모드)
 
-### 5.4 추가 거래소 (선택적 확장)
+### 5.8 추가 거래소 (선택적 확장)
 - Coinbase, Kraken (암호화폐)
 - Interactive Brokers, 키움증권 (주식)
 
@@ -2025,7 +2053,303 @@ trader migrate apply --db-url "postgres://..." --dir migrations_v2
 
 ---
 
-## 8. 참고 문서
+## 8. 확장 로드맵
+
+> v0.9.0 이후 단계적으로 도입할 기능 요구사항.
+> 상세 작업 추적: `docs/todo_v2.md`
+
+### 구현 순서 및 의존관계
+
+```
+Phase 1 (독립, 즉시 착수)
+├── [A] 보안 & 인증 ─────────── 라이브 트레이딩 전 필수
+├── [B] 데이터 파이프라인 ────── 분석/백테스트 신뢰성 기반
+└── [G] 프론트엔드 & UX ────── 전 구간 병행 가능
+
+Phase 2 (B 완료 후)
+├── [C] 포트폴리오 & 리스크 ── B-1(보정 데이터) + B-6(환율) 선행
+└── [D] 전략 라이프사이클 ──── B-8(Clock Trait) 시너지
+
+Phase 3
+├── [E] 실행 & 컴플라이언스 ── AUM 기반 단계적 도입
+└── [F] 관측성 & 아키텍처 ──── A~D 안정화 후
+```
+
+| 순서 | 그룹 | 병렬 가능 | 규모 |
+|:----:|:----:|:---------:|:----:|
+| 1 | **A** 보안 | B, G와 동시 | Small |
+| 1 | **B** 데이터 | A, G와 동시 | Large |
+| 1 | **G** 프론트엔드 | A, B와 동시 | Medium |
+| 2 | **C** 포트폴리오 | D와 동시 | Large |
+| 2 | **D** 전략 라이프사이클 | C와 동시 | Large |
+| 3 | **E** 실행 & 컴플라이언스 | E4~E6 라이브 시 즉시 | Medium-Large |
+| 3 | **F** 관측성 & 아키텍처 | F1~F4 조기 가능 | Large |
+
+---
+
+### 8.1 보안 & 인증 기반
+
+> 라이브 트레이딩 전 필수. 모든 그룹과 독립, 즉시 착수 가능.
+
+#### 8.1.1 API 인증 체계
+
+- 전체 API 라우트에 JWT 기반 `AuthUser` extractor 인증 적용
+- WebSocket 핸드셰이크 시 토큰 검증 미들웨어 추가
+- Axum `RequestBodyLimit` 미들웨어로 DoS 방지
+- `config/default.toml` 기본 시크릿 제거 → 환경변수 필수화
+
+---
+
+### 8.2 데이터 파이프라인 & 무결성
+
+> 모든 분석·백테스트·전략의 신뢰성 기반. Phase 2~3의 선행 조건.
+
+#### 8.2.1 기업 이벤트 처리 (Corporate Action)
+
+- `corporate_actions` 테이블: 액면분할, 배당, 합병 등 이벤트 기록 (`event_type`, `symbol`, `ex_date`, `split_factor`, `dividend_amount`)
+- `ohlcv` 보정 컬럼: `adj_close`, `split_factor`, `dividend`
+- Backward Adjust 로직으로 과거 가격 소급 보정
+- Yahoo Finance / KRX에서 Split/Dividend 이벤트 자동 수집
+- `CandleProcessor`가 보정 데이터를 사용하도록 수정
+- API: `POST /api/v1/data/adjust-corporate-actions`, `GET /api/v1/data/events/{symbol}`
+
+#### 8.2.2 시점 데이터 관리 (Point-in-Time)
+
+- `symbol_fundamental` 테이블에 `announce_date`, `report_period` 추가
+- 백테스트 쿼리에 `announce_date <= backtest_time` 조건 강제 (look-ahead bias 방지)
+- 기존 데이터 대상 공시일 백필(backfill) 스크립트
+
+#### 8.2.3 생존 편향 방지 (Survivorship Bias)
+
+- `symbol_info`에 `is_active BOOLEAN`, `delisted_date DATE` 추가
+- 상폐 종목 이력 수집 (KRX, Yahoo Finance)
+- 백테스트 유니버스에 `delisted_date > backtest_time` 종목 포함
+- 시뮬레이션 중 상폐 시점 잔여 포지션 강제 청산
+
+#### 8.2.4 데이터 갭 감지 & 복구
+
+- OHLCV 누락 구간 자동 감지 모듈 (`gap_detector.rs`)
+- 거래일 캘린더 대비 누락 일자 스캔 쿼리
+- 감지된 갭에 대한 자동 재수집 트리거
+- API: `GET /api/v1/data/gaps`
+
+#### 8.2.5 Collector 복원력 강화
+
+- Dead-letter 큐: 실패 심볼 자동 재시도
+- 재시도 정책: 지수 백오프, 최대 3회, 실패 시 알림 발송
+- Collector 헬스 상태를 `/health/ready` 응답에 통합 (마지막 실행 시각, 성공/실패 카운트)
+
+#### 8.2.6 FX 환율 서비스
+
+- `FxRateProvider` trait 기반 환율 조회 추상화
+- Yahoo Finance / 한국은행 API 기반 환율 수집
+- Redis 캐시 (TTL 1시간) + DB 히스토리 저장
+- 포트폴리오 P&L 산출 시 통화 통합 변환
+
+#### 8.2.7 거래소 중립 마켓 캘린더
+
+- `MarketCalendar` trait: 거래일, 공휴일, 반일 거래, 점검 시간 추상화
+- KRX, NYSE/NASDAQ, Binance 별 구현
+- 전략·수집기의 `is_market_open()` 호출을 trait 기반으로 통일
+
+#### 8.2.8 Clock Trait
+
+- `Clock` trait: `fn now(&self) -> DateTime<Utc>` 시간 추상화
+- `SystemClock` (실시간), `ManualClock` (백테스트/테스트용) 구현
+- 코드 전반의 `Utc::now()` 직접 호출 제거
+- 백테스트 엔진에 `ManualClock` 주입, 시간 진행 제어
+
+---
+
+### 8.3 포트폴리오 분석 & 리스크 고도화
+
+> 선행: 8.2.1 (보정 데이터), 8.2.6 (환율 서비스) 완료 필수. Rust 구현 (`argmin` 크레이트).
+
+#### 8.3.1 포트폴리오 최적화 (Global Optimizer)
+
+- Mean-Variance Optimization (샤프 비율 최대화)
+- Risk Parity (리스크 균등 기여 비중)
+- Minimum Variance (포트폴리오 변동성 최소화)
+- 입력: 자산별 기대 수익률 벡터 + 공분산 행렬 (FX 변환 적용)
+- `AssetAllocation` 전략과 최적 비중 벡터 연동
+- API: `POST /api/v1/portfolio/optimize`, `GET /api/v1/portfolio/efficient-frontier`
+
+#### 8.3.2 실시간 VaR (Value at Risk)
+
+- Parametric VaR: 공분산 행렬 기반 정규분포 가정 (95%, 99% 신뢰구간)
+- Historical VaR: TimescaleDB 과거 수익률 시뮬레이션 기반
+- `RiskManager` 파이프라인에 VaR 한도 검증 단계 추가
+- VaR 초과 시 신규 진입 강제 차단
+
+#### 8.3.3 섹터/팩터 노출 제한
+
+- `RiskConfig`에 `max_sector_weight`, `factor_tilt_limit` 필드 추가
+- 포트폴리오 레벨 섹터 비중 검증 (`RiskManager::validate_order()` 확장)
+- 특정 팩터(모멘텀, 가치 등) 쏠림 제한
+
+#### 8.3.4 성과 기여도 분석 (Attribution)
+
+- Brinson Model: 자산배분 효과 vs 종목선정 효과 분해
+- Beta 분석: 벤치마크(KOSPI/SPY) 대비 민감도 + 상관계수
+- 섹터 기여도: 비중 확대/축소 기인 손익 분해
+- API: `GET /api/v1/portfolio/attribution`
+
+#### 8.3.5 거래 비용 분석 (TCA)
+
+- Implementation Shortfall: 신호 시점 중간가 vs 실제 평균 체결가
+- Slippage 분류: 호가 공백 손실 vs 통신 지연 손실
+- Market Impact: 주문 직후 호가 변동 분석
+- DB: `reality_check` 테이블 확장 (`theory_price`, `exec_price`, `slippage_bps`)
+
+---
+
+### 8.4 전략 라이프사이클 & 테스트 인프라
+
+> B-8 (Clock Trait)과 시너지. 통합 테스트는 B와 동시 착수 권장.
+
+#### 8.4.1 전략 파라미터 버전 관리
+
+- `strategy_run_snapshots` 테이블: 실행 시점 파라미터 자동 스냅샷 (`strategy_id`, `version`, `params_json`, `started_at`)
+- 라이브/페이퍼 실행 시작 시 현재 파라미터 저장
+- API: `GET /api/v1/strategies/{id}/history`
+
+#### 8.4.2 전략 파라미터 최적화
+
+- `ParameterGrid` 러너: 파라미터 조합 생성 + 순차 백테스트 실행
+- Bayesian 최적화 (`argmin` 활용, 선택적)
+- 최적화 결과 비교 테이블 + 상위 N개 설정 추천
+- API: `POST /api/v1/backtest/optimize`
+
+#### 8.4.3 전략 비교 리포트
+
+- 동일 기간 N개 전략 병렬 백테스트 API
+- 성과 지표 병렬 비교 (CAGR, MDD, Sharpe, 승률 등)
+- 프론트엔드 비교 차트 컴포넌트
+
+#### 8.4.4 백테스트 회귀 테스트
+
+- 기준 결과(baseline) 저장 메커니즘
+- `cargo test` 시 현재 결과 vs baseline 자동 비교
+- 시그널 변경 감지 시 diff 리포트 출력
+
+#### 8.4.5 통합 테스트
+
+- API → Strategy → Execution → DB 핵심 경로 end-to-end 테스트
+- 백테스트 엔진: 알려진 데이터 → 기대 시그널 검증
+- Paper Trading: 세션 생성 → 시그널 처리 → 포지션 확인 흐름
+
+---
+
+### 8.5 실행 계층 & 컴플라이언스
+
+> E-1~E-3: AUM 증가 시 단계적 도입. E-4~E-6: 라이브 운영 시작과 함께 도입.
+
+#### 8.5.1 스마트 주문 집행 (Algo Execution)
+
+- `ExecutionAlgo` trait 기반 알고리즘 주문 추상화
+- TWAP: 시간 분할 매매 (`duration`, `slice_count`)
+- Iceberg: 빙산 주문 (`visible_qty`, `variance`)
+- POV: 거래량 참여율 연동 (`participation_rate`)
+- Parent Order → Child Order 분할 + 순차 전송
+
+#### 8.5.2 내부 상계 시스템 (Internal Netting)
+
+- 중앙 `OrderManager`: 전략별 신호 주기적 수집 (예: 1분)
+- 동일 심볼 매수/매도 상계 처리 후 순 주문만 거래소 전송
+- 상계 절감 수수료·슬리피지 추적 로그
+
+#### 8.5.3 Smart Order Router
+
+- 전략 → `Intent` (대상, 수량, 긴급도) 발행
+- SOR → `Intent` → 실제 `Order[]` 변환 (알고리즘 선택·분할)
+- `LiveExecutor`에서 의사결정/집행 책임 분리
+
+#### 8.5.4 불변 감사 로그 (Audit Trail)
+
+- `audit_log` append-only 테이블 (INSERT만 허용, UPDATE/DELETE 차단)
+- 모든 주문 생성·체결·취소 이벤트 자동 기록
+- API: `GET /api/v1/audit/trades`
+
+#### 8.5.5 세금 Lot 추적
+
+- FIFO/LIFO/특정 Lot 지정 방식 취득원가 계산 모듈
+- 기존 `GET /api/v1/journal/cost-basis/{symbol}` 확장
+- 연간 양도소득세 리포트 생성 API
+
+#### 8.5.6 전략 상태 영속화 (Graceful Shutdown)
+
+- `StrategyState` 직렬화 → DB/파일 저장 (`on_shutdown` 훅)
+- DCA 그리드 레벨, 트레일링 스톱 고점 등 인메모리 상태 대상
+- 재시작 시 마지막 저장 상태에서 복원
+
+---
+
+### 8.6 관측성 & 아키텍처 확장
+
+> A~D 안정화 후 도입. 전략 50개+ 또는 고빈도 처리 시 우선.
+
+#### 8.6.1 분산 트레이싱 (OpenTelemetry)
+
+- `opentelemetry` + `tracing-opentelemetry` 의존성 추가
+- API → Strategy → Exchange → DB 요청 상관관계 추적
+- Jaeger/Zipkin 연동
+
+#### 8.6.2 Collector 헬스 메트릭
+
+- 수집 성공/실패 카운트, API 할당량 잔여를 `/health/ready` JSON에 포함
+- 수집 주기 이상 감지 시 Telegram/Discord 알림 발송
+
+#### 8.6.3 DB 연결풀 & 슬로우 쿼리 모니터링
+
+- 연결풀 사용률(active/idle/max)을 `/health/ready` JSON에 포함
+- `pg_stat_statements` 기반 슬로우 쿼리 자동 감지 + Telegram/Discord 알림
+- Redis `maxmemory` 환경변수화
+
+#### 8.6.4 에러 트래커 영속화
+
+- 인메모리 `DashMap` → DB 영속 저장 병행
+- 에러 이력 조회 API + 재시작 후에도 이력 유지
+
+#### 8.6.5 Actor Model 전환
+
+- 전략별 독립 Tokio Task + mpsc 채널 메시지 기반 통신
+- `StrategyContext`의 `Arc<RwLock<>>` 제거 → 전략 로컬 상태
+- 락 경합 벤치마크 (전환 전/후 비교)
+
+#### 8.6.6 Event Bus (Pub/Sub)
+
+- 시스템 이벤트 정의: `MarketEvent`, `SignalEvent`, `OrderEvent`, `SystemAlert`
+- 전략 → `SignalEvent` 발행, `OrderExecutor` 구독 처리
+- Audit Logger, Dashboard 등 신규 컨슈머를 구독만으로 추가
+
+---
+
+### 8.7 프론트엔드 & UX
+
+> 전 구간 병행 가능. 백엔드 작업과 독립.
+
+#### 8.7.1 차트 시각화 강화
+
+- RouteState 구간 배경색 밴드 렌더링 (ATTACK/WAIT/OVERHEAT)
+- 비매매 지표 마커: RSI 과매수/과매도(•), Golden/Dead Cross(x), TTM Squeeze(Bar)
+- 캔들 패턴 라벨: 48개 패턴 약어(H, E, D) 캔들 위 오버레이
+- 줌 레벨 기반 마커 필터링: Zoom Out 시 매매만, Zoom In 시 보조 마커 표시
+
+#### 8.7.2 툴팁 & 인터랙션 강화
+
+- 매매 마커 호버 시 RSI/MACD/RouteState/Score 컨텍스트 툴팁
+- `SignalDetailPopup` 확장: 진입 근거 + 당시 지표 값 표시
+
+#### 8.7.3 시스템 UX 개선
+
+- UTC → KST 타임존 변환 유틸리티 + 사용자 설정 연동
+- 다크/라이트 테마 토글 (TailwindCSS `dark:` + `localStorage`)
+- 페이지 레벨 `<ErrorBoundary>` + 로딩 스켈레톤 시스템
+- 모바일 반응형 레이아웃 검증 + 뷰포트 대응
+
+---
+
+## 9. 참고 문서
 
 | 문서 | 위치 | 용도 |
 |------|------|------|
@@ -2034,7 +2358,22 @@ trader migrate apply --db-url "postgres://..." --dir migrations_v2
 
 ---
 
-*버전 이력: v1.0 → v2.0 → v2.1 → v3.0 → v4.0 → v4.1 → v5.0 → v5.1 → v5.2 → v6.0 → v6.1 → v7.0*
+*버전 이력: v1.0 → v2.0 → v2.1 → v3.0 → v4.0 → v4.1 → v5.0 → v5.1 → v5.2 → v6.0 → v6.1 → v7.0 → v8.0 → v9.0*
+
+**v9.0 변경사항 (2026-02-09):**
+- 확장 로드맵 섹션 추가 (8장) — todo_v2.md 요구사항 PRD 반영
+  - [A] 보안 & 인증 기반 (8.1)
+  - [B] 데이터 파이프라인 & 무결성 (8.2)
+  - [C] 포트폴리오 분석 & 리스크 고도화 (8.3)
+  - [D] 전략 라이프사이클 & 테스트 인프라 (8.4)
+  - [E] 실행 계층 & 컴플라이언스 (8.5)
+  - [F] 관측성 & 아키텍처 확장 (8.6)
+  - [G] 프론트엔드 & UX (8.7)
+
+**v8.0 변경사항 (2026-02-09):**
+- 비기능 요구사항에 관측성 섹션 추가 (3.4) — 경량 모니터링 방침
+- 기술 스택 거래소에 Upbit, Bithumb, DB금융투자, LS증권 추가 (4장)
+- 지원 거래소 섹션에 한국 거래소 4개 추가 (5.3~5.6)
 
 **v7.0 변경사항 (2026-02-06):**
 - 다중 채널 알림 시스템 추가 - Discord, Slack, Email, SMS (2.4.4)

@@ -1,9 +1,10 @@
 # ZeroQuant Trading Bot - 기술 아키텍처
 
-> 작성일: 2026-02-07
-> 버전: 3.5 (v0.8.0 반영)
+> 작성일: 2026-02-09
+> 버전: 3.6 (v0.9.0 반영)
 >
 > 주요 변경:
+> - Mock 거래소 KIS 수준 업그레이드 (VWAP 체결, 호가창, 지정가/스톱 큐)
 > - StrategyContext 통합 아키텍처 (ExchangeProvider + AnalyticsProvider)
 > - 전략 실행 모드 (실거래/페이퍼트레이딩/백테스트) 분리
 > - 포지션 ID/그룹 ID 시스템 (Grid/Spread 전략)
@@ -165,18 +166,26 @@ d:\Trader\
 │   │   ├── order_manager.rs       # 주문 관리
 │   │   └── position_tracker.rs    # 포지션 추적
 │   │
-│   ├── trader-exchange/       # 거래소 연동 [v0.8.0 통합]
+│   ├── trader-exchange/       # 거래소 연동 [v0.8.0 통합, 한국 거래소 확장]
 │   │   ├── connector/
 │   │   │   ├── binance.rs     # Binance 커넥터
-│   │   │   └── kis/           # KIS 커넥터 [v0.8.0 확장]
-│   │   │       ├── client.rs      # 공통 HTTP 클라이언트 [v0.8.0 신규]
-│   │   │       ├── client_kr.rs   # KR 주문/조회
-│   │   │       ├── client_us.rs   # US 주문/조회
-│   │   │       ├── websocket_kr.rs # KR WebSocket (동적 구독) [v0.8.0]
-│   │   │       └── websocket_us.rs # US WebSocket (동적 구독) [v0.8.0]
+│   │   │   ├── kis/           # KIS 커넥터 [v0.8.0 확장]
+│   │   │   │   ├── client.rs      # 공통 HTTP 클라이언트 [v0.8.0 신규]
+│   │   │   │   ├── client_kr.rs   # KR 주문/조회
+│   │   │   │   ├── client_us.rs   # US 주문/조회
+│   │   │   │   ├── websocket_kr.rs # KR WebSocket (동적 구독) [v0.8.0]
+│   │   │   │   └── websocket_us.rs # US WebSocket (동적 구독) [v0.8.0]
+│   │   │   ├── upbit/         # Upbit 커넥터
+│   │   │   ├── bithumb/       # Bithumb 커넥터
+│   │   │   ├── db_investment/ # DB금융투자 커넥터
+│   │   │   └── ls_sec/        # LS증권 커넥터
 │   │   ├── provider/          # ExchangeProvider 구현
 │   │   │   ├── kis.rs         # KIS 통합 프로바이더 [v0.8.0 통합]
 │   │   │   ├── binance.rs     # Binance 프로바이더
+│   │   │   ├── upbit.rs       # Upbit 프로바이더
+│   │   │   ├── bithumb.rs     # Bithumb 프로바이더
+│   │   │   ├── db_investment.rs # DB금융투자 프로바이더
+│   │   │   ├── ls_sec.rs      # LS증권 프로바이더
 │   │   │   └── mock.rs        # Mock 프로바이더 [v0.8.0 신규]
 │   │   ├── stream.rs          # UnifiedMarketStream (Bridge Task) [v0.8.0]
 │   │   ├── simulated/         # 시뮬레이션 모드
@@ -408,7 +417,9 @@ Notification Service
 │                         데이터 소스                                   │
 │  ┌────────────────┐              ┌────────────────────────────────┐  │
 │  │  거래소 API    │              │      분석 엔진                  │  │
-│  │  (Binance,KIS) │              │  (GlobalScorer, RouteState)    │  │
+│  │  (KIS,Binance, │              │  (GlobalScorer, RouteState)    │  │
+│  │   Upbit,Bithumb│              │                                │  │
+│  │   DB금투,LS증권)│              │                                │  │
 │  └───────┬────────┘              └───────────────┬────────────────┘  │
 │          │                                       │                   │
 │          ▼                                       ▼                   │
@@ -487,6 +498,8 @@ Notification Service
 │  │  ExchangeProvider (실환경) │    │  BacktestEngine (과거 데이터)   │   │
 │  │  • KIS (KR/US)             │    │  • TimescaleDB OHLCV           │   │
 │  │  • Binance                 │    │  • SimulationEngine (스트리밍) │   │
+│  │  • Upbit, Bithumb          │    │                                │   │
+│  │  • DB금융투자, LS증권       │    │                                │   │
 │  │  • Mock (페이퍼)           │    │                                │   │
 │  └────────────┬───────────────┘    └───────────────┬────────────────┘   │
 │               └────────────────┬───────────────────┘                    │
@@ -536,7 +549,7 @@ Notification Service
 
 | 데이터 발행 | Signal 처리 | 결과 | 용도 |
 |------------|------------|------|------|
-| ExchangeProvider (KIS/Binance) | LiveExecutor | **실거래** | 실제 매매 |
+| ExchangeProvider (KIS/Binance/Upbit/Bithumb/DB금투/LS증권) | LiveExecutor | **실거래** | 실제 매매 |
 | ExchangeProvider (Mock) | SimulatedExecutor | **페이퍼 트레이딩** | 전략 검증 |
 | BacktestEngine | SimulatedExecutor | **정적 백테스트** | 과거 성과 분석 |
 | SimulationEngine | SimulatedExecutor | **동적 백테스트** | 시각적 시뮬레이션 |
@@ -593,12 +606,13 @@ pub struct ProcessorPosition {
 │  async fn cancel_order(&self, order_id) -> Result              │
 │  async fn modify_order(&self, order_id, request) -> Result     │
 │  async fn get_order_status(&self, order_id) -> OrderStatus     │
-└──────────────┬───────────────┬───────────────┬──────────────────┘
-               │               │               │
-    ┌──────────▼──────┐ ┌──────▼──────┐ ┌──────▼──────┐
-    │ KisOrderClient  │ │BinanceClient│ │    Mock     │
-    │   (KR/US)       │ │   (Spot)    │ │  (테스트)   │
-    └─────────────────┘ └─────────────┘ └─────────────┘
+└──┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──┘
+   │          │          │          │          │          │          │
+┌──▼───────┐┌─▼────────┐┌▼────────┐┌▼────────┐┌▼────────┐┌▼────────┐┌▼──────┐
+│KisOrder  ││Binance   ││ Upbit   ││Bithumb  ││DB금투   ││LS증권   ││ Mock  │
+│Client    ││Client    ││ Client  ││Client   ││Client   ││Client   ││(테스트)│
+│(KR/US)   ││(Spot)    ││         ││         ││         ││         ││       │
+└──────────┘└──────────┘└─────────┘└─────────┘└─────────┘└─────────┘└───────┘
 ```
 
 ### 핵심 원칙

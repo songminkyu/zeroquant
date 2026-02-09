@@ -1,6 +1,6 @@
 # 마이그레이션 관리 가이드
 
-> 마지막 업데이트: 2026-02-07
+> 마지막 업데이트: 2026-02-09
 
 ## 개요
 
@@ -57,7 +57,7 @@ trader migrate consolidate --output migrations_v2
 | 05 | evaluation_ranking | global_score, reality_check |
 | 06 | user_settings | watchlist, preset, notification |
 | 07 | performance_optimization | 인덱스, MV(screening, sector_rs), Hypertable |
-| 08 | paper_trading | Mock 거래소, 전략-계정 연결, Paper Trading 세션 |
+| 08 | paper_trading | Mock 거래소, 전략-계정 연결, Paper Trading 세션, 미체결 주문 |
 | 09 | strategy_watched_tickers | 전략별 관심 종목, Collector 우선순위 연동 |
 | 10 | symbol_cascade | Symbol 연쇄 삭제 + 고아 데이터 정리 DB 함수 |
 

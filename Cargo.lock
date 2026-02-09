@@ -6810,6 +6810,7 @@ dependencies = [
  "tokio-tungstenite 0.24.0",
  "tracing",
  "trader-core",
+ "trader-data",
  "trader-execution",
  "uuid",
  "yahoo_finance_api",
