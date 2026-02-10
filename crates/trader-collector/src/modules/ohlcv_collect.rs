@@ -119,11 +119,9 @@ impl ProgressTracker {
         }
         self.last_log_time = Instant::now();
 
-        let percent = if self.total > 0 {
-            (self.completed * 100) / self.total
-        } else {
-            0
-        };
+        let percent = (self.completed * 100)
+            .checked_div(self.total)
+            .unwrap_or(0);
         let elapsed = self.overall_start.elapsed();
         let eta_str = self
             .estimated_remaining()
