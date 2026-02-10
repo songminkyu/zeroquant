@@ -2,12 +2,13 @@
 //!
 //! Handles database operations for storing and retrieving trading strategies.
 
+use std::sync::Arc;
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::PgPool;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use trader_core::StrategyContext;
 use uuid::Uuid;

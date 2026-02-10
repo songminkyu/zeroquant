@@ -4,8 +4,9 @@
 //!
 //! **참고**: 현재 다른 에이전트에서 구현 중입니다.
 
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
 
 /// 종목의 매매 단계를 나타내는 5단계 상태.
 ///

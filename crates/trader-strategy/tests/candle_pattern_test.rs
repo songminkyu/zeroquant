@@ -18,8 +18,7 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
 use trader_core::{Kline, MarketData, Position, Side, SignalType, Timeframe};
-use trader_strategy::strategies::candle_pattern::CandlePatternStrategy;
-use trader_strategy::Strategy;
+use trader_strategy::{strategies::candle_pattern::CandlePatternStrategy, Strategy};
 
 // ============================================================================
 // 테스트 헬퍼 함수

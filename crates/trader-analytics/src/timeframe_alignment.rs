@@ -31,8 +31,9 @@
 //! let latest = TimeframeAligner::find_latest_completed(&h1_klines, current_time);
 //! ```
 
-use chrono::{DateTime, Utc};
 use std::collections::HashMap;
+
+use chrono::{DateTime, Utc};
 use trader_core::{Kline, Timeframe};
 
 /// 타임프레임 정렬 유틸리티.
@@ -206,9 +207,10 @@ impl TimeframeAligner {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::TimeZone;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     fn make_kline(open_time: DateTime<Utc>, close_time: DateTime<Utc>) -> Kline {
         Kline {

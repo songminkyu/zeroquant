@@ -13,18 +13,18 @@
 //! - 섹터, 시장 구분 (KOSPI/KOSDAQ/ETF)
 //! - 외국인 소진율
 
+use std::{collections::HashMap, sync::Arc, time::Duration};
+
 use chrono::Utc;
 use sqlx::{PgPool, Postgres, QueryBuilder};
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::Duration;
 use tokio::sync::Semaphore;
 use tracing::{debug, info, warn};
-use uuid::Uuid;
-
 use trader_core::CredentialEncryptor;
-use trader_data::provider::krx_api::{KrxApiClient, KrxDailyTrade};
-use trader_data::provider::naver::{NaverFinanceFetcher, NaverFundamentalData};
+use trader_data::provider::{
+    krx_api::{KrxApiClient, KrxDailyTrade},
+    naver::{NaverFinanceFetcher, NaverFundamentalData},
+};
+use uuid::Uuid;
 
 use super::checkpoint::{self, CheckpointStatus};
 use crate::{config::FundamentalCollectConfig, error::CollectorError, Result};

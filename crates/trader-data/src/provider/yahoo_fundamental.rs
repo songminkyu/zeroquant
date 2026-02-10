@@ -20,8 +20,9 @@
 //! println!("Apple PER: {:?}", data.per);
 //! ```
 
-use rust_decimal::Decimal;
 use std::time::Duration;
+
+use rust_decimal::Decimal;
 use thiserror::Error;
 use tokio::sync::Mutex;
 use tracing::debug;

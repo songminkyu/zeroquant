@@ -228,8 +228,9 @@ impl SuperTrendIndicator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     fn sample_data() -> (Vec<Decimal>, Vec<Decimal>, Vec<Decimal>) {
         let high = vec![

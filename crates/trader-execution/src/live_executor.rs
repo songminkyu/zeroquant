@@ -10,22 +10,24 @@
 //! - **position_id/group_id 지원**: 스프레드/그리드 전략의 분할 매매 구조 완전 지원
 //! - **브라켓 주문**: SL/TP 주문을 자동으로 생성하여 거래소에 제출
 
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use std::collections::HashMap;
-use std::sync::Arc;
 use tracing::{debug, info, warn};
-
 use trader_core::{
     OrderExecutionProvider, OrderRequest, OrderType, Side, Signal, SignalType, TimeInForce,
 };
 
-use crate::executor::{BracketOrderManager, ConversionConfig};
-use crate::signal_processor::{
-    apply_slippage, build_add_trade, build_entry_trade, build_exit_trade, calculate_position_size,
-    calculate_realized_pnl, determine_close_quantity, update_position_average, validate_funds,
-    ProcessorConfig, ProcessorPosition, SignalProcessor, SignalProcessorError, TradeResult,
+use crate::{
+    executor::{BracketOrderManager, ConversionConfig},
+    signal_processor::{
+        apply_slippage, build_add_trade, build_entry_trade, build_exit_trade,
+        calculate_position_size, calculate_realized_pnl, determine_close_quantity,
+        update_position_average, validate_funds, ProcessorConfig, ProcessorPosition,
+        SignalProcessor, SignalProcessorError, TradeResult,
+    },
 };
 
 /// 실거래 실행기.
@@ -734,9 +736,10 @@ impl SignalProcessor for LiveExecutor {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
     use trader_core::{OrderResponse, ProviderError};
+
+    use super::*;
 
     /// 테스트용 Mock 주문 제공자.
     struct MockOrderProvider {

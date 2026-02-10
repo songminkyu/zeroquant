@@ -3,11 +3,11 @@
 //! 백테스트와 페이퍼 트레이딩에서 사용하는 가상 체결 실행기입니다.
 //! SignalProcessor trait을 구현하여 실거래와 동일한 인터페이스를 제공합니다.
 
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use std::collections::HashMap;
-
 use trader_core::{Side, Signal, SignalType};
 
 use crate::signal_processor::{
@@ -537,8 +537,9 @@ impl SignalProcessor for SimulatedExecutor {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     fn create_test_signal(ticker: &str, side: Side, signal_type: SignalType) -> Signal {
         Signal::new("test_strategy", ticker.to_string(), side, signal_type)

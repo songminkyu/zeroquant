@@ -3,14 +3,14 @@
 //! 코스피/코스닥 레버리지와 인버스 ETF를 조합한 양방향 전략 테스트.
 //! OBV, MA, RSI 지표를 활용한 추세 판단 로직 검증.
 
+use std::sync::Arc;
+
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use trader_core::{Kline, MarketData, Position, Side, StrategyContext, Timeframe};
-use trader_strategy::strategies::momentum_surge::MomentumSurgeStrategy;
-use trader_strategy::Strategy;
+use trader_strategy::{strategies::momentum_surge::MomentumSurgeStrategy, Strategy};
 
 // ============================================================================
 // 테스트 헬퍼 함수

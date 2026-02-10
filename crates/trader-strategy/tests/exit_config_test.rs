@@ -6,8 +6,9 @@
 //! 3. 하위 호환 헬퍼 (stop_loss(), take_profit(), trailing_stop())
 //! 4. Signal 인리치먼트 (SL/TP 가격 계산, metadata, Long/Short, 기존값 보존)
 
-use rust_decimal_macros::dec;
 use std::collections::HashMap;
+
+use rust_decimal_macros::dec;
 use trader_core::{Side, Signal, SignalType};
 use trader_strategy::strategies::common::{
     DailyLossLimitConfig, ExitConfig, ProfitLockConfig, StepLevel, StopLossConfig, StopLossMode,

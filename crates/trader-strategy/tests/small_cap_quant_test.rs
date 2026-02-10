@@ -7,8 +7,7 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
 use trader_core::{Kline, MarketData, Position, Side, Timeframe};
-use trader_strategy::strategies::small_cap_quant::SmallCapQuantStrategy;
-use trader_strategy::Strategy;
+use trader_strategy::{strategies::small_cap_quant::SmallCapQuantStrategy, Strategy};
 
 // ============================================================================
 // 테스트 헬퍼 함수

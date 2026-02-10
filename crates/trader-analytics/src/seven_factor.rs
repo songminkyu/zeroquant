@@ -12,10 +12,11 @@
 //! 6. **NORM_GROWTH** - 성장성 (매출/이익 성장률)
 //! 7. **NORM_SENTIMENT** - 시장 심리 (52주 위치, 최근 추세)
 
+use std::collections::HashMap;
+
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 // ================================================================================================
 // Types

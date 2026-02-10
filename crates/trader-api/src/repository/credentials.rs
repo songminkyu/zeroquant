@@ -7,23 +7,23 @@
 //! - OAuth 토큰은 DB에 캐싱하여 rate limit 대응 (1분당 1회 제한)
 //! - **거래소 중립**: 특정 거래소에 의존하지 않음
 
-use super::kis_token::KisTokenRepository;
+use std::{collections::HashMap, sync::Arc};
+
 use rust_decimal::Decimal;
 use sqlx::PgPool;
-use std::collections::HashMap;
-use std::sync::Arc;
 use tracing::{debug, info, warn};
-use trader_core::CredentialEncryptor;
-use trader_core::{ExchangeProvider, MarketDataProvider};
-use trader_exchange::connector::kis::{KisAccountType, KisClient, KisConfig, KisOAuth};
-use trader_exchange::provider::{
-    BithumbProvider, DbInvestmentProvider, KisProvider, LsSecProvider, MockConfig,
-    MockExchangeProvider, UpbitProvider,
-};
+use trader_core::{CredentialEncryptor, ExchangeProvider, MarketDataProvider};
 use trader_exchange::{
+    connector::kis::{KisAccountType, KisClient, KisConfig, KisOAuth},
+    provider::{
+        BithumbProvider, DbInvestmentProvider, KisProvider, LsSecProvider, MockConfig,
+        MockExchangeProvider, UpbitProvider,
+    },
     BithumbClient, BithumbConfig, DbInvestmentClient, DbInvestmentConfig, LsSecClient, LsSecConfig,
     UpbitClient, UpbitConfig,
 };
+
+use super::kis_token::KisTokenRepository;
 
 /// KIS credential 조회 결과 타입 (복잡한 타입 alias)
 type KisCredentialRow = (Vec<u8>, Vec<u8>, bool, Option<serde_json::Value>);

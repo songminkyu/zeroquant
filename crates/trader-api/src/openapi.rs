@@ -19,23 +19,20 @@
 //! - 또는 `#[schema(value_type = Object)]` 사용하여 JSON 객체로 처리
 
 use axum::Router;
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
-
+// trader-analytics ML 타입
+use trader_analytics::ml::{CandlestickPatternInfo, ChartPatternInfo, PatternDetectionResult};
 // trader-core 도메인 타입 (ToSchema 지원)
 use trader_core::types::{MarketType, Symbol};
 use trader_core::{OrderStatusType, OrderType, Side, SignalIndicators, TimeInForce};
-
-// trader-analytics ML 타입
-use trader_analytics::ml::{CandlestickPatternInfo, ChartPatternInfo, PatternDetectionResult};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 // ==================== 각 모듈에서 스키마 Import ====================
-
 use crate::error::ApiErrorResponse;
-use crate::repository::signal_performance::{
-    SignalPerformanceResponse, SignalReturnPoint, SignalSymbolStats,
+use crate::repository::{
+    signal_performance::{SignalPerformanceResponse, SignalReturnPoint, SignalSymbolStats},
+    RankedSymbol, SevenFactorData, SevenFactorResponse,
 };
-use crate::repository::{RankedSymbol, SevenFactorData, SevenFactorResponse};
 use crate::routes::{
     // Alert History 모듈
     alert_history::FrontendAlertHistoryResponse,

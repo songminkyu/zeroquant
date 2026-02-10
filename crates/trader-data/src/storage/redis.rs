@@ -3,11 +3,12 @@
 //! 자주 접근하는 시장 데이터에 대한 cache 레이어를 제공하여
 //! 데이터베이스 부하를 줄이고 응답 시간을 개선합니다.
 
-use crate::error::{DataError, Result};
 use redis::{aio::MultiplexedConnection, AsyncCommands, Client};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tracing::{info, instrument, warn};
 use trader_core::{Kline, OrderBook, Ticker, Timeframe};
+
+use crate::error::{DataError, Result};
 
 /// Redis 설정.
 #[derive(Debug, Clone, Deserialize)]

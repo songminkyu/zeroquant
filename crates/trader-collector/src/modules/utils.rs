@@ -4,8 +4,7 @@
 
 use rust_decimal::Decimal;
 use trader_analytics::{indicators::TtmSqueezeParams, IndicatorEngine};
-use trader_core::types::MarketType;
-use trader_core::Kline;
+use trader_core::{types::MarketType, Kline};
 
 /// CamelCase 문자열을 SCREAMING_SNAKE_CASE로 변환.
 ///

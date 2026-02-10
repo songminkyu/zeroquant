@@ -3,9 +3,10 @@
 //! 서버 상태 확인을 위한 헬스 체크 엔드포인트를 제공합니다.
 //! 로드밸런서나 오케스트레이션 시스템(Kubernetes 등)에서 사용됩니다.
 
+use std::sync::Arc;
+
 use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use utoipa::ToSchema;
 
 use crate::state::AppState;
@@ -184,12 +185,13 @@ pub fn health_router() -> Router<Arc<AppState>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axum::{
         body::Body,
         http::{Request, StatusCode},
     };
     use tower::ServiceExt;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_health_check_returns_ok() {

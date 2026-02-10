@@ -2,15 +2,18 @@
 //!
 //! 가격대를 여러 구간으로 나누어 구간 변동 시 매매하는 전략 테스트
 
+use std::sync::Arc;
+
 use chrono::Utc;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use trader_core::{Kline, MarketData, Position, Side, StrategyContext, Timeframe};
-use trader_strategy::strategies::range_trading::{RangeTradingConfig, RangeTradingStrategy};
-use trader_strategy::Strategy;
+use trader_strategy::{
+    strategies::range_trading::{RangeTradingConfig, RangeTradingStrategy},
+    Strategy,
+};
 use uuid::Uuid;
 
 // ============================================================================

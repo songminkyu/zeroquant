@@ -2,8 +2,9 @@
 //!
 //! 모든 HTTP 요청에 대해 메트릭을 수집합니다.
 
-use axum::{extract::Request, middleware::Next, response::Response};
 use std::time::Instant;
+
+use axum::{extract::Request, middleware::Next, response::Response};
 
 use crate::metrics::{
     normalize_path, record_http_duration, record_http_request, record_http_response,
@@ -41,7 +42,6 @@ pub async fn metrics_layer(request: Request, next: Next) -> Response {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axum::{
         body::Body,
         http::{Method, Request, StatusCode},
@@ -50,6 +50,8 @@ mod tests {
         Router,
     };
     use tower::ServiceExt;
+
+    use super::*;
 
     async fn test_handler() -> &'static str {
         "OK"

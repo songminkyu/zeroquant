@@ -384,8 +384,9 @@ impl MomentumCalculator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     fn sample_prices() -> Vec<Decimal> {
         vec![

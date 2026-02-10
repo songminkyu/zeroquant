@@ -28,11 +28,11 @@
 //! println!("샤프 비율: {}", metrics.sharpe_ratio);
 //! ```
 
-use chrono::{DateTime, Duration, Utc};
-use rust_decimal::prelude::*;
-use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
+
+use chrono::{DateTime, Duration, Utc};
+use rust_decimal::{prelude::*, Decimal};
+use serde::{Deserialize, Serialize};
 use trader_core::{net_pnl, realized_pnl, Side, TradeInfo, TradeStatistics};
 use uuid::Uuid;
 
@@ -1091,8 +1091,9 @@ impl RollingMetrics {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     /// 테스트용 라운드트립 거래 데이터 생성
     fn create_test_round_trips() -> Vec<RoundTrip> {

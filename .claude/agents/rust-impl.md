@@ -1,6 +1,6 @@
 ---
 name: rust-impl
-description: Rust 코드 구현 및 리팩토링 전문가. 새 기능 구현, 버그 수정, 코드 리팩토링 시 사용. 프로젝트의 Decimal 필수, unwrap 금지, 거래소 중립 규칙을 자동 적용합니다. Use proactively for any Rust implementation task.
+description: Rust 코드 구현 전문가. 새 기능 구현, 버그 수정 시 사용. 프로젝트의 Decimal 필수, unwrap 금지, 거래소 중립 규칙을 자동 적용합니다. Use proactively for any Rust implementation task.
 model: sonnet
 tools: Read, Edit, Write, Grep, Glob, Bash
 permissionMode: acceptEdits

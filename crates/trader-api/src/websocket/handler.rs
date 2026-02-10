@@ -2,8 +2,7 @@
 //!
 //! Axum WebSocket 엔드포인트 및 메시지 처리.
 
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     extract::{
@@ -20,12 +19,16 @@ use tokio::sync::{broadcast, RwLock};
 use tracing::{debug, info, warn};
 use uuid::Uuid;
 
-use super::messages::{ClientMessage, ServerMessage};
-use super::subscriptions::SharedSubscriptionManager;
-use crate::auth::{decode_token, Claims};
-use crate::metrics::{decrement_websocket_connections, increment_websocket_connections};
-use crate::services::MarketStreamHandle;
-use crate::state::AppState;
+use super::{
+    messages::{ClientMessage, ServerMessage},
+    subscriptions::SharedSubscriptionManager,
+};
+use crate::{
+    auth::{decode_token, Claims},
+    metrics::{decrement_websocket_connections, increment_websocket_connections},
+    services::MarketStreamHandle,
+    state::AppState,
+};
 
 /// MarketStream 핸들 맵 타입 (복잡한 타입 alias)
 type MarketStreamMap = HashMap<Uuid, Arc<MarketStreamHandle>>;
@@ -340,8 +343,10 @@ async fn forward_subscribe_to_exchange_streams(
 
 #[cfg(test)]
 mod tests {
-    use super::super::subscriptions::{create_subscription_manager, Subscription};
-    use super::*;
+    use super::{
+        super::subscriptions::{create_subscription_manager, Subscription},
+        *,
+    };
 
     #[test]
     fn test_ws_state_creation() {

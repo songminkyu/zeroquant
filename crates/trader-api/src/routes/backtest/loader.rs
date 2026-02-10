@@ -2,11 +2,11 @@
 //!
 //! DB에서 캔들 데이터를 로드하거나 샘플 데이터를 생성하는 함수를 제공합니다.
 
+use std::collections::{HashMap, HashSet};
+
 use chrono::{NaiveDate, TimeZone, Utc};
 use rust_decimal::Decimal;
-use std::collections::{HashMap, HashSet};
 use tracing::{debug, warn};
-
 use trader_core::{Kline, MarketType, Symbol, Timeframe};
 use trader_data::cache::CachedHistoricalDataProvider;
 

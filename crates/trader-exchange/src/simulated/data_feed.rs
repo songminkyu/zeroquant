@@ -4,12 +4,15 @@
 
 #![allow(dead_code)] // 테스트/디버깅용 유틸리티 함수
 
+use std::{
+    collections::{BTreeMap, HashMap},
+    path::Path,
+};
+
 use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap};
-use std::path::Path;
 use trader_core::{Kline, Ticker, Timeframe};
 
 use crate::ExchangeError;

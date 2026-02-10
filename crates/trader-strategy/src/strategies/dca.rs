@@ -23,21 +23,27 @@
 //! └── DcaVariant::InfinityBot → 라운드별 물타기/익절
 //! ```
 
-use crate::strategies::common::{adjust_strength_by_score, ExitConfig};
-use crate::Strategy;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
-use trader_core::domain::{MarketRegime, RouteState, StrategyContext};
-use trader_core::types::Timeframe;
-use trader_core::{Kline, MarketData, MarketDataType, Order, Position, Side, Signal, SignalType};
+use trader_core::{
+    domain::{MarketRegime, RouteState, StrategyContext},
+    types::Timeframe,
+    Kline, MarketData, MarketDataType, Order, Position, Side, Signal, SignalType,
+};
 use trader_strategy_macro::StrategyConfig;
+
+use crate::{
+    strategies::common::{adjust_strength_by_score, ExitConfig},
+    Strategy,
+};
 
 // ================================================================================================
 // 전략 변형
@@ -1179,9 +1185,9 @@ impl DcaStrategy {
     }
 
     fn is_above_ma(&self, price: Decimal) -> bool {
-        // MA 계산 불가 시 true 반환 (데이터 없으면 진입 허용)
-        // InfinityBot은 DCA 전략이므로 기본적으로 진입을 허용해야 함
-        self.calculate_ma().map(|ma| price > ma).unwrap_or(true)
+        // MA 계산 불가 시 false 반환 (워밍업 기간 중 진입 금지)
+        // MA 데이터가 충분할 때만 진입 조건 판단
+        self.calculate_ma().map(|ma| price > ma).unwrap_or(false)
     }
 
     fn has_positive_momentum(&self) -> bool {

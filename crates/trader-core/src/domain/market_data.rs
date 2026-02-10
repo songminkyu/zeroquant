@@ -7,11 +7,14 @@
 //! - `TradeTick` - 체결 틱 데이터
 //! - `MarketData` - 통합 시장 데이터
 
-use crate::domain::order::Side;
-use crate::types::{Price, Quantity, Timeframe};
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    domain::order::Side,
+    types::{Price, Quantity, Timeframe},
+};
 
 /// OHLCV 캔들스틱 데이터.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -316,8 +319,9 @@ impl MarketData {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_kline() {

@@ -2,18 +2,19 @@
 //!
 //! 전략 설정 UI를 자동 생성하기 위한 스키마 엔드포인트를 제공합니다.
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse, Json},
 };
 use serde_json::json;
-use std::sync::Arc;
 use trader_core::FragmentCategory;
 use trader_strategy::{FragmentRegistry, SchemaComposer, StrategyRegistry};
+use utoipa;
 
 use crate::{error::ApiErrorResponse, state::AppState};
-use utoipa;
 
 /// GET /api/v1/strategies/meta
 ///

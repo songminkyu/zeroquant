@@ -9,7 +9,6 @@ use thiserror::Error;
 use trader_core::{Kline, TriggerResult, TriggerType};
 
 use crate::indicators::{IndicatorEngine, IndicatorError};
-
 #[cfg(feature = "ml")]
 use crate::ml::pattern::{CandlestickPatternType, PatternRecognizer};
 
@@ -288,10 +287,11 @@ impl Default for TriggerCalculator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::{TimeZone, Utc};
     use rust_decimal_macros::dec;
     use trader_core::Timeframe;
+
+    use super::*;
 
     fn create_test_kline(
         open: Decimal,

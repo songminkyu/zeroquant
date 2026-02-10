@@ -45,6 +45,7 @@
       "Bash(netstat *)",
       "Bash(tasklist *)",
       "Bash(powershell.exe -ExecutionPolicy Bypass -File *)",
+      "Bash(Stop-Process *)",
       "WebFetch(domain:*)",
       "WebSearch",
       "mcp__context7__*",
@@ -98,7 +99,7 @@
           {
             "type": "command",
             "command": "powershell.exe -ExecutionPolicy Bypass -File .claude/hooks/pre-commit-check.ps1",
-            "timeout": 120000
+            "timeout": 600000
           }
         ]
       },

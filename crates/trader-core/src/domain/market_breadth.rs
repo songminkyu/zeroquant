@@ -2,9 +2,10 @@
 //!
 //! 20일선 상회 종목 비율로 시장 전체 건강 상태를 측정합니다.
 
+use std::fmt;
+
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 /// 시장 온도 (Market Temperature).
 ///
@@ -223,8 +224,9 @@ impl Default for MarketBreadth {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_market_temperature_from_ratio() {

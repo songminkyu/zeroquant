@@ -6,11 +6,11 @@
 //! - 동적 조정이 가능한 추적 손절매
 //! - 변동성 조정 리스크 관리를 위한 ATR 기반 스탑
 
-use crate::config::RiskConfig;
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::{Deserialize, Serialize};
 use trader_core::{OrderRequest, OrderType, Position, Side, TimeInForce};
+
+use crate::config::RiskConfig;
 
 /// 정수 연산을 사용하여 가격에 백분율 조정을 적용.
 /// 예시: apply_pct(50000, -2.0) = 49000 (2% 감소)
@@ -482,9 +482,10 @@ impl StopOrderGenerator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
     use trader_core::Symbol;
+
+    use super::*;
 
     fn create_test_position(side: Side, quantity: Decimal, entry_price: Decimal) -> Position {
         let symbol = "BTC/USDT".to_string();

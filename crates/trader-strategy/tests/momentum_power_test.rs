@@ -5,17 +5,18 @@
 //! 2. 세 가지 모드 (Attack/Safe/Crisis)
 //! 3. 리밸런싱 주기 (30일)
 
+use std::sync::Arc;
+
 use chrono::{TimeZone, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use trader_core::{Kline, MarketData, MarketDataType, Position, Side, StrategyContext, Timeframe};
-use trader_strategy::strategies::momentum_power::{
-    MomentumPowerConfig, MomentumPowerMarket, MomentumPowerStrategy,
+use trader_strategy::{
+    strategies::momentum_power::{MomentumPowerConfig, MomentumPowerMarket, MomentumPowerStrategy},
+    Strategy,
 };
-use trader_strategy::Strategy;
 
 // ============================================================================
 // 헬퍼 함수

@@ -1,9 +1,9 @@
 //! Strategy trait 정의.
 
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use serde_json::Value;
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use trader_core::{
     domain::MultiTimeframeConfig, Kline, MarketData, Order, Position, Signal, StrategyContext,

@@ -27,11 +27,12 @@
 //! let chart_patterns = recognizer.detect_chart_patterns(&klines);
 //! ```
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use trader_core::Kline;
 
 // ==================== 캔들스틱 패턴 타입 ====================
@@ -1710,10 +1711,11 @@ impl PatternRecognizer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::TimeZone;
     use rust_decimal_macros::dec;
     use trader_core::Timeframe;
+
+    use super::*;
 
     fn create_test_kline(
         open: Decimal,

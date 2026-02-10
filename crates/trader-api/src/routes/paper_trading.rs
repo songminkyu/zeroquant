@@ -10,6 +10,8 @@
 //! - `GET /api/v1/paper-trading/accounts/:id/executions` - 체결 내역 조회
 //! - `POST /api/v1/paper-trading/accounts/:id/reset` - 계정 초기화
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -19,13 +21,12 @@ use axum::{
 };
 use rust_decimal::Decimal;
 use serde::Serialize;
-use std::sync::Arc;
+use trader_exchange::provider::{MockConfig, MockExchangeProvider};
 use ts_rs::TS;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::state::AppState;
-use trader_exchange::provider::{MockConfig, MockExchangeProvider};
 
 /// Mock 프로바이더의 latest_tickers 캐시에서 실시간 가격을 조회합니다.
 ///

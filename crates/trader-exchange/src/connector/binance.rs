@@ -5,21 +5,27 @@
 
 #![allow(dead_code)] // API 응답 필드 전체 매핑 (일부만 사용)
 
-use crate::traits::{AccountInfo, Balance, ExchangeResult};
-use crate::ExchangeError;
+use std::{
+    fmt,
+    sync::Arc,
+    time::{SystemTime, UNIX_EPOCH},
+};
+
 use chrono::{DateTime, Utc};
 use hmac::{Hmac, Mac};
 use reqwest::Client;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use sha2::Sha256;
-use std::fmt;
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::{debug, error, info, warn};
 use trader_core::{
     Kline, MarketType, OrderBook, OrderBookLevel, OrderRequest, OrderStatus, OrderType, Position,
     RoundMethod, Side, Symbol, TickSizeProvider, Ticker, Timeframe, TradeTick,
+};
+
+use crate::{
+    traits::{AccountInfo, Balance, ExchangeResult},
+    ExchangeError,
 };
 
 type HmacSha256 = Hmac<Sha256>;

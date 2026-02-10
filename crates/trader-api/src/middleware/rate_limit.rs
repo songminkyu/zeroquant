@@ -4,6 +4,13 @@
 
 #![allow(dead_code)] // Rate limiting 레이어는 향후 프로덕션 배포 시 활성화 예정
 
+use std::{
+    collections::HashMap,
+    net::IpAddr,
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
 use axum::{
     extract::Request,
     http::{HeaderValue, StatusCode},
@@ -11,10 +18,6 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use metrics::counter;
-use std::collections::HashMap;
-use std::net::IpAddr;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 
 /// Rate Limiter 설정.

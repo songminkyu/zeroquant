@@ -3,21 +3,24 @@
 //! 전략이 거래소 정보와 현재 포지션 상태를 실시간으로 조회하여
 //! 의사결정에 활용할 수 있도록 합니다.
 
+use std::collections::{HashMap, HashSet};
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-
-use super::analytics_provider::{
-    GlobalScoreResult, MacroEnvironment, MarketBreadth, MarketRegime, RouteState, ScreeningResult,
-    StructuralFeatures,
-};
-use super::market_data::Kline;
-use super::order::{OrderStatusType, Side};
-use super::signal::{Signal, SignalType};
-use super::trigger::TriggerResult;
-use crate::Timeframe;
 use thiserror::Error;
+
+use super::{
+    analytics_provider::{
+        GlobalScoreResult, MacroEnvironment, MarketBreadth, MarketRegime, RouteState,
+        ScreeningResult, StructuralFeatures,
+    },
+    market_data::Kline,
+    order::{OrderStatusType, Side},
+    signal::{Signal, SignalType},
+    trigger::TriggerResult,
+};
+use crate::Timeframe;
 
 // =============================================================================
 // 충돌 방지 에러 타입
@@ -886,8 +889,9 @@ impl StrategyContext {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_account_info_default() {

@@ -13,6 +13,8 @@
 //! - `PATCH /api/v1/journal/executions/{id}` - 체결 내역 메모/태그 수정
 //! - `GET /api/v1/journal/cost-basis/{symbol}` - FIFO 원가 계산
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -22,7 +24,6 @@ use axum::{
 use chrono::{DateTime, NaiveDate, TimeZone, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use trader_core::Side;
 use ts_rs::TS;
 use utoipa::{IntoParams, ToSchema};
@@ -122,17 +123,20 @@ fn parse_date_flexible(s: &str, field_name: &str) -> Result<NaiveDate, DateParse
     Err(DateParseError::new(field_name, s, FORMATS.to_vec()))
 }
 
-use crate::repository::{
-    build_tracker_from_executions, create_exchange_providers_from_credential,
-    create_provider_for_mock_credential, CostBasisSummary, CumulativePnL,
-    CurrentPosition as RepoCurrentPosition, DailySummary, EquityHistoryRepository,
-    ExecutionCacheRepository, ExecutionFilter, JournalRepository, MonthlyPnL, NewExecution,
-    PnLSummary, PositionRepository, StrategyPerformance, SymbolPnL, TradeExecution,
-    TradeExecutionRecord, TradingInsights, WeeklyPnL, YearlyPnL,
-};
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
 use tracing::{debug, error, warn};
+
+use crate::{
+    repository::{
+        build_tracker_from_executions, create_exchange_providers_from_credential,
+        create_provider_for_mock_credential, CostBasisSummary, CumulativePnL,
+        CurrentPosition as RepoCurrentPosition, DailySummary, EquityHistoryRepository,
+        ExecutionCacheRepository, ExecutionFilter, JournalRepository, MonthlyPnL, NewExecution,
+        PnLSummary, PositionRepository, StrategyPerformance, SymbolPnL, TradeExecution,
+        TradeExecutionRecord, TradingInsights, WeeklyPnL, YearlyPnL,
+    },
+    routes::strategies::ApiError,
+    state::AppState,
+};
 
 // ==================== 요청 타입 ====================
 

@@ -440,10 +440,11 @@ pub trait OrderExecutionProvider: Send + Sync {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::domain::order::Side;
     use rust_decimal::Decimal;
     use rust_decimal_macros::dec;
+
+    use super::*;
+    use crate::domain::order::Side;
 
     /// 테스트용 MockProvider.
     struct MockProvider {

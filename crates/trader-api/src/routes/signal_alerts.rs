@@ -2,6 +2,8 @@
 //!
 //! 알림 규칙 CRUD 엔드포인트를 제공합니다.
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -9,15 +11,16 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::error::{ApiErrorResponse, ApiResult};
-use crate::repository::{
-    CreateAlertRuleRequest, SignalAlertRule, SignalAlertRuleRepository, UpdateAlertRuleRequest,
+use crate::{
+    error::{ApiErrorResponse, ApiResult},
+    repository::{
+        CreateAlertRuleRequest, SignalAlertRule, SignalAlertRuleRepository, UpdateAlertRuleRequest,
+    },
+    AppState,
 };
-use crate::AppState;
 
 // ==================== Request/Response 타입 ====================
 

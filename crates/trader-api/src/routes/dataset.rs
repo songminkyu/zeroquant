@@ -13,6 +13,8 @@
 //! - `DELETE /api/v1/dataset/symbols/:ticker` - 심볼 삭제 + 연쇄 정리
 //! - `POST /api/v1/dataset/symbols/cleanup-orphans` - 고아 데이터 일괄 정리
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -21,15 +23,15 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tracing::{debug, error};
+use trader_core::Timeframe;
 use utoipa::{IntoParams, ToSchema};
 
-use trader_core::Timeframe;
-
-use crate::repository::{CascadeDeleteResult, SymbolInfoRepository, SymbolSearchResult};
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
+use crate::{
+    repository::{CascadeDeleteResult, SymbolInfoRepository, SymbolSearchResult},
+    routes::strategies::ApiError,
+    state::AppState,
+};
 
 // ==================== 응답 타입 ====================
 

@@ -16,23 +16,23 @@
 //! handle.subscribe("AAPL").await?;
 //! ```
 
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
+
 use tokio::sync::RwLock;
 use tracing::{info, warn};
+use trader_core::crypto::CredentialEncryptor;
+use trader_exchange::{
+    connector::kis::{KisConfig, KisOAuth},
+    provider::MockExchangeProvider,
+    stream::{
+        BithumbMarketStream, KisKrMarketStream, KisUsMarketStream, LsSecMarketStream,
+        UnifiedMarketStream, UpbitMarketStream,
+    },
+    traits::MarketStream,
+};
 use uuid::Uuid;
 
-use trader_core::crypto::CredentialEncryptor;
-use trader_exchange::connector::kis::{KisConfig, KisOAuth};
-use trader_exchange::provider::MockExchangeProvider;
-use trader_exchange::stream::{
-    BithumbMarketStream, KisKrMarketStream, KisUsMarketStream, LsSecMarketStream,
-    UnifiedMarketStream, UpbitMarketStream,
-};
-use trader_exchange::traits::MarketStream;
-
-use crate::websocket::aggregator::MarketDataAggregator;
-use crate::websocket::SharedSubscriptionManager;
+use crate::websocket::{aggregator::MarketDataAggregator, SharedSubscriptionManager};
 
 /// 거래소별 WebSocket 스트림 핸들.
 ///

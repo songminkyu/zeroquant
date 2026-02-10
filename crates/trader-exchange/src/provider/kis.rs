@@ -19,25 +19,28 @@
 //!     └── oauth: Arc<KisOAuth> (공유)
 //! ```
 
+use std::{sync::Arc, time::Duration};
+
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
 use rust_decimal::Decimal;
-use std::sync::Arc;
-use std::time::Duration;
 use tracing::{debug, info, warn};
-
-use crate::connector::kis::client::KisClient;
-use crate::connector::kis::client_kr::KrOrderExecution;
-use crate::connector::kis::config::KisAccountType;
-use trader_core::cache::{ExchangeCache, TtlCache};
-use trader_core::domain::{
-    ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse, MarketDataProvider,
-    OrderExecution, OrderExecutionProvider, OrderRequest, OrderResponse, OrderType, PendingOrder,
-    ProviderError, QuoteData, Side, StrategyAccountInfo, StrategyPositionInfo, Trade,
+use trader_core::{
+    cache::{ExchangeCache, TtlCache},
+    domain::{
+        ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse, MarketDataProvider,
+        OrderExecution, OrderExecutionProvider, OrderRequest, OrderResponse, OrderType,
+        PendingOrder, ProviderError, QuoteData, Side, StrategyAccountInfo, StrategyPositionInfo,
+        Trade,
+    },
+    types::{MarketType, Symbol},
+    OrderStatusType,
 };
-use trader_core::types::{MarketType, Symbol};
-use trader_core::OrderStatusType;
 use uuid::Uuid;
+
+use crate::connector::kis::{
+    client::KisClient, client_kr::KrOrderExecution, config::KisAccountType,
+};
 
 // ==================== 캐시 설정 ====================
 

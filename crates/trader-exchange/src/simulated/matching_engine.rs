@@ -1,10 +1,10 @@
 //! 시뮬레이션 거래소를 위한 주문 매칭 엔진.
 
+use std::{collections::HashMap, sync::Arc};
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use std::collections::HashMap;
-use std::sync::Arc;
 use trader_core::{Kline, OrderRequest, OrderType, RoundMethod, Side, TickSizeProvider};
 
 /// 주문 체결 유형.
@@ -478,8 +478,9 @@ impl MatchingEngine {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use trader_core::{TimeInForce, Timeframe};
+
+    use super::*;
 
     fn create_test_symbol() -> String {
         "BTC/USDT".to_string()

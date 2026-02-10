@@ -3,8 +3,9 @@
 //! This module provides handlers for managing SMS notification settings
 //! with AES-256-GCM encryption for sensitive data (account_sid and auth_token).
 
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use std::sync::Arc;
+
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use tracing::{debug, error};
 use uuid::Uuid;
 
@@ -12,8 +13,7 @@ use super::types::{
     log_credential_access, mask_api_key, NotificationSettingsConfig, SaveSmsSettingsRequest,
     SmsSettingsRow,
 };
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
+use crate::{routes::strategies::ApiError, state::AppState};
 
 // =============================================================================
 // SMS Settings Handlers

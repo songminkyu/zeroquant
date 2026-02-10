@@ -10,10 +10,9 @@
 //! - VIX (^VIX)
 //! - NASDAQ (^IXIC)
 
-use std::sync::Arc;
-use std::time::Instant;
-use tracing::{error, info, warn};
+use std::{sync::Arc, time::Instant};
 
+use tracing::{error, info, warn};
 use trader_data::cache::{MacroDataProvider, MacroDataProviderTrait, RedisCache};
 
 use crate::Result;

@@ -1,9 +1,9 @@
 //! 온라인 소스에서 종목 정보 자동 수집 및 DB 동기화.
 
+use std::{fs, path::Path};
+
 use anyhow::{Context, Result};
 use sqlx::PgPool;
-use std::fs;
-use std::path::Path;
 use tracing::{error, info, warn};
 use trader_data::{Database, DatabaseConfig};
 

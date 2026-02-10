@@ -13,6 +13,8 @@
 //! - `GET /api/v1/backtest/results/{id}` - 단일 결과 조회
 //! - `DELETE /api/v1/backtest/results/{id}` - 결과 삭제
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -23,15 +25,16 @@ use axum::{
 use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tracing::{debug, warn};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::repository::{
-    BacktestResultDto, BacktestResultInput, BacktestResultsRepository, ListResultsFilter,
+use crate::{
+    repository::{
+        BacktestResultDto, BacktestResultInput, BacktestResultsRepository, ListResultsFilter,
+    },
+    state::AppState,
 };
-use crate::state::AppState;
 
 // ==================== 요청/응답 타입 (API용) ====================
 

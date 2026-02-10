@@ -9,6 +9,8 @@
 //! - `GET /api/v1/screening/presets/{preset}` - 프리셋 스크리닝 실행
 //! - `GET /api/v1/screening/momentum` - 모멘텀 기반 스크리닝
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -18,19 +20,19 @@ use axum::{
 };
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tracing::{debug, info, warn};
+use trader_core::MacroEnvironment;
+use trader_data::{cache::MacroData, RedisCache};
 use ts_rs::TS;
 use utoipa::ToSchema;
 
-use trader_core::MacroEnvironment;
-use trader_data::cache::MacroData;
-use trader_data::RedisCache;
-
-use crate::repository::{
-    MomentumScreenResult, ScreeningFilter, ScreeningPreset, ScreeningRepository, ScreeningResult,
+use crate::{
+    repository::{
+        MomentumScreenResult, ScreeningFilter, ScreeningPreset, ScreeningRepository,
+        ScreeningResult,
+    },
+    state::AppState,
 };
-use crate::state::AppState;
 
 // ==================== Request/Response 타입 ====================
 

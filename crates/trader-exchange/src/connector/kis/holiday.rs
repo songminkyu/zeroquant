@@ -12,16 +12,16 @@
 #![allow(dead_code)] // 휴장일 캐시 메타데이터
 #![allow(unused_comparisons)] // minute >= 0 비교 (문서화 목적)
 
-use super::auth::KisOAuth;
-use crate::ExchangeError;
+use std::{collections::HashSet, sync::Arc, time::Duration};
+
 use chrono::{Datelike, NaiveDate, Timelike, Utc, Weekday};
 use reqwest::Client;
 use serde::Deserialize;
-use std::collections::HashSet;
-use std::sync::Arc;
-use std::time::Duration;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
+
+use super::auth::KisOAuth;
+use crate::ExchangeError;
 
 /// 휴장일 API용 거래 ID.
 pub mod tr_id {

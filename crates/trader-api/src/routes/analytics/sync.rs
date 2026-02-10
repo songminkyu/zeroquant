@@ -2,20 +2,22 @@
 //!
 //! 거래소 API에서 체결 내역을 가져와 자산 곡선 데이터를 재구성합니다.
 
+use std::sync::Arc;
+
 use axum::{extract::State, response::IntoResponse, Json};
 use chrono::{DateTime, NaiveDate, Utc};
-use std::sync::Arc;
 use tracing::{debug, warn};
+use trader_core::{ExecutionHistoryRequest, Side};
 use uuid::Uuid;
 
-use crate::repository::{
-    create_kis_provider_for_sync, create_provider_for_mock_credential, get_credential_info,
-    EquityHistoryRepository, ExecutionCacheRepository, ExecutionForSync, NewExecution,
-};
-use crate::state::AppState;
-use trader_core::{ExecutionHistoryRequest, Side};
-
 use super::types::{SyncEquityCurveRequest, SyncEquityCurveResponse};
+use crate::{
+    repository::{
+        create_kis_provider_for_sync, create_provider_for_mock_credential, get_credential_info,
+        EquityHistoryRepository, ExecutionCacheRepository, ExecutionForSync, NewExecution,
+    },
+    state::AppState,
+};
 
 /// 거래소 체결 내역으로 자산 곡선 동기화.
 ///

@@ -3,9 +3,9 @@
 //! 각 거래소는 고유한 호가 단위 규칙을 가지고 있으며,
 //! 이 모듈은 가격을 호가 단위에 맞게 라운딩하는 기능을 제공합니다.
 
+use std::{collections::HashMap, sync::Arc};
+
 use rust_decimal::Decimal;
-use std::collections::HashMap;
-use std::sync::Arc;
 
 /// 호가 단위 라운딩 방법
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -202,8 +202,9 @@ impl TickSizeProvider for BinanceTickSize {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_krx_tick_size() {

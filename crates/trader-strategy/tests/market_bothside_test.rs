@@ -3,14 +3,14 @@
 //! 코스피 레버리지/인버스 ETF를 활용한 양방향 투자 전략 테스트.
 //! MA3/6/19/60, 이격도, RSI 지표를 조합한 추세 판단 로직 검증.
 
+use std::sync::Arc;
+
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use trader_core::{Kline, MarketData, Position, Side, StrategyContext, Timeframe};
-use trader_strategy::strategies::market_bothside::MarketBothSideStrategy;
-use trader_strategy::Strategy;
+use trader_strategy::{strategies::market_bothside::MarketBothSideStrategy, Strategy};
 
 // ============================================================================
 // 테스트 헬퍼 함수

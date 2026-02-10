@@ -2,6 +2,8 @@
 //!
 //! 포트폴리오 성과 요약 API를 제공합니다.
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Query, State},
     response::IntoResponse,
@@ -10,14 +12,16 @@ use axum::{
 use chrono::{DateTime, Datelike, Duration, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use std::sync::Arc;
 use tracing::{debug, warn};
 
-use crate::repository::{EquityHistoryRepository, ExecutionCacheRepository};
-use crate::state::AppState;
-
-use super::manager::AnalyticsManager;
-use super::types::{PerformanceResponse, PeriodQuery, PeriodReturnResponse};
+use super::{
+    manager::AnalyticsManager,
+    types::{PerformanceResponse, PeriodQuery, PeriodReturnResponse},
+};
+use crate::{
+    repository::{EquityHistoryRepository, ExecutionCacheRepository},
+    state::AppState,
+};
 
 // ==================== 기간 파싱 유틸리티 ====================
 
@@ -287,9 +291,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_performance_endpoint() {
-        use crate::state::create_test_state;
         use axum::{body::Body, http::Request, routing::get, Router};
         use tower::ServiceExt;
+
+        use crate::state::create_test_state;
 
         let state = Arc::new(create_test_state());
         let app = Router::new()

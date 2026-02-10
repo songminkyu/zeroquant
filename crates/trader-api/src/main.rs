@@ -3,36 +3,32 @@
 //! Axum 기반 REST API 서버를 시작합니다.
 //! 헬스 체크, 전략 관리, 주문/포지션 조회 등의 엔드포인트를 제공합니다.
 
-use std::net::SocketAddr;
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::Duration;
+use std::{net::SocketAddr, path::PathBuf, sync::Arc, time::Duration};
 
 use axum::{http::StatusCode, middleware, routing::get, Router};
 use metrics_exporter_prometheus::PrometheusHandle;
 use tokio_util::sync::CancellationToken;
-use tower_http::cors::{AllowOrigin, CorsLayer};
-use tower_http::services::{ServeDir, ServeFile};
-use tower_http::timeout::TimeoutLayer;
-use tower_http::trace::TraceLayer;
-use tracing::{error, info, warn};
-use trader_data::{Database, DatabaseConfig};
-
-use trader_api::metrics::setup_metrics_recorder;
-use trader_api::middleware::{
-    metrics_layer, rate_limit_middleware, RateLimitConfig, RateLimitState,
+use tower_http::{
+    cors::{AllowOrigin, CorsLayer},
+    services::{ServeDir, ServeFile},
+    timeout::TimeoutLayer,
+    trace::TraceLayer,
 };
-use trader_api::openapi::swagger_ui_router;
-use trader_api::repository::StrategyRepository;
-use trader_api::routes::create_api_router;
-use trader_api::services::ApiBotHandler;
-use trader_api::state::AppState;
-use trader_api::websocket::{
-    create_subscription_manager, standalone_websocket_router, start_simulator, WsState,
+use tracing::{error, info, warn};
+use trader_api::{
+    metrics::setup_metrics_recorder,
+    middleware::{metrics_layer, rate_limit_middleware, RateLimitConfig, RateLimitState},
+    openapi::swagger_ui_router,
+    repository::StrategyRepository,
+    routes::create_api_router,
+    services::ApiBotHandler,
+    state::AppState,
+    websocket::{
+        create_subscription_manager, standalone_websocket_router, start_simulator, WsState,
+    },
 };
 use trader_core::crypto::CredentialEncryptor;
-use trader_data::cache::CachedHistoricalDataProvider;
-use trader_data::RedisCache;
+use trader_data::{cache::CachedHistoricalDataProvider, Database, DatabaseConfig, RedisCache};
 use trader_execution::{ConversionConfig, OrderExecutor};
 use trader_notification::{NotificationManager, TelegramConfig, TelegramSender};
 use trader_risk::{RiskConfig, RiskManager};

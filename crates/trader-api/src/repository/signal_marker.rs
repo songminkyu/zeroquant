@@ -2,17 +2,17 @@
 //!
 //! 백테스트 및 실거래에서 발생한 기술적 신호를 저장하고 조회합니다.
 
+use std::collections::HashMap;
+
+use axum::{http::StatusCode, Json};
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde_json::Value as JsonValue;
 use sqlx::PgPool;
-use std::collections::HashMap;
 use trader_core::{Side, SignalIndicators, SignalMarker, SignalType, Symbol};
 use uuid::Uuid;
 
 use crate::error::{ApiErrorResponse, ApiResult};
-use axum::http::StatusCode;
-use axum::Json;
 
 /// SignalMarker 리포지토리
 pub struct SignalMarkerRepository {
@@ -479,8 +479,9 @@ fn build_jsonb_where_clause(filter: &JsonValue) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_build_jsonb_where_clause() {

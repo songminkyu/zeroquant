@@ -13,12 +13,12 @@
 //!
 //! - 1년 데이터(약 365개 포인트) 처리 시간: < 100ms
 
+use std::collections::BTreeMap;
+
 use chrono::{DateTime, Datelike, Duration, NaiveDate, Utc};
-use rust_decimal::prelude::*;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::*, Decimal};
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 
 /// 시간 프레임 (데이터 집계 단위)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

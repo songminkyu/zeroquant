@@ -49,21 +49,23 @@
 //! });
 //! ```
 
-use crate::strategies::common::adjust_strength_by_score;
-use crate::Strategy;
+use std::{collections::VecDeque, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Timelike, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::VecDeque;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
-use trader_core::domain::{RouteState, StrategyContext};
-use trader_core::{MarketData, MarketDataType, Order, Position, Side, Signal, Timeframe};
+use trader_core::{
+    domain::{RouteState, StrategyContext},
+    MarketData, MarketDataType, Order, Position, Side, Signal, Timeframe,
+};
 use trader_strategy_macro::StrategyConfig;
+
+use crate::{strategies::common::adjust_strength_by_score, Strategy};
 
 /// 일간 트레이딩 전략 변형.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]

@@ -11,17 +11,15 @@
 //! MockPriceGenerator → PriceTick → MockOrderBookGenerator → OrderBook + Ticker
 //! ```
 
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rand::Rng;
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tracing::debug;
-
 use trader_core::{Kline, OrderBook, OrderBookLevel, RoundMethod, TickSizeProvider, Ticker};
 
 // ==================== 설정 타입 ====================
@@ -525,8 +523,9 @@ impl MockOrderBookGenerator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_random_walk_generator() {

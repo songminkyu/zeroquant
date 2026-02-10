@@ -3,9 +3,10 @@
 //! This module provides utility functions for handling common serialization patterns
 //! such as symbol normalization, decimal parsing, and flexible boolean parsing.
 
+use std::str::FromStr;
+
 use rust_decimal::Decimal;
 use serde::{de, Deserialize, Deserializer, Serializer};
-use std::str::FromStr;
 
 /// Deserializes a symbol string with normalization.
 ///
@@ -169,9 +170,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde::Deserialize;
     use serde_json::json;
+
+    use super::*;
 
     #[derive(Debug, Deserialize, PartialEq)]
     struct TestSymbol {

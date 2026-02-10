@@ -6,11 +6,14 @@
 //! - 에러 유형별 집계
 //! - Critical 에러 발생 시 Telegram 알림
 
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::{Arc, RwLock},
+};
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
-use std::sync::{Arc, RwLock};
 use tracing::{error, warn};
 
 /// 에러 심각도 수준.

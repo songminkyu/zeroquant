@@ -6,16 +6,19 @@
 //!
 //! KIS API는 사용량 제한이 있으므로 외부 데이터 소스를 우선적으로 사용합니다.
 
+use std::{
+    fs::File,
+    io::{BufWriter, Write},
+    path::Path,
+    str::FromStr,
+};
+
 use anyhow::{Context, Result};
 use chrono::{NaiveDate, TimeZone, Utc};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 use rust_decimal::Decimal;
 use serde::Deserialize;
-use std::fs::File;
-use std::io::{BufWriter, Write};
-use std::path::Path;
-use std::str::FromStr;
 use tracing::{debug, info, warn};
 
 /// 지원되는 시장 유형
@@ -445,8 +448,9 @@ pub fn print_available_symbols(market: Market) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Datelike;
+
+    use super::*;
 
     #[test]
     fn test_market_parsing() {

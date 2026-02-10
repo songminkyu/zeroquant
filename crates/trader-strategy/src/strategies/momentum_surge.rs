@@ -20,22 +20,26 @@
 //! # 권장 타임프레임
 //! - 일봉 (1D)
 
-use crate::strategies::common::{deserialize_tickers, ExitConfig};
-use crate::Strategy;
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use rust_decimal::prelude::*;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::*, Decimal};
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
-use trader_core::domain::{RouteState, StrategyContext};
-use trader_core::{Kline, MarketData, MarketDataType, Order, Position, Side, Signal, Timeframe};
+use trader_core::{
+    domain::{RouteState, StrategyContext},
+    Kline, MarketData, MarketDataType, Order, Position, Side, Signal, Timeframe,
+};
 use trader_strategy_macro::StrategyConfig;
+
+use crate::{
+    strategies::common::{deserialize_tickers, ExitConfig},
+    Strategy,
+};
 
 /// Momentum Surge 전략 설정.
 #[derive(Debug, Clone, Deserialize, Serialize, StrategyConfig)]

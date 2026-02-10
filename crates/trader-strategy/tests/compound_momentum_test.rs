@@ -6,17 +6,18 @@
 //! 3. PFIX/TMF 대체 로직
 //! 4. 월간 리밸런싱
 
+use std::sync::Arc;
+
 use chrono::{TimeZone, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use trader_core::{Kline, MarketData, MarketDataType, Position, Side, StrategyContext, Timeframe};
-use trader_strategy::strategies::compound_momentum::{
-    CompoundMomentumConfig, CompoundMomentumStrategy, MarketType,
+use trader_strategy::{
+    strategies::compound_momentum::{CompoundMomentumConfig, CompoundMomentumStrategy, MarketType},
+    Strategy,
 };
-use trader_strategy::Strategy;
 
 // ============================================================================
 // 헬퍼 함수

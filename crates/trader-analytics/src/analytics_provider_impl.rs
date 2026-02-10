@@ -9,18 +9,18 @@
 //! - 내부적으로 CachedHistoricalDataProvider를 통해 캔들 데이터를 조회합니다
 //! - 각 calculator를 호출하여 분석 결과를 생성합니다
 
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use async_trait::async_trait;
 use tracing::{debug, warn};
-
-use trader_core::domain::{
-    AnalyticsError, AnalyticsProvider, GlobalScoreResult, MacroEnvironment, MarketBreadth,
-    MarketRegime, RouteState, ScreeningPreset, ScreeningResult, StructuralFeatures,
+use trader_core::{
+    domain::{
+        AnalyticsError, AnalyticsProvider, GlobalScoreResult, MacroEnvironment, MarketBreadth,
+        MarketRegime, RouteState, ScreeningPreset, ScreeningResult, StructuralFeatures,
+    },
+    types::MarketType,
+    Timeframe,
 };
-use trader_core::types::MarketType;
-use trader_core::Timeframe;
 use trader_data::cache::CachedHistoricalDataProvider;
 
 use crate::{

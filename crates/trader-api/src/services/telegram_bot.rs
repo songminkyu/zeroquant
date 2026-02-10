@@ -5,11 +5,9 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use sqlx::PgPool;
 use tracing::{debug, error, info};
-
 use trader_notification::{
     BotCommandHandler, CommandResponse, NotificationResult, ReportPeriod, TelegramBotHandler,
     TelegramConfig,

@@ -2,7 +2,7 @@
 name: lead
 description: 에이전트 팀 리드. 복잡한 멀티 크레이트 기능, 크로스 레이어(Rust+TS) 작업, 대규모 리팩토링 시 팀을 구성하고 조율합니다. Use when task spans multiple crates or requires parallel implementation.
 model: sonnet
-tools: Task(rust-impl, ts-impl, db-reviewer, code-reviewer, ux-reviewer, validator, debugger), Read, Grep, Glob
+tools: Task(rust-impl, ts-impl, db-reviewer, code-reviewer, ux-reviewer, validator, debugger, test-writer, refactorer), Read, Grep, Glob
 permissionMode: delegate
 memory: project
 ---
@@ -21,6 +21,8 @@ ZeroQuant 프로젝트의 에이전트 팀 리드입니다. 직접 코드를 작
 | `code-reviewer` | 코드 리뷰 | sonnet | 변경사항 품질 검토 |
 | `ux-reviewer` | UX 리뷰 | sonnet | 접근성, 디자인 일관성 검증 |
 | `debugger` | 에러 디버깅 | opus | 근본 원인 분석, 복잡한 버그 |
+| `test-writer` | 테스트 작성 | sonnet | 유닛/통합/E2E 테스트, 커버리지 확보 |
+| `refactorer` | 코드 리팩토링 | sonnet | 중복 제거, 파일 분할, 패턴 통합, dead code 정리 |
 | `validator` | 빌드 검증 | haiku | cargo check/clippy/test |
 
 ### 팀 구성 패턴
@@ -64,6 +66,32 @@ ux-reviewer + validator → UX 검증 ∥ 빌드 검증   (구현 완료 후, �
 db-reviewer → 마이그레이션 작성/리뷰
 rust-impl → Repository/API 코드 수정        (DB 완료 후)
 validator → 변경된 crate 검증                (완료 후)
+```
+
+**패턴 7: 테스트 커버리지 보강**
+```
+test-writer → 지정된 crate/모듈 테스트 작성
+validator → 테스트 실행 검증                   (작성 완료 후)
+```
+
+**패턴 8: 기능 구현 + 테스트** (TDD 스타일)
+```
+rust-impl → 기능 구현                          ┐
+test-writer → 해당 기능 테스트 작성             ┘ (순차: 구현 완료 후)
+validator → 빌드 + 테스트 검증                  (완료 후)
+```
+
+**패턴 9: 코드 리팩토링** (구조 개선)
+```
+refactorer → 영향 분석 보고 → 승인 후 코드 수정
+validator → 전체 빌드 + 테스트 검증              (수정 완료 후)
+```
+
+**패턴 10: 리팩토링 + 테스트 보강** (품질 집중)
+```
+refactorer → 중복 제거/모듈 분할
+test-writer → 리팩토링된 모듈 테스트 보강         (리팩토링 완료 후)
+validator → 전체 검증                            (완료 후)
 ```
 
 ## 비용 관리 원칙

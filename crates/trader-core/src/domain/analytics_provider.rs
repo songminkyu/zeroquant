@@ -3,23 +3,20 @@
 //! 이 모듈은 전략에서 분석 결과를 조회하기 위한 추상화 계층을 제공합니다.
 //! 실제 분석 로직(GlobalScorer, RouteStateAnalyzer 등)은 Phase 1에서 구현됩니다.
 
-use crate::types::MarketType;
+use std::{collections::HashMap, error::Error as StdError, fmt};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::error::Error as StdError;
-use std::fmt;
 
-use super::market_data::Kline;
-
-// Re-export RouteState from route_state module for convenience
-pub use super::route_state::RouteState;
 // Re-export MarketRegime, MacroEnvironment, MarketBreadth for convenience
 pub use super::macro_environment::MacroEnvironment;
-pub use super::market_breadth::MarketBreadth;
-pub use super::market_regime::MarketRegime;
+use super::market_data::Kline;
+// Re-export RouteState from route_state module for convenience
+pub use super::route_state::RouteState;
+pub use super::{market_breadth::MarketBreadth, market_regime::MarketRegime};
+use crate::types::MarketType;
 
 // ================================================================================================
 // Error Types

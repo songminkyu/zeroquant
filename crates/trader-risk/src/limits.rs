@@ -12,10 +12,11 @@
 //! - **KST**: 한국 시간 09:00 (장 개시) 기준
 //! - **EST**: 미국 동부 시간 09:30 (장 개시) 기준
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, Timelike, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// 거래 시간대 설정.
 ///
@@ -582,8 +583,9 @@ use rust_decimal::prelude::ToPrimitive;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_daily_loss_tracker_creation() {

@@ -26,26 +26,27 @@
 //! - 091180: TIGER 자동차
 //! - 102960: KODEX 기계장비
 
-use crate::register_strategy;
-use crate::strategies::common::deserialize_tickers;
-use crate::Strategy;
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Timelike, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
-use trader_core::domain::StrategyContext;
 use trader_core::{
-    MarketData, MarketDataType, MarketRegime, Order, Position, RouteState, Side, Signal,
+    domain::StrategyContext, MarketData, MarketDataType, MarketRegime, Order, Position, RouteState,
+    Side, Signal,
 };
 use trader_strategy_macro::StrategyConfig;
 
-use crate::strategies::common::{adjust_strength_by_score, ExitConfig};
+use crate::{
+    register_strategy,
+    strategies::common::{adjust_strength_by_score, deserialize_tickers, ExitConfig},
+    Strategy,
+};
 
 // ============================================================================
 // 상수 정의
@@ -981,8 +982,9 @@ impl Strategy for SectorVbStrategy {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::TimeZone;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_sector_vb_initialization() {

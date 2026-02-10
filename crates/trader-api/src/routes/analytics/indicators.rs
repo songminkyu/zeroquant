@@ -1103,10 +1103,11 @@ pub async fn calculate_indicators(
 pub async fn get_volume_profile(
     Query(query): Query<super::types::VolumeProfileQuery>,
 ) -> impl IntoResponse {
-    use super::types::{PriceLevelResponse, VolumeProfileResponse};
     use rust_decimal::prelude::ToPrimitive;
     use trader_analytics::VolumeProfileCalculator;
     use trader_core::Kline;
+
+    use super::types::{PriceLevelResponse, VolumeProfileResponse};
 
     // OHLCV 데이터 생성 (실제로는 DB에서 조회)
     let days = query.period as i64;
@@ -1201,9 +1202,11 @@ pub async fn get_volume_profile(
 pub async fn get_correlation(
     Query(query): Query<super::types::CorrelationQuery>,
 ) -> impl IntoResponse {
-    use super::types::CorrelationResponse;
     use std::collections::HashMap;
+
     use trader_analytics::correlation::calculate_correlation_matrix;
+
+    use super::types::CorrelationResponse;
 
     // 종목 코드 파싱 (쉼표 구분)
     let symbols: Vec<String> = query

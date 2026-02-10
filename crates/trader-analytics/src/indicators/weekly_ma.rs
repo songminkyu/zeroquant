@@ -294,9 +294,10 @@ pub fn detect_weekly_ma_cross(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::{TimeZone, Weekday};
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     fn create_test_daily_klines() -> Vec<Kline> {
         // 2024년 1월 - 4주 + α (약 22일)

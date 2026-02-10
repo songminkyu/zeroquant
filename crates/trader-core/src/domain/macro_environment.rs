@@ -3,9 +3,10 @@
 //! USD/KRW 환율과 나스닥 지수 모니터링으로 시장 위험도를 평가하고,
 //! 진입 기준(EBS)과 추천 종목 수를 동적으로 조정합니다.
 
+use std::fmt;
+
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 /// 매크로 위험도 수준.
 ///

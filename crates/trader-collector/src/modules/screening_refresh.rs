@@ -3,8 +3,9 @@
 //! `mv_symbol_screening` Materialized View를 갱신하여
 //! 스크리닝 쿼리 성능을 최적화합니다.
 
-use sqlx::PgPool;
 use std::time::Instant;
+
+use sqlx::PgPool;
 use tracing::{debug, info};
 
 use crate::{CollectionStats, CollectorError, Result};

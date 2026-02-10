@@ -2,23 +2,22 @@
 //!
 //! RouteState, MarketRegime, TTM Squeeze 지표를 계산하여 symbol_fundamental 테이블에 저장합니다.
 
+use std::time::Instant;
+
 use chrono::{Duration, Utc};
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder};
-use std::time::Instant;
 use tracing::{debug, info, warn};
-use uuid::Uuid;
-
 use trader_analytics::{indicators::IndicatorEngine, MarketRegimeCalculator, RouteStateCalculator};
 use trader_core::{Kline, Timeframe};
+use uuid::Uuid;
 
-use super::checkpoint::{self, CheckpointStatus};
-use super::utils::{calculate_ttm_squeeze, to_screaming_snake_case};
-use super::watchlist_helper;
-use crate::config::CollectorConfig;
-use crate::error::CollectorError;
-use crate::stats::CollectionStats;
-use crate::Result;
+use super::{
+    checkpoint::{self, CheckpointStatus},
+    utils::{calculate_ttm_squeeze, to_screaming_snake_case},
+    watchlist_helper,
+};
+use crate::{config::CollectorConfig, error::CollectorError, stats::CollectionStats, Result};
 
 /// 지표 동기화 옵션
 #[derive(Debug, Default)]

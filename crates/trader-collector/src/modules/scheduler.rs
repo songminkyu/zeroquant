@@ -2,9 +2,10 @@
 //!
 //! 각 시장의 운영 시간을 고려하여 워크플로우 실행 시점을 결정합니다.
 
+use std::collections::HashSet;
+
 use chrono::{DateTime, Datelike, NaiveDate, NaiveTime, Timelike, Utc, Weekday};
 use chrono_tz::Tz;
-use std::collections::HashSet;
 use tracing::{debug, info};
 
 use crate::config::SchedulingConfig;

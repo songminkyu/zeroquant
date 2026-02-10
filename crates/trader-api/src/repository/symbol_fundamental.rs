@@ -8,9 +8,8 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use tracing::debug;
-use uuid::Uuid;
-
 use trader_data::RedisCache;
+use uuid::Uuid;
 
 /// 펀더멘털 데이터 캐시 TTL (1시간).
 /// 펀더멘털 데이터는 7일마다 갱신되므로 긴 TTL 가능.

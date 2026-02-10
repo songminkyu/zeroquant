@@ -2,10 +2,10 @@
 //!
 //! 이 모듈은 애플리케이션 설정을 정의하고 관리합니다.
 
+use std::{collections::HashMap, path::Path};
+
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::Path;
 
 /// 애플리케이션 설정.
 #[derive(Debug, Clone, Deserialize, Serialize)]

@@ -14,8 +14,7 @@
 //! 모든 모델은 거래소에 독립적으로 동작합니다.
 //! Kline 데이터만으로 슬리피지를 계산할 수 있습니다.
 
-use rust_decimal::prelude::*;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::*, Decimal};
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use trader_core::{Kline, Side};
@@ -256,8 +255,9 @@ pub struct SlippageResult {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_fixed_slippage() {

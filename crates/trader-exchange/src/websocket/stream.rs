@@ -4,23 +4,26 @@
 
 #![allow(dead_code)] // WebSocket 연결 상태 추적 필드
 
-use crate::connector::binance::BinanceConfig;
-use crate::traits::{ExchangeResult, MarketEvent, MarketStream};
-use crate::ExchangeError;
+use std::collections::HashSet;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use futures::{SinkExt, StreamExt};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
-use tokio::net::TcpStream;
-use tokio::sync::mpsc;
+use tokio::{net::TcpStream, sync::mpsc};
 use tokio_tungstenite::{
     connect_async, tungstenite::protocol::Message, MaybeTlsStream, WebSocketStream,
 };
 use tracing::{debug, error, info};
 use trader_core::{
     Kline, MarketType, OrderBook, OrderBookLevel, Side, Symbol, Ticker, Timeframe, TradeTick,
+};
+
+use crate::{
+    connector::binance::BinanceConfig,
+    traits::{ExchangeResult, MarketEvent, MarketStream},
+    ExchangeError,
 };
 
 // ============================================================================

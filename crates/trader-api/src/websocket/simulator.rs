@@ -2,8 +2,7 @@
 //!
 //! 테스트용 모의 시세 데이터를 생성합니다.
 
-use std::collections::HashMap;
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use chrono::Utc;
 use rand::Rng;
@@ -12,8 +11,10 @@ use rust_decimal_macros::dec;
 use tokio::time::interval;
 use tracing::{debug, info};
 
-use super::messages::{ServerMessage, TickerData};
-use super::subscriptions::SharedSubscriptionManager;
+use super::{
+    messages::{ServerMessage, TickerData},
+    subscriptions::SharedSubscriptionManager,
+};
 
 /// 심볼별 가격 정보.
 #[derive(Debug, Clone)]

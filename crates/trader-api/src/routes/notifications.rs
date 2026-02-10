@@ -2,23 +2,24 @@
 //!
 //! 알림 설정 조회 및 테스트 endpoint.
 
+use std::sync::Arc;
+
 use axum::{
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
     Json, Router,
 };
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tracing::{debug, error};
-use utoipa::ToSchema;
-
-use crate::state::AppState;
 use rust_decimal_macros::dec;
+use serde::{Deserialize, Serialize};
+use tracing::{debug, error};
 use trader_notification::{
     Notification, NotificationEvent, NotificationPriority, NotificationSender, TelegramConfig,
     TelegramSender,
 };
+use utoipa::ToSchema;
+
+use crate::state::AppState;
 
 /// 텔레그램 테스트 요청.
 #[derive(Debug, Deserialize, ToSchema)]

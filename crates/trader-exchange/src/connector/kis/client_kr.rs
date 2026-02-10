@@ -14,19 +14,22 @@
 //! - 잔고 조회
 //! - 매수가능금액 조회
 
-use super::auth::KisOAuth;
-use super::config::{KisAccountType, KisEnvironment};
-use super::tr_id;
-use crate::retry::RetryConfig;
-use crate::ExchangeError;
+use std::sync::Arc;
+
 use reqwest::Client;
 use rust_decimal::Decimal;
 use serde::Deserialize;
-use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 use trader_core::{
     ExecutionHistory, ExecutionRecord, OrderStatusType, RoundMethod, Side, TickSizeProvider,
 };
+
+use super::{
+    auth::KisOAuth,
+    config::{KisAccountType, KisEnvironment},
+    tr_id,
+};
+use crate::{retry::RetryConfig, ExchangeError};
 
 /// KIS API Rate Limit 에러 메시지 코드.
 /// KIS는 HTTP 500과 함께 이 코드를 반환합니다.

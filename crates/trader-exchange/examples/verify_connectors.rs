@@ -1,7 +1,9 @@
 use trader_core::domain::ExchangeProvider;
-use trader_exchange::connector::bithumb::{BithumbClient, BithumbConfig};
-use trader_exchange::connector::db_investment::{DbInvestmentClient, DbInvestmentConfig};
-use trader_exchange::connector::upbit::{UpbitClient, UpbitConfig};
+use trader_exchange::connector::{
+    bithumb::{BithumbClient, BithumbConfig},
+    db_investment::{DbInvestmentClient, DbInvestmentConfig},
+    upbit::{UpbitClient, UpbitConfig},
+};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

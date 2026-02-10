@@ -1,10 +1,47 @@
 <#
 .SYNOPSIS
-    위험한 Bash 명령 사전 검증 훅
+    위험한 Bash 명령 사전 검증 + rust-analyzer 좀비 자동 정리 훅
 .DESCRIPTION
-    프로덕션 DB 직접 접근, 민감 정보 노출 등을 차단합니다.
+    1) 프로덕션 DB 직접 접근, 민감 정보 노출 등을 차단합니다.
+    2) 10분 쿨다운으로 rust-analyzer 좀비 프로세스를 자동 정리합니다.
     종료 코드 2 = 차단, 0 = 통과
 #>
+
+# ========== 좀비 rust-analyzer 자동 정리 (10분 쿨다운) ==========
+$stampFile = Join-Path $env:TEMP "ra-cleanup-stamp.txt"
+$cooldownMin = 10
+$shouldClean = $true
+
+if (Test-Path $stampFile) {
+    $lastRun = [datetime]::Parse((Get-Content $stampFile -Raw).Trim())
+    if (((Get-Date) - $lastRun).TotalMinutes -lt $cooldownMin) {
+        $shouldClean = $false
+    }
+}
+
+if ($shouldClean) {
+    $raProcs = Get-Process rust-analyzer -ErrorAction SilentlyContinue | Sort-Object StartTime -Descending
+    if ($raProcs -and $raProcs.Count -gt 2) {
+        $stale = $raProcs | Select-Object -Skip 2
+        $freedMB = 0
+        foreach ($p in $stale) {
+            $freedMB += [math]::Round($p.WorkingSet64 / 1MB)
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+        }
+        if ($freedMB -gt 100) {
+            Write-Host "[Hook] rust-analyzer $($stale.Count)개 정리 (~${freedMB}MB 해제)" -ForegroundColor DarkGray
+        }
+    }
+    # proc-macro-srv도 정리 (2개 초과 시)
+    $pmProcs = Get-Process rust-analyzer-proc-macro-srv -ErrorAction SilentlyContinue | Sort-Object StartTime -Descending
+    if ($pmProcs -and $pmProcs.Count -gt 2) {
+        $pmProcs | Select-Object -Skip 2 | ForEach-Object {
+            Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+        }
+    }
+    Set-Content $stampFile (Get-Date).ToString("o")
+}
+# ================================================================
 
 $toolInput = $env:CLAUDE_TOOL_INPUT | ConvertFrom-Json -ErrorAction SilentlyContinue
 

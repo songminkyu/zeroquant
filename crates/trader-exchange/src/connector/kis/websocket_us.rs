@@ -29,17 +29,17 @@
 //! ws.connect().await?;
 //! ```
 
-use super::auth::KisOAuth;
-use super::tr_id;
-use crate::ExchangeError;
+use std::{sync::Arc, time::Duration};
+
 use futures::{SinkExt, StreamExt};
 use rust_decimal::Decimal;
 use serde::Serialize;
-use std::sync::Arc;
-use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 use tracing::{debug, error, info, warn};
+
+use super::{auth::KisOAuth, tr_id};
+use crate::ExchangeError;
 
 /// 해외 WebSocket 동적 구독/해제 명령.
 ///

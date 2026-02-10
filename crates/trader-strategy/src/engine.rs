@@ -3,12 +3,11 @@
 //! 엔진은 전략 생명주기를 관리하고, 시장 데이터를 전략에 라우팅하며,
 //! 전략으로부터 트레이딩 신호를 수집합니다.
 
-use crate::Strategy;
+use std::{collections::HashMap, sync::Arc};
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
-use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{broadcast, mpsc, RwLock};
 use tracing::{debug, error, info, warn};
@@ -16,6 +15,8 @@ use trader_core::{
     domain::{MarketDataType, SignalConflictError, StrategyContext},
     Kline, MarketData, Order, Position, Signal, SignalType, Timeframe,
 };
+
+use crate::Strategy;
 
 /// Signal 충돌 이벤트.
 ///
@@ -1075,8 +1076,9 @@ pub struct EngineStats {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use async_trait::async_trait;
+
+    use super::*;
 
     /// 간단한 테스트 전략.
     struct TestStrategy {

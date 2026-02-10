@@ -2,6 +2,8 @@
 //!
 //! ML 모델 훈련 시작, 작업 모니터링, 모델 관리 엔드포인트를 제공합니다.
 
+use std::{collections::HashMap, sync::Arc};
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -10,8 +12,6 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;

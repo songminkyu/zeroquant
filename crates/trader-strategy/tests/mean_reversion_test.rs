@@ -7,16 +7,15 @@
 //! Grid Trading, MagicSplit, InfinityBot은 `dca_test.rs`에서 테스트됩니다.
 //! 이들은 스프레드 기반 전략으로 dca.rs로 이동했습니다.
 
+use std::sync::Arc;
+
 use chrono::Utc;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
-use std::sync::Arc;
 use tokio::sync::RwLock;
-use trader_core::types::Timeframe;
-use trader_core::{Kline, MarketData, MarketDataType, StrategyContext, Ticker};
-use trader_strategy::strategies::mean_reversion::MeanReversionStrategy;
-use trader_strategy::Strategy;
+use trader_core::{types::Timeframe, Kline, MarketData, MarketDataType, StrategyContext, Ticker};
+use trader_strategy::{strategies::mean_reversion::MeanReversionStrategy, Strategy};
 
 // ================================================================================================
 // 헬퍼 함수

@@ -8,6 +8,8 @@
 //! - `GET /api/v1/orders/:id` - 특정 주문 상세 조회
 //! - `DELETE /api/v1/orders/:id` - 주문 취소
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -18,15 +20,16 @@ use axum::{
 use chrono::Utc;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use trader_core::{Order, OrderStatusType, OrderType, Side};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::metrics::record_order;
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
-use crate::websocket::{OrderUpdateData, ServerMessage};
-use trader_core::{Order, OrderStatusType, OrderType, Side};
+use crate::{
+    metrics::record_order,
+    routes::strategies::ApiError,
+    state::AppState,
+    websocket::{OrderUpdateData, ServerMessage},
+};
 
 // ==================== 응답 타입 ====================
 
@@ -543,13 +546,14 @@ pub fn orders_router() -> Router<Arc<AppState>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axum::{
         body::Body,
         http::{Request, StatusCode},
         routing::delete,
     };
     use tower::ServiceExt;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_list_orders_empty() {

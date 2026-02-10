@@ -315,10 +315,11 @@ pub fn calculate_volume_profile(klines: &[Kline], num_levels: usize) -> Option<V
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::{TimeZone, Utc};
     use rust_decimal_macros::dec;
     use trader_core::Timeframe;
+
+    use super::*;
 
     fn create_test_klines() -> Vec<Kline> {
         let base_time = Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();

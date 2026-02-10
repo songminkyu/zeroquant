@@ -5,13 +5,14 @@
 //! - `Signal` - 매매 신호 엔티티
 //! - `SignalValidation` - 신호 검증 결과
 
-use crate::domain::{RouteState, Side};
+use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use uuid::Uuid;
+
+use crate::domain::{RouteState, Side};
 
 /// 수행할 액션의 종류를 나타내는 신호 유형.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

@@ -20,18 +20,18 @@
 //! - Mock 거래소: MockExchangeProvider.process_signal() 호출
 //! - 실제 거래소: (향후) KIS/Binance Provider의 주문 API 호출
 
+use std::{collections::HashMap, sync::Arc};
+
 use chrono::Utc;
 use sqlx::PgPool;
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::{mpsc, RwLock};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
+use trader_core::Signal;
+use trader_exchange::provider::MockExchangeProvider;
 use uuid::Uuid;
 
 use crate::repository::create_mock_provider_concrete;
-use trader_core::Signal;
-use trader_exchange::provider::MockExchangeProvider;
 
 /// 거래소별 Provider 캐시.
 ///

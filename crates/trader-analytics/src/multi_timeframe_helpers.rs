@@ -17,9 +17,10 @@
 //! let combined = combine_signals(&signal_scores, &weights);
 //! ```
 
+use std::collections::HashMap;
+
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use std::collections::HashMap;
 use trader_core::{Kline, Timeframe};
 
 /// 추세 방향.

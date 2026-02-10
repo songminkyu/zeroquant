@@ -29,24 +29,33 @@
 //! strategy.initialize(serde_json::to_value(config)?).await?;
 //! ```
 
-use crate::strategies::common::rebalance::{
-    PortfolioPosition, RebalanceCalculator, RebalanceConfig, RebalanceOrderSide, TargetAllocation,
-};
-use crate::strategies::common::{adjust_strength_by_score, ExitConfig};
-use crate::Strategy;
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Datelike, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
-use trader_core::domain::{RouteState, ScreeningResult, StrategyContext};
-use trader_core::{MarketData, Order, Position, Side, Signal, SignalType, Timeframe};
+use trader_core::{
+    domain::{RouteState, ScreeningResult, StrategyContext},
+    MarketData, Order, Position, Side, Signal, SignalType, Timeframe,
+};
 use trader_strategy_macro::StrategyConfig;
+
+use crate::{
+    strategies::common::{
+        adjust_strength_by_score,
+        rebalance::{
+            PortfolioPosition, RebalanceCalculator, RebalanceConfig, RebalanceOrderSide,
+            TargetAllocation,
+        },
+        ExitConfig,
+    },
+    Strategy,
+};
 
 // ============================================================================
 // 전략 변형 (Strategy Variant)

@@ -27,8 +27,7 @@
 //! - 가격 < VWAP: 약세 (매도 우위)
 //! - VWAP 밴드: 지지/저항선으로 활용
 
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::{Deserialize, Serialize};
 
 use super::{IndicatorError, IndicatorResult};
@@ -185,8 +184,9 @@ impl ObvIndicator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     fn sample_data() -> (Vec<Decimal>, Vec<Decimal>) {
         let close = vec![
@@ -540,8 +540,9 @@ impl VwapIndicator {
 
 #[cfg(test)]
 mod vwap_tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     fn sample_ohlcv() -> (Vec<Decimal>, Vec<Decimal>, Vec<Decimal>, Vec<Decimal>) {
         let high = vec![

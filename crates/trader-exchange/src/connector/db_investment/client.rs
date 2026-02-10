@@ -1,4 +1,7 @@
-use std::time::{Duration, Instant};
+use std::{
+    str::FromStr,
+    time::{Duration, Instant},
+};
 
 use async_trait::async_trait;
 use chrono::Utc;
@@ -6,15 +9,14 @@ use reqwest::{Client, Method};
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use serde_json::{json, Value};
-use std::str::FromStr;
 use tokio::sync::Mutex;
-
-use trader_core::domain::{
-    ExchangeProvider, MarketDataProvider, OrderResponse, OrderStatusType, PendingOrder, Side,
-    StrategyAccountInfo, StrategyPositionInfo,
+use trader_core::{
+    domain::{
+        ExchangeProvider, MarketDataProvider, OrderResponse, OrderStatusType, PendingOrder, Side,
+        StrategyAccountInfo, StrategyPositionInfo,
+    },
+    ProviderError, QuoteData,
 };
-use trader_core::ProviderError;
-use trader_core::QuoteData;
 
 // ============================================================================
 // 설정

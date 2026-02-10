@@ -2,9 +2,7 @@
 //!
 //! 정규식 기반으로 SQL 문장을 파싱하고 의존성 그래프를 생성합니다.
 
-use std::collections::HashSet;
-use std::fs;
-use std::path::Path;
+use std::{collections::HashSet, fs, path::Path};
 
 use super::models::*;
 

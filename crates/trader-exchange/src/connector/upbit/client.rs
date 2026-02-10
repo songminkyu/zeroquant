@@ -1,18 +1,19 @@
+use std::str::FromStr;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use reqwest::{Client, Method};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
-use uuid::Uuid;
-
-use trader_core::domain::{
-    ExchangeProvider, MarketDataProvider, OrderStatusType, PendingOrder, Side, StrategyAccountInfo,
-    StrategyPositionInfo,
+use trader_core::{
+    domain::{
+        ExchangeProvider, MarketDataProvider, OrderStatusType, PendingOrder, Side,
+        StrategyAccountInfo, StrategyPositionInfo,
+    },
+    ProviderError, QuoteData,
 };
-use trader_core::ProviderError;
-use trader_core::QuoteData;
+use uuid::Uuid;
 
 // ============================================================================
 // 설정

@@ -19,13 +19,13 @@
 //! let klines = cache.get_klines("AAPL", Timeframe::D1, 100).await?;
 //! ```
 
-use crate::error::{DataError, Result};
 use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
-use sqlx::postgres::PgPool;
-use sqlx::FromRow;
+use sqlx::{postgres::PgPool, FromRow};
 use tracing::{debug, info, instrument, warn};
 use trader_core::{Kline, Timeframe};
+
+use crate::error::{DataError, Result};
 
 /// OHLCV 캔들 데이터베이스 레코드.
 #[derive(Debug, Clone, FromRow)]

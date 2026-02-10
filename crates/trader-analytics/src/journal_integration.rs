@@ -6,9 +6,9 @@
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use trader_core::{Side, TradeInfo};
 
 use crate::performance::RoundTrip;
-use trader_core::{Side, TradeInfo};
 
 /// 매매일지 체결 내역 입력 (trader-api의 TradeExecutionInput 간소화 버전).
 ///
@@ -195,9 +195,10 @@ pub fn export_backtest_trades(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_export_single_roundtrip() {

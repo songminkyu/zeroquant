@@ -9,9 +9,10 @@ pub mod fundamental;
 pub mod historical;
 pub mod macro_data;
 
-pub use crate::storage::redis::{CacheStats, MetricsCache, RedisCache, RedisConfig};
 pub use fundamental::{FetchResult, FundamentalData, FundamentalFetcher};
 pub use historical::{CacheStats as HistoricalCacheStats, CachedHistoricalDataProvider};
 pub use macro_data::{
     CachedMacroDataProvider, MacroData, MacroDataError, MacroDataProvider, MacroDataProviderTrait,
 };
+
+pub use crate::storage::redis::{CacheStats, MetricsCache, RedisCache, RedisConfig};

@@ -2,9 +2,9 @@
 //!
 //! 지원하는 모든 전략을 enum으로 정의하여 타입 안전성을 보장합니다.
 
+use std::{fmt, str::FromStr};
+
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::str::FromStr;
 
 /// 지원하는 전략 타입.
 ///

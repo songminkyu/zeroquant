@@ -44,16 +44,20 @@
 //!     └─────────────────────┘
 //! ```
 
-use crate::error::{DataError, Result};
-use crate::provider::SymbolResolver;
-use crate::storage::ohlcv::{timeframe_to_string, OhlcvCache};
+use std::sync::Arc;
+
 use chrono::{DateTime, Datelike, Duration, NaiveDate, TimeZone, Utc};
 use rust_decimal::Decimal;
 use sqlx::postgres::PgPool;
-use std::sync::Arc;
 use time::OffsetDateTime;
 use tracing::{debug, info, instrument, warn};
 use trader_core::{Kline, Timeframe};
+
+use crate::{
+    error::{DataError, Result},
+    provider::SymbolResolver,
+    storage::ohlcv::{timeframe_to_string, OhlcvCache},
+};
 
 // =============================================================================
 // 상장폐지 감지 상수 및 함수

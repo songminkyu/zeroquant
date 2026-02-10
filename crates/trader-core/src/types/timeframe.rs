@@ -2,10 +2,9 @@
 //!
 //! 이 모듈은 다양한 시간 간격을 나타내는 타임프레임 타입을 정의합니다.
 
+use std::{fmt, str::FromStr, time::Duration};
+
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::str::FromStr;
-use std::time::Duration;
 
 /// 캔들스틱 타임프레임.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

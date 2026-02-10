@@ -9,11 +9,11 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use tracing::{debug, info, warn};
+use trader_data::RedisCache;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::symbol_fundamental::{NewSymbolFundamental, SymbolFundamentalRepository};
-use trader_data::RedisCache;
 
 /// 심볼 정보 캐시 TTL (24시간).
 /// 심볼 정보는 변경이 드물어 긴 TTL 적용.

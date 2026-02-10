@@ -20,10 +20,10 @@
 //! println!("상관계수: {:.4}", corr.unwrap_or(0.0));
 //! ```
 
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use rust_decimal::{prelude::ToPrimitive, Decimal};
+use serde::{Deserialize, Serialize};
 
 /// 상관행렬 결과.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -209,8 +209,9 @@ pub fn calculate_correlation_matrix_decimal(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_correlation_perfect_positive() {

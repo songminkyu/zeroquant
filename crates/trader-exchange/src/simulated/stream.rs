@@ -2,9 +2,9 @@
 
 #![allow(dead_code)] // 스트림 생명주기 관리 메서드
 
+use std::{collections::HashSet, sync::Arc};
+
 use async_trait::async_trait;
-use std::collections::HashSet;
-use std::sync::Arc;
 use tokio::sync::{mpsc, RwLock};
 use trader_core::Timeframe;
 
@@ -188,9 +188,10 @@ impl<T: Clone + Send> Default for EventBroadcaster<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
     use trader_core::{Symbol, Ticker};
+
+    use super::*;
 
     fn create_test_symbol() -> Symbol {
         Symbol::crypto("BTC", "USDT")

@@ -3,8 +3,9 @@
 //! This module provides handlers for managing Telegram notification settings
 //! with AES-256-GCM encryption for sensitive data (bot_token and chat_id).
 
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use std::sync::Arc;
+
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use tracing::{error, info};
 use uuid::Uuid;
 
@@ -12,8 +13,7 @@ use super::types::{
     log_credential_access, mask_api_key, SaveTelegramSettingsRequest, TelegramNotificationSettings,
     TelegramSettingsRow,
 };
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
+use crate::{routes::strategies::ApiError, state::AppState};
 
 // =============================================================================
 // Telegram Settings Handlers

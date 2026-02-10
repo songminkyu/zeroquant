@@ -17,11 +17,12 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, NaiveDate, Utc};
 use tracing::{debug, info, warn};
-
 use trader_core::{Kline, Symbol, Timeframe};
 
-use crate::connector::kis::{KisClient, KrMinuteOhlcv, KrOhlcv, UsOhlcv};
-use crate::ExchangeError;
+use crate::{
+    connector::kis::{KisClient, KrMinuteOhlcv, KrOhlcv, UsOhlcv},
+    ExchangeError,
+};
 
 /// 거래소 중립적 과거 데이터 제공자 trait.
 #[async_trait]

@@ -6,6 +6,13 @@
 //! - 피처 추출
 //! - 가격 예측 (ONNX 모델 사용시)
 
+use std::sync::Arc;
+
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
+use trader_core::Kline;
+
 use crate::ml::{
     error::MlResult,
     features::{FeatureConfig, FeatureExtractor},
@@ -16,11 +23,6 @@ use crate::ml::{
     predictor::{MockPredictor, PredictorConfig, PricePredictor},
     types::{ConfidenceLevel, FeatureVector, Prediction},
 };
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use trader_core::Kline;
 
 /// ML 서비스 설정.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -667,10 +669,11 @@ fn get_chart_pattern_name(pattern_type: &ChartPatternType) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
     use rust_decimal_macros::dec;
     use trader_core::Timeframe;
+
+    use super::*;
 
     fn create_test_klines(count: usize) -> Vec<Kline> {
         let ticker = "BTC/USDT".to_string();

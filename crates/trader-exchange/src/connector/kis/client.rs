@@ -24,23 +24,26 @@
 //! - 6자리 숫자 → 국내 주식 (예: "005930" 삼성전자)
 //! - 그 외 → 해외 주식 (예: "AAPL" 애플)
 
-use super::auth::KisOAuth;
-use super::client_kr::{
-    KisKrClient, KrBuyPower, KrMinuteOhlcv, KrOhlcv, KrOrderExecution, KrOrderHistory,
-    KrOrderResponse, StockPrice as KrStockPrice,
-};
-use super::client_us::{
-    KisUsClient, StockPrice as UsStockPrice, UsMarketSession, UsOhlcv, UsOrderExecution,
-    UsOrderResponse,
-};
-use super::config::{KisAccountType, KisEnvironment};
-use crate::retry::RetryConfig;
-use crate::ExchangeError;
-use rust_decimal::Decimal;
 use std::sync::Arc;
+
+use rust_decimal::Decimal;
 use trader_core::{
     AccountBalance, ExecutionHistory, OhlcvBar, OrderResponse, SimpleOrderBook, TickSizeProvider,
 };
+
+use super::{
+    auth::KisOAuth,
+    client_kr::{
+        KisKrClient, KrBuyPower, KrMinuteOhlcv, KrOhlcv, KrOrderExecution, KrOrderHistory,
+        KrOrderResponse, StockPrice as KrStockPrice,
+    },
+    client_us::{
+        KisUsClient, StockPrice as UsStockPrice, UsMarketSession, UsOhlcv, UsOrderExecution,
+        UsOrderResponse,
+    },
+    config::{KisAccountType, KisEnvironment},
+};
+use crate::{retry::RetryConfig, ExchangeError};
 
 /// KIS 통합 클라이언트.
 ///
@@ -515,8 +518,9 @@ fn us_order_to_response(us: UsOrderResponse) -> OrderResponse {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_kr_ohlcv_to_bar() {

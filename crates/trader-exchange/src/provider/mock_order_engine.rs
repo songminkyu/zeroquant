@@ -11,13 +11,12 @@
 //! - 부분 체결: OrderBook 물량 부족 시 가능한 만큼만 체결
 //! - 잔고 예약: 지정가 주문 시 필요 자금 예약 (cancel 시 해제)
 
+use std::{collections::HashMap, sync::Arc};
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use std::collections::HashMap;
-use std::sync::Arc;
 use tracing::{debug, info};
-
 use trader_core::{
     OrderBook, OrderBookLevel, OrderRequest, OrderStatusType, OrderType, PendingOrder, Side,
     TickSizeProvider, Ticker,
@@ -796,9 +795,10 @@ impl MockOrderEngine {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
     use trader_core::TimeInForce;
+
+    use super::*;
 
     fn create_test_orderbook(symbol: &str, mid_price: Decimal) -> OrderBook {
         let tick = dec!(100);

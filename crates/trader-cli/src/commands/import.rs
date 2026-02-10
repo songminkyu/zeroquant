@@ -12,14 +12,14 @@
 //! trader import-db -m US -s SPY -f 2024-01-01 -t 2024-12-31
 //! ```
 
+use std::str::FromStr;
+
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Datelike, NaiveDate, TimeZone, Utc};
 use indicatif::{ProgressBar, ProgressStyle};
 use rust_decimal::Decimal;
 use serde::Deserialize;
-use std::str::FromStr;
 use tracing::{debug, info, warn};
-
 use trader_core::{Kline, Timeframe};
 use trader_data::{Database, DatabaseConfig, OhlcvCache};
 
@@ -299,9 +299,10 @@ struct YahooQuote {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::{Datelike, Timelike};
     use trader_core::Symbol;
+
+    use super::*;
 
     /// 테스트용 심볼 객체 생성
     fn create_symbol(config: &ImportDbConfig) -> Symbol {

@@ -3,8 +3,9 @@
 //! This module provides handlers for managing Discord Webhook notification settings
 //! with AES-256-GCM encryption for sensitive data (webhook_url).
 
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use std::sync::Arc;
+
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use tracing::{debug, error};
 use uuid::Uuid;
 
@@ -12,8 +13,7 @@ use super::types::{
     log_credential_access, mask_api_key, DiscordSettingsRow, NotificationSettingsConfig,
     SaveDiscordSettingsRequest,
 };
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
+use crate::{routes::strategies::ApiError, state::AppState};
 
 // =============================================================================
 // Discord Settings Handlers

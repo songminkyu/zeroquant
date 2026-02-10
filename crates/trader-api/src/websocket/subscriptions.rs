@@ -2,8 +2,11 @@
 //!
 //! 클라이언트 구독 관리 및 메시지 브로드캐스트.
 
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
+
 use tokio::sync::{broadcast, RwLock};
 
 use super::messages::ServerMessage;
@@ -367,8 +370,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_broadcast() {
-        use super::super::messages::TickerData;
         use rust_decimal_macros::dec;
+
+        use super::super::messages::TickerData;
 
         let manager = SubscriptionManager::new(100);
         let mut rx = manager.register("session-1").await;

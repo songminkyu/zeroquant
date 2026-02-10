@@ -3,20 +3,26 @@
 //! 스토리지(TimescaleDB)와 캐시(Redis) 사이를 조정하여
 //! 자동 캐싱을 통한 효율적인 데이터 접근을 제공합니다.
 
-use crate::error::Result;
-use crate::storage::redis::{RedisCache, RedisConfig};
-use crate::storage::timescale::{
-    Database, DatabaseConfig, OrderRecord, OrderRepository, PositionRecord, PositionRepository,
-    SymbolRecord, SymbolRepository, TradeRecord, TradeRepository, TradeTickRecord,
-    TradeTickRepository,
-};
+use std::sync::Arc;
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{info, instrument, warn};
 use trader_core::{Order, OrderBook, OrderStatusType, Side, Ticker, TradeTick};
 use uuid::Uuid;
+
+use crate::{
+    error::Result,
+    storage::{
+        redis::{RedisCache, RedisConfig},
+        timescale::{
+            Database, DatabaseConfig, OrderRecord, OrderRepository, PositionRecord,
+            PositionRepository, SymbolRecord, SymbolRepository, TradeRecord, TradeRepository,
+            TradeTickRecord, TradeTickRepository,
+        },
+    },
+};
 
 /// 데이터 매니저 설정.
 #[derive(Debug, Clone)]

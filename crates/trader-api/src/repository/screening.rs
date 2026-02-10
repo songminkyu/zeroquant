@@ -4,21 +4,18 @@
 //! 다양한 조건으로 종목을 필터링합니다.
 
 use chrono::{DateTime, Duration, Utc};
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::{FromRow, PgPool, QueryBuilder};
 use tracing::{debug, warn};
-use utoipa::ToSchema;
-use uuid::Uuid;
-
 // 구조적 피처 계산을 위한 import
 use trader_analytics::indicators::IndicatorEngine;
 use trader_analytics::StructuralFeaturesCalculator;
 use trader_core::{types::Timeframe, Kline};
-use trader_data::cache::CachedHistoricalDataProvider;
-use trader_data::RedisCache;
+use trader_data::{cache::CachedHistoricalDataProvider, RedisCache};
+use utoipa::ToSchema;
+use uuid::Uuid;
 
 /// 스크리닝 결과 캐시 TTL (2시간).
 /// 일중 변동이 없으므로 장 마감까지 유효.

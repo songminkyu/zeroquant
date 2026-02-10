@@ -54,11 +54,14 @@ pub mod simulation;
 pub mod strategies;
 pub mod watchlist;
 
+use std::sync::Arc;
+
 pub use alert_history::{alert_history_router, FrontendAlertHistoryResponse};
 pub use analytics::{
     analytics_router, ChartResponse, EquityCurveResponse, MonthlyReturnsResponse,
     PerformanceResponse,
 };
+use axum::Router;
 pub use backtest::{
     backtest_router, BacktestMultiRunRequest, BacktestMultiRunResponse, BacktestRunRequest,
     BacktestRunResponse, BacktestStrategiesResponse,
@@ -118,9 +121,6 @@ pub use watchlist::{
     watchlist_router, AddItemsRequest, AddItemsResponse, WatchlistDetailResponse,
     WatchlistListResponse,
 };
-
-use axum::Router;
-use std::sync::Arc;
 
 use crate::state::AppState;
 

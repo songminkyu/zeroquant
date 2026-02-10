@@ -2,19 +2,23 @@
 //!
 //! DbInvestmentClient를 래핑하여 거래소 중립적인 인터페이스를 제공합니다.
 
-use crate::connector::db_investment::DbInvestmentClient;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use rust_decimal::Decimal;
-use std::sync::Arc;
 use tracing::{debug, info};
-use trader_core::cache::ExchangeCache;
-use trader_core::domain::{
-    ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse, MarketDataProvider,
-    OrderExecutionProvider, OrderRequest, OrderResponse, OrderType, PendingOrder, ProviderError,
-    QuoteData, StrategyAccountInfo, StrategyPositionInfo, Trade,
+use trader_core::{
+    cache::ExchangeCache,
+    domain::{
+        ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse, MarketDataProvider,
+        OrderExecutionProvider, OrderRequest, OrderResponse, OrderType, PendingOrder,
+        ProviderError, QuoteData, StrategyAccountInfo, StrategyPositionInfo, Trade,
+    },
 };
 use uuid::Uuid;
+
+use crate::connector::db_investment::DbInvestmentClient;
 
 /// DB Investment ExchangeProvider 구현.
 ///

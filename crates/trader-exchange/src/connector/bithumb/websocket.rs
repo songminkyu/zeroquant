@@ -1,17 +1,16 @@
-use futures::{SinkExt, StreamExt};
-use serde_json::json;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::sync::{mpsc, RwLock};
-use tokio::time::interval;
-use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
+use std::{str::FromStr, sync::Arc, time::Duration};
 
 use chrono::Utc;
+use futures::{SinkExt, StreamExt};
 use rust_decimal::Decimal;
+use serde_json::json;
+use tokio::{
+    sync::{mpsc, RwLock},
+    time::interval,
+};
+use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use tracing::{error, info};
-use trader_core::ProviderError;
-use trader_core::QuoteData;
+use trader_core::{ProviderError, QuoteData};
 
 const BITHUMB_WS_URL: &str = "wss://api.bithumb.com/pub/ws";
 const MAX_RECONNECT_ATTEMPTS: u32 = 5;

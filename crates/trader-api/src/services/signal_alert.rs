@@ -180,10 +180,11 @@ impl SignalAlertService {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
     use rust_decimal_macros::dec;
     use trader_core::SignalType;
+
+    use super::*;
 
     #[test]
     fn test_filter_min_strength() {

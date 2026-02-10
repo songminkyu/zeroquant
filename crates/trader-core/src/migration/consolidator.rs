@@ -3,9 +3,11 @@
 //! 여러 마이그레이션 파일을 논리적 그룹으로 통합하고,
 //! 안전한 마이그레이션 SQL을 생성합니다.
 
-use std::collections::{HashMap, HashSet};
-use std::fs;
-use std::path::Path;
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+    path::Path,
+};
 
 use super::models::*;
 

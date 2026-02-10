@@ -54,16 +54,15 @@ pub mod volatility;
 pub mod volume;
 pub mod weekly_ma;
 
-use rust_decimal::Decimal;
-use thiserror::Error;
-
 pub use candle_patterns::{
     CandlePatternIndicator, CandlePatternParams, CandlePatternResult, CandlePatternType,
 };
 pub use hma::{HmaIndicator, HmaParams};
 pub use momentum::{MomentumCalculator, RsiParams, StochasticParams, StochasticResult};
+use rust_decimal::Decimal;
 pub use structural::StructuralFeatures;
 pub use supertrend::{SuperTrendIndicator, SuperTrendParams, SuperTrendResult};
+use thiserror::Error;
 pub use trend::{EmaParams, MacdParams, MacdResult, SmaParams, TrendIndicators};
 pub use volatility::{
     AtrParams, BollingerBandsParams, BollingerBandsResult, KeltnerChannelParams,
@@ -490,8 +489,9 @@ impl IndicatorEngine {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     fn sample_prices() -> Vec<Decimal> {
         vec![

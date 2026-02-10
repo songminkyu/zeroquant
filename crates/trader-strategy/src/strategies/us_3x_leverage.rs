@@ -17,27 +17,23 @@
 //! - **레버리지**: TQQQ (나스닥 3배), SOXL (반도체 3배)
 //! - **인버스**: SQQQ (나스닥 인버스 3배), SOXS (반도체 인버스 3배)
 
-use crate::register_strategy;
-use crate::Strategy;
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use rust_decimal::prelude::*;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::*, Decimal};
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
-use trader_core::domain::StrategyContext;
-use trader_core::types::Timeframe;
 use trader_core::{
-    MacroRisk, MarketData, MarketDataType, MarketRegime, Order, Position, RouteState, Side, Signal,
+    domain::StrategyContext, types::Timeframe, MacroRisk, MarketData, MarketDataType, MarketRegime,
+    Order, Position, RouteState, Side, Signal,
 };
 use trader_strategy_macro::StrategyConfig;
 
-use crate::strategies::common::ExitConfig;
+use crate::{register_strategy, strategies::common::ExitConfig, Strategy};
 
 // ============================================================================
 // 설정

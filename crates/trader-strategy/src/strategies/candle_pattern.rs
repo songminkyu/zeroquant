@@ -24,20 +24,28 @@
 //! 2. 패턴 강도 평가 (Volume, Trend 확인)
 //! 3. 다중 패턴 확인 시 강화 신호
 
-use crate::strategies::common::{adjust_strength_by_score, deserialize_ticker, ExitConfig};
-use crate::Strategy;
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::Arc,
+};
+
 use async_trait::async_trait;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::{HashMap, VecDeque};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
-use trader_core::domain::{RouteState, StrategyContext};
-use trader_core::{MarketData, MarketDataType, Order, Position, Side, Signal, SignalType};
+use trader_core::{
+    domain::{RouteState, StrategyContext},
+    MarketData, MarketDataType, Order, Position, Side, Signal, SignalType,
+};
 use trader_strategy_macro::StrategyConfig;
+
+use crate::{
+    strategies::common::{adjust_strength_by_score, deserialize_ticker, ExitConfig},
+    Strategy,
+};
 
 /// 캔들스틱 패턴 종류
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

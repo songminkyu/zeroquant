@@ -18,32 +18,37 @@
 //! Mock 거래소는 다른 실제 거래소(KIS, Binance 등)와 동일한 인터페이스를 제공합니다.
 //! 이를 통해 전략 코드는 거래소 종류와 무관하게 동일한 방식으로 동작합니다.
 
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 use tokio::sync::{mpsc, RwLock};
 use tracing::{debug, error, info, warn};
+use trader_core::{
+    domain::{
+        ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse,
+        OrderExecutionProvider, OrderRequest, OrderResponse, PendingOrder, ProviderError, Side,
+        StrategyAccountInfo, StrategyPositionInfo, Trade,
+    },
+    OrderType, Ticker, Timeframe,
+};
+use trader_execution::{ProcessorPosition, TradeResult};
 use uuid::Uuid;
 
-use crate::simulated::EventBroadcaster;
-use crate::traits::MarketEvent;
-use trader_core::{OrderType, Ticker};
-
-use crate::historical::HistoricalDataProvider;
-use crate::yahoo::YahooFinanceProvider;
-use trader_core::domain::{
-    ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse, OrderExecutionProvider,
-    OrderRequest, OrderResponse, PendingOrder, ProviderError, Side, StrategyAccountInfo,
-    StrategyPositionInfo, Trade,
+use crate::{
+    historical::HistoricalDataProvider, simulated::EventBroadcaster, traits::MarketEvent,
+    yahoo::YahooFinanceProvider,
 };
-use trader_core::Timeframe;
-use trader_execution::{ProcessorPosition, TradeResult};
 
 /// Mock 거래소 설정
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1203,8 +1208,9 @@ impl MarketDataProvider for MockExchangeProvider {
 // 실시간 스트리밍 구현
 // =============================================================================
 
-use crate::simulated::SimulatedMarketStream;
 use std::time::Duration;
+
+use crate::simulated::SimulatedMarketStream;
 
 /// Mock 거래소용 MarketStream.
 ///
@@ -1812,8 +1818,9 @@ impl OrderExecutionProvider for MockExchangeProvider {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_mock_config_default() {

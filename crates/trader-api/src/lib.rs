@@ -42,12 +42,11 @@ pub use monitoring::{
 };
 pub use routes::*;
 pub use services::start_context_sync_service;
+#[cfg(any(test, feature = "test-utils"))]
+pub use state::create_test_state;
 pub use state::AppState;
 pub use types::StrategyType;
 pub use websocket::{
     handler::WsState, subscriptions::create_subscription_manager, websocket_handler,
     websocket_router, ClientMessage, ServerMessage, Subscription, SubscriptionManager, WsError,
 };
-
-#[cfg(any(test, feature = "test-utils"))]
-pub use state::create_test_state;

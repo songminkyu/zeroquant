@@ -2,18 +2,21 @@
 //!
 //! UpbitClient를 래핑하여 거래소 중립적인 인터페이스를 제공합니다.
 
-use crate::connector::upbit::UpbitClient;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use rust_decimal::Decimal;
-use std::sync::Arc;
-use tracing::debug;
-use tracing::info;
-use trader_core::cache::ExchangeCache;
-use trader_core::domain::{
-    ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse, MarketDataProvider,
-    OrderExecutionProvider, OrderRequest, OrderResponse, OrderType, PendingOrder, ProviderError,
-    QuoteData, Side, StrategyAccountInfo, StrategyPositionInfo,
+use tracing::{debug, info};
+use trader_core::{
+    cache::ExchangeCache,
+    domain::{
+        ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse, MarketDataProvider,
+        OrderExecutionProvider, OrderRequest, OrderResponse, OrderType, PendingOrder,
+        ProviderError, QuoteData, Side, StrategyAccountInfo, StrategyPositionInfo,
+    },
 };
+
+use crate::connector::upbit::UpbitClient;
 
 /// Upbit ExchangeProvider 구현.
 ///
@@ -82,8 +85,9 @@ impl ExchangeProvider for UpbitExchangeProvider {
         &self,
         request: &ExecutionHistoryRequest,
     ) -> Result<ExecutionHistoryResponse, ProviderError> {
-        use chrono::DateTime;
         use std::str::FromStr;
+
+        use chrono::DateTime;
         use trader_core::domain::Trade;
         use uuid::Uuid;
 

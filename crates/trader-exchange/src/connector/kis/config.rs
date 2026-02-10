@@ -6,8 +6,9 @@
 //! - 실전투자 일반
 //! - 실전투자 ISA
 
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
 
 /// KIS API 환경 유형.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]

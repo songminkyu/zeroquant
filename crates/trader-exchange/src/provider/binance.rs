@@ -22,20 +22,23 @@
 //!     └── cache: Arc<ExchangeCache>
 //! ```
 
-use crate::connector::binance::BinanceClient;
-use crate::ExchangeError;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use std::sync::Arc;
 use tracing::{debug, info, warn};
-use trader_core::cache::ExchangeCache;
-use trader_core::domain::{
-    ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse, MarketDataProvider,
-    OrderExecutionProvider, OrderResponse, PendingOrder, ProviderError, QuoteData, Side,
-    StrategyAccountInfo, StrategyPositionInfo, Trade,
+use trader_core::{
+    cache::ExchangeCache,
+    domain::{
+        ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse, MarketDataProvider,
+        OrderExecutionProvider, OrderResponse, PendingOrder, ProviderError, QuoteData, Side,
+        StrategyAccountInfo, StrategyPositionInfo, Trade,
+    },
 };
 use uuid::Uuid;
+
+use crate::{connector::binance::BinanceClient, ExchangeError};
 
 // ==================== 에러 변환 ====================
 

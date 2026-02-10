@@ -3,10 +3,11 @@
 //! ML 모델 입력으로 사용하기 위해 Kline 데이터에서
 //! 기술 지표와 파생 feature를 추출합니다.
 
-use crate::ml::{FeatureVector, MlError, MlResult};
 use rust_decimal::prelude::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use trader_core::Kline;
+
+use crate::ml::{FeatureVector, MlError, MlResult};
 
 /// feature 추출을 위한 설정.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -493,10 +494,11 @@ impl FeatureExtractor {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
     use rust_decimal_macros::dec;
     use trader_core::Timeframe;
+
+    use super::*;
 
     fn create_test_klines(count: usize) -> Vec<Kline> {
         let ticker = "BTC/USDT".to_string();

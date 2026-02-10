@@ -14,10 +14,11 @@
 //! println!("삼성전자 PER: {:?}", data.per);
 //! ```
 
+use std::time::Duration;
+
 use reqwest::Client;
 use rust_decimal::Decimal;
 use scraper::{Html, Selector};
-use std::time::Duration;
 use thiserror::Error;
 
 /// 네이버 금융 크롤러 에러

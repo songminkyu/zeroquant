@@ -8,9 +8,9 @@
 //! - DB 레코드 타입 (내부용)
 //! - 헬퍼 함수
 
+use std::{collections::HashMap, fmt};
+
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt;
 use tracing::warn;
 use utoipa::ToSchema;
 use uuid::Uuid;

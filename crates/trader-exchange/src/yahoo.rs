@@ -31,11 +31,10 @@ use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
 use rust_decimal::Decimal;
 use tracing::{debug, info, warn};
+use trader_core::{Kline, Symbol, Timeframe};
 use yahoo_finance_api as yahoo;
 
-use crate::historical::HistoricalDataProvider;
-use crate::ExchangeError;
-use trader_core::{Kline, Symbol, Timeframe};
+use crate::{historical::HistoricalDataProvider, ExchangeError};
 
 /// Yahoo Finance 과거 데이터 제공자.
 ///

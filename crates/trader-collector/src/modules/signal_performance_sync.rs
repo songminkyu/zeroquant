@@ -3,18 +3,18 @@
 //! signal_marker 테이블의 신호에 대해 N일 후 수익률을 계산하여
 //! signal_performance 테이블에 저장합니다.
 
+use std::time::Instant;
+
 use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use sqlx::PgPool;
-use std::time::Instant;
 use tracing::{debug, info, warn};
 use uuid::Uuid;
 
-use crate::config::SignalPerformanceConfig;
-use crate::error::CollectorError;
-use crate::stats::CollectionStats;
-use crate::Result;
+use crate::{
+    config::SignalPerformanceConfig, error::CollectorError, stats::CollectionStats, Result,
+};
 
 /// 신호 성과 조회 결과 타입 (N일 후 종가 + MFE/MAE)
 type SignalPerformanceRow = (

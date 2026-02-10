@@ -6,10 +6,11 @@
 //! - 주문 이벤트 처리
 //! - 조회 기능
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use thiserror::Error;
 use trader_core::{Order, OrderRequest, OrderStatus, OrderStatusType, Side};
 use uuid::Uuid;
@@ -691,9 +692,10 @@ pub struct OrderStats {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal::prelude::FromPrimitive;
     use trader_core::OrderRequest;
+
+    use super::*;
 
     /// Decimal 생성을 위한 헬퍼 매크로
     macro_rules! dec {

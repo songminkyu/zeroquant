@@ -2,24 +2,27 @@
 
 #![allow(dead_code)] // 시뮬레이션 상태 추적 필드 (디버깅용)
 
+use std::{collections::HashMap, sync::Arc};
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use trader_core::{
     Kline, OrderBook, OrderBookLevel, OrderRequest, OrderStatus, OrderStatusType, OrderType,
     Position, Side, Symbol, Ticker, Timeframe, TradeTick,
 };
 
-use crate::traits::{AccountInfo, Balance, ExchangeResult, MarketEvent, UserEvent};
-use crate::ExchangeError;
-
-use super::data_feed::{DataFeed, DataFeedConfig};
-use super::matching_engine::{FillType, MatchingEngine, OrderMatch};
-use super::stream::{EventBroadcaster, SimulatedMarketStream, SimulatedUserStream};
+use super::{
+    data_feed::{DataFeed, DataFeedConfig},
+    matching_engine::{FillType, MatchingEngine, OrderMatch},
+    stream::{EventBroadcaster, SimulatedMarketStream, SimulatedUserStream},
+};
+use crate::{
+    traits::{AccountInfo, Balance, ExchangeResult, MarketEvent, UserEvent},
+    ExchangeError,
+};
 
 /// 시뮬레이션 거래소 설정.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -839,9 +842,10 @@ impl SimulatedExchange {
 
 #[cfg(test)]
 mod tests {
+    use trader_core::TimeInForce;
+
     use super::*;
     use crate::simulated::data_feed::generate_sample_klines;
-    use trader_core::TimeInForce;
 
     fn create_test_symbol() -> Symbol {
         Symbol::crypto("BTC", "USDT")

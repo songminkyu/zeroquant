@@ -12,15 +12,15 @@
 //!
 //! 3. 최대 라운드: max_rounds까지만 물타기 가능
 
+use std::sync::Arc;
+
 use chrono::Utc;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use trader_core::{Kline, MarketData, Position, Side, StrategyContext, Timeframe};
-use trader_strategy::strategies::DcaStrategy;
-use trader_strategy::Strategy;
+use trader_strategy::{strategies::DcaStrategy, Strategy};
 use uuid::Uuid;
 
 // ============================================================================
@@ -1045,6 +1045,7 @@ fn grid_config(ticker: &str, spacing_pct: &str, levels: usize) -> serde_json::Va
         "atr_period": 14,
         "max_positions": 15,
         "min_global_score": "0"
+        // warmup_candles는 기본값 5 사용
     })
 }
 
@@ -1122,18 +1123,38 @@ async fn test_grid_buy_timing() {
 
     strategy.initialize(config).await.unwrap();
 
-    // 초기화: base_price = 100
-    let init_prices = vec![dec!(100)];
-    let context = setup_context_with_prices("005930", &init_prices, 1000000);
-    strategy.set_context(context);
-    let data = create_kline("005930", dec!(100), 1000000);
-    let _ = strategy.on_market_data(&data).await.unwrap();
+    // 워밍업 기간 (6개 캔들) + 초기화: base_price = 100
+    // warmup_candles 기본값 5이고 조건이 `<= warmup_candles`이므로
+    // candles_processed가 6이 되어야 거래 시작 (0,1,2,3,4,5 = 6번)
+    let warmup_prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+    ];
+    let context = setup_context_with_prices("005930", &warmup_prices, 1000000);
+    strategy.set_context(context.clone());
+
+    for i in 0..6 {
+        let data = create_kline("005930", dec!(100), 1000000 + 86400 * i);
+        let _ = strategy.on_market_data(&data).await.unwrap();
+    }
 
     // 가격이 99로 하락 → Level 1 buy_price(98) 이상이므로 매수 안 함
-    let prices = vec![dec!(100), dec!(99)];
+    let prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(99),
+    ];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let data = create_kline("005930", dec!(99), 1000000 + 86400);
+    let data = create_kline("005930", dec!(99), 1000000 + 86400 * 6);
     let signals = strategy.on_market_data(&data).await.unwrap();
     assert!(
         signals.iter().all(|s| s.side != Side::Buy),
@@ -1141,10 +1162,19 @@ async fn test_grid_buy_timing() {
     );
 
     // 가격이 98로 하락 → Level 1 buy_price(98)에 도달, 매수 발생
-    let prices = vec![dec!(100), dec!(99), dec!(98)];
+    let prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(99),
+        dec!(98),
+    ];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let data = create_kline("005930", dec!(98), 1000000 + 86400 * 2);
+    let data = create_kline("005930", dec!(98), 1000000 + 86400 * 7);
     let signals = strategy.on_market_data(&data).await.unwrap();
     let buy_signals: Vec<_> = signals.iter().filter(|s| s.side == Side::Buy).collect();
     assert_eq!(
@@ -1174,16 +1204,37 @@ async fn test_grid_sell_timing() {
 
     strategy.initialize(config).await.unwrap();
 
-    // 초기화 및 Level 1 매수 트리거
-    let prices = vec![dec!(100), dec!(98)];
+    // 워밍업 기간 (6개 캔들) + 초기화: base_price = 100
+    let warmup_prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+    ];
+    let context = setup_context_with_prices("005930", &warmup_prices, 1000000);
+    strategy.set_context(context.clone());
+
+    for i in 0..6 {
+        let data = create_kline("005930", dec!(100), 1000000 + 86400 * i);
+        let _ = strategy.on_market_data(&data).await.unwrap();
+    }
+
+    // Level 1 매수 트리거 (가격 98)
+    let prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(98),
+    ];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-
-    let _ = strategy
-        .on_market_data(&create_kline("005930", dec!(100), 1000000))
-        .await;
     let signals = strategy
-        .on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400))
+        .on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400 * 6))
         .await
         .unwrap();
     assert_eq!(
@@ -1193,11 +1244,20 @@ async fn test_grid_sell_timing() {
     );
 
     // 가격이 99로 상승 → sell_price(100) 미달, 매도 안 함
-    let prices = vec![dec!(100), dec!(98), dec!(99)];
+    let prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(98),
+        dec!(99),
+    ];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
     let signals = strategy
-        .on_market_data(&create_kline("005930", dec!(99), 1000000 + 86400 * 2))
+        .on_market_data(&create_kline("005930", dec!(99), 1000000 + 86400 * 7))
         .await
         .unwrap();
     assert!(
@@ -1206,11 +1266,21 @@ async fn test_grid_sell_timing() {
     );
 
     // 가격이 100으로 상승 → sell_price(100) 도달, 매도 발생
-    let prices = vec![dec!(100), dec!(98), dec!(99), dec!(100)];
+    let prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(98),
+        dec!(99),
+        dec!(100),
+    ];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
     let signals = strategy
-        .on_market_data(&create_kline("005930", dec!(100), 1000000 + 86400 * 3))
+        .on_market_data(&create_kline("005930", dec!(100), 1000000 + 86400 * 8))
         .await
         .unwrap();
     let sell_signals: Vec<_> = signals.iter().filter(|s| s.side == Side::Sell).collect();
@@ -1234,20 +1304,37 @@ async fn test_grid_multiple_level_buy() {
 
     strategy.initialize(config).await.unwrap();
 
-    // 가격이 100 → 94로 급락 (Level 1, 2, 3 모두 트리거)
-    let prices = vec![dec!(100)];
-    let context = setup_context_with_prices("005930", &prices, 1000000);
-    strategy.set_context(context);
-    let _ = strategy
-        .on_market_data(&create_kline("005930", dec!(100), 1000000))
-        .await;
+    // 워밍업 기간 (6개 캔들) + 초기화: base_price = 100
+    let warmup_prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+    ];
+    let context = setup_context_with_prices("005930", &warmup_prices, 1000000);
+    strategy.set_context(context.clone());
 
-    // 급락 시 모든 레벨 매수
-    let prices = vec![dec!(100), dec!(94)];
+    for i in 0..6 {
+        let data = create_kline("005930", dec!(100), 1000000 + 86400 * i);
+        let _ = strategy.on_market_data(&data).await.unwrap();
+    }
+
+    // 가격이 100 → 94로 급락 (Level 1, 2, 3 모두 트리거)
+    let prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(94),
+    ];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
     let signals = strategy
-        .on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400))
+        .on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400 * 6))
         .await
         .unwrap();
     let buy_signals: Vec<_> = signals.iter().filter(|s| s.side == Side::Buy).collect();
@@ -1278,21 +1365,30 @@ async fn test_grid_cycle_trading() {
     strategy.initialize(config).await.unwrap();
 
     let mut all_signals = vec![];
-    let mut prices = vec![dec!(100)];
 
-    // 1. 초기화
+    // 워밍업 기간 (6개 캔들) + 초기화: base_price = 100
+    let mut prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+    ];
     let context = setup_context_with_prices("005930", &prices, 1000000);
-    strategy.set_context(context);
-    let _ = strategy
-        .on_market_data(&create_kline("005930", dec!(100), 1000000))
-        .await;
+    strategy.set_context(context.clone());
+
+    for i in 0..6 {
+        let data = create_kline("005930", dec!(100), 1000000 + 86400 * i);
+        let _ = strategy.on_market_data(&data).await.unwrap();
+    }
 
     // 2. 하락 → Level 1 매수 (98)
     prices.push(dec!(98));
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
     let signals = strategy
-        .on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400))
+        .on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400 * 6))
         .await
         .unwrap();
     all_signals.extend(signals);
@@ -1302,7 +1398,7 @@ async fn test_grid_cycle_trading() {
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
     let signals = strategy
-        .on_market_data(&create_kline("005930", dec!(100), 1000000 + 86400 * 2))
+        .on_market_data(&create_kline("005930", dec!(100), 1000000 + 86400 * 7))
         .await
         .unwrap();
     all_signals.extend(signals);
@@ -1312,7 +1408,7 @@ async fn test_grid_cycle_trading() {
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
     let signals = strategy
-        .on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400 * 3))
+        .on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400 * 8))
         .await
         .unwrap();
     all_signals.extend(signals);
@@ -1334,19 +1430,37 @@ async fn test_grid_position_id() {
 
     strategy.initialize(config).await.unwrap();
 
-    // 급락으로 여러 레벨 매수
-    let prices = vec![dec!(100)];
-    let context = setup_context_with_prices("005930", &prices, 1000000);
-    strategy.set_context(context);
-    let _ = strategy
-        .on_market_data(&create_kline("005930", dec!(100), 1000000))
-        .await;
+    // 워밍업 기간 (6개 캔들) + 초기화: base_price = 100
+    let warmup_prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+    ];
+    let context = setup_context_with_prices("005930", &warmup_prices, 1000000);
+    strategy.set_context(context.clone());
 
-    let prices = vec![dec!(100), dec!(94)];
+    for i in 0..6 {
+        let data = create_kline("005930", dec!(100), 1000000 + 86400 * i);
+        let _ = strategy.on_market_data(&data).await.unwrap();
+    }
+
+    // 급락으로 여러 레벨 매수
+    let prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(94),
+    ];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
     let signals = strategy
-        .on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400))
+        .on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400 * 6))
         .await
         .unwrap();
 
@@ -1385,19 +1499,37 @@ async fn test_grid_group_id() {
 
     strategy.initialize(config).await.unwrap();
 
-    // 급락으로 여러 레벨 매수
-    let prices = vec![dec!(100)];
-    let context = setup_context_with_prices("005930", &prices, 1000000);
-    strategy.set_context(context);
-    let _ = strategy
-        .on_market_data(&create_kline("005930", dec!(100), 1000000))
-        .await;
+    // 워밍업 기간 (6개 캔들) + 초기화: base_price = 100
+    let warmup_prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+    ];
+    let context = setup_context_with_prices("005930", &warmup_prices, 1000000);
+    strategy.set_context(context.clone());
 
-    let prices = vec![dec!(100), dec!(94)];
+    for i in 0..6 {
+        let data = create_kline("005930", dec!(100), 1000000 + 86400 * i);
+        let _ = strategy.on_market_data(&data).await.unwrap();
+    }
+
+    // 급락으로 여러 레벨 매수
+    let prices = vec![
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(100),
+        dec!(94),
+    ];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
     let signals = strategy
-        .on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400))
+        .on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400 * 6))
         .await
         .unwrap();
 

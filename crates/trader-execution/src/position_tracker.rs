@@ -5,10 +5,11 @@
 //! - 손익(PnL) 추적 및 계산
 //! - 포지션 조회 및 집계
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use thiserror::Error;
 use trader_core::{Order, Position, PositionSummary, Side};
 use uuid::Uuid;
@@ -577,8 +578,9 @@ impl PositionTracker {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal::prelude::FromPrimitive;
+
+    use super::*;
 
     /// Decimal 생성을 위한 헬퍼 매크로
     macro_rules! dec {

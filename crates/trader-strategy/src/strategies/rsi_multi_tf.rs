@@ -29,15 +29,13 @@
 //! // on_multi_timeframe_data()가 호출됩니다.
 //! ```
 
-use crate::strategies::common::{deserialize_ticker, ExitConfig};
-use crate::{register_strategy, Strategy};
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
 use trader_core::{
@@ -45,6 +43,12 @@ use trader_core::{
     Kline, MarketData, MarketDataType, Order, Position, RouteState, Side, Signal, Timeframe,
 };
 use trader_strategy_macro::StrategyConfig;
+
+use crate::{
+    register_strategy,
+    strategies::common::{deserialize_ticker, ExitConfig},
+    Strategy,
+};
 
 /// 다중 타임프레임 RSI 전략 설정.
 #[derive(Debug, Clone, Deserialize, Serialize, StrategyConfig)]

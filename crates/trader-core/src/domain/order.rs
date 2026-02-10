@@ -8,11 +8,12 @@
 //! - `OrderRequest` - 주문 요청
 //! - `Order` - 주문 엔티티
 
-use crate::types::{Price, Quantity};
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::types::{Price, Quantity};
 
 /// 주문 방향 (매수 또는 매도).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -430,8 +431,9 @@ impl Order {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_order_request() {

@@ -4,12 +4,15 @@
 //! - `Trade` - 개별 체결 기록
 //! - `TradeStats` - 거래 통계
 
-use crate::domain::{OrderStatusType, Side};
-use crate::types::{Price, Quantity};
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::{
+    domain::{OrderStatusType, Side},
+    types::{Price, Quantity},
+};
 
 /// 체결된 주문을 나타내는 거래 기록.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -190,8 +193,9 @@ pub struct ExecutionHistory {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_trade_creation() {

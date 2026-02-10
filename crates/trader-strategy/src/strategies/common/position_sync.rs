@@ -413,10 +413,11 @@ impl PositionSync {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
     use trader_core::{OrderType, TimeInForce};
     use uuid::Uuid;
+
+    use super::*;
 
     fn create_filled_order(ticker: &str, side: Side, qty: Decimal, price: Decimal) -> Order {
         // 테스트용 심볼 파싱 (예: "BTCUSDT" -> BTC/USDT)

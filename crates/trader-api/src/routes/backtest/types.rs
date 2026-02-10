@@ -2,11 +2,11 @@
 //!
 //! 요청/응답 타입 및 SDUI 스키마 타입을 정의합니다.
 
-use chrono::{DateTime, NaiveDate, Utc};
-use rust_decimal::prelude::FromStr;
-use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use chrono::{DateTime, NaiveDate, Utc};
+use rust_decimal::{prelude::FromStr, Decimal};
+use serde::{Deserialize, Serialize};
 use trader_core::{Side, Timeframe, TradeInfo};
 use ts_rs::TS;
 use utoipa::ToSchema;

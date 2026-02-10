@@ -3,8 +3,7 @@
 //! StructuralFeatures 계산 결과를 Redis에 캐싱하여 성능을 개선합니다.
 
 use trader_core::domain::StructuralFeatures;
-use trader_data::cache::RedisCache;
-use trader_data::error::Result;
+use trader_data::{cache::RedisCache, error::Result};
 
 /// 구조적 피처 캐싱 래퍼.
 #[derive(Clone)]

@@ -3,8 +3,9 @@
 //! StrategyUISchema와 FragmentRegistry를 조합하여
 //! 프론트엔드에서 렌더링할 수 있는 완전한 SDUI JSON을 생성합니다.
 
-use serde_json::{json, Value};
 use std::sync::Arc;
+
+use serde_json::{json, Value};
 use trader_core::{FieldSchema, SchemaFragment, StrategyUISchema};
 
 use crate::FragmentRegistry;
@@ -174,8 +175,9 @@ impl SchemaComposer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use trader_core::{FieldType, FragmentRef, StrategyUISchema};
+
+    use super::*;
 
     #[test]
     fn test_compose_basic_schema() {

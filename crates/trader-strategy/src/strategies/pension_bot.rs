@@ -18,25 +18,32 @@
 //! 3. 남은 현금을 단기자금과 상위 모멘텀 종목에 분배
 //! 4. 목표 비중에 맞게 리밸런싱
 
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{Datelike, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
-use trader_core::domain::{RouteState, StrategyContext};
+use trader_core::{
+    domain::{RouteState, StrategyContext},
+    MarketData, MarketDataType, Order, Position, Side, Signal,
+};
 use trader_strategy_macro::StrategyConfig;
 
-use crate::strategies::common::rebalance::{
-    PortfolioPosition, RebalanceCalculator, RebalanceConfig, RebalanceOrderSide, TargetAllocation,
+use crate::{
+    strategies::common::{
+        rebalance::{
+            PortfolioPosition, RebalanceCalculator, RebalanceConfig, RebalanceOrderSide,
+            TargetAllocation,
+        },
+        ExitConfig,
+    },
+    traits::Strategy,
 };
-use crate::strategies::common::ExitConfig;
-use crate::traits::Strategy;
-use trader_core::{MarketData, MarketDataType, Order, Position, Side, Signal};
 
 /// 자산 유형
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

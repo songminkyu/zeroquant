@@ -29,10 +29,11 @@
 //! println!("모멘텀 점수: {:?}", result.score);
 //! ```
 
+use std::collections::HashMap;
+
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// 월별 거래일 수 (근사치).
 pub const TRADING_DAYS_PER_MONTH: usize = 21;

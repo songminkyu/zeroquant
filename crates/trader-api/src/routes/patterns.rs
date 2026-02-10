@@ -9,13 +9,14 @@
 //! - `GET /api/v1/patterns/detect` - 모든 패턴 감지 (캔들스틱 + 차트)
 //! - `GET /api/v1/patterns/types` - 지원되는 패턴 타입 목록
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Query, State},
     routing::get,
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use trader_analytics::ml::{CandlestickPatternInfo, ChartPatternInfo, PatternDetectionResult};
 use trader_core::{Kline, Timeframe};
 use utoipa::{IntoParams, ToSchema};

@@ -2,12 +2,10 @@
 //!
 //! 60일 상대강도, 가격 기울기, RSI를 종합하여 종목의 시장 레짐을 판정합니다.
 
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use trader_core::{Kline, MarketRegime};
 
-use crate::indicators::IndicatorEngine;
-use crate::IndicatorError;
+use crate::{indicators::IndicatorEngine, IndicatorError};
 
 /// MarketRegime 계산 결과
 #[derive(Debug, Clone)]
@@ -238,8 +236,9 @@ impl Default for MarketRegimeCalculator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
+
+    use super::*;
 
     fn create_test_klines(count: usize, base_price: f64, trend: f64) -> Vec<Kline> {
         use trader_core::Timeframe;

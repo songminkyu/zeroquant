@@ -7,11 +7,13 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
 use trader_core::{Kline, MarketData, Position, Side, Timeframe};
-use trader_strategy::strategies::common::ExitConfig;
-use trader_strategy::strategies::pension_bot::{
-    PensionAsset, PensionAssetType, PensionBotConfig, PensionBotStrategy,
+use trader_strategy::{
+    strategies::{
+        common::ExitConfig,
+        pension_bot::{PensionAsset, PensionAssetType, PensionBotConfig, PensionBotStrategy},
+    },
+    Strategy,
 };
-use trader_strategy::Strategy;
 use uuid::Uuid;
 
 // ============================================================================

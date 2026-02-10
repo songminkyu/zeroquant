@@ -7,10 +7,9 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tracing::debug;
+use trader_data::RedisCache;
 use ts_rs::TS;
 use utoipa::ToSchema;
-
-use trader_data::RedisCache;
 
 /// 스코어 히스토리 캐시 TTL (7일).
 /// 히스토리 데이터는 불변이므로 긴 TTL 적용.

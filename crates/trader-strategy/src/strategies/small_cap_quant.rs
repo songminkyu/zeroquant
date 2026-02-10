@@ -22,23 +22,23 @@
 //! - 코스닥 소형지수가 20일 MA 아래 → 전량 매도
 //! - 월간 리밸런싱
 
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Datelike, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
-
-use crate::traits::Strategy;
-use trader_core::domain::{RouteState, StrategyContext};
-use trader_core::{Kline, MarketData, MarketDataType, Order, Position, Side, Signal, Timeframe};
+use trader_core::{
+    domain::{RouteState, StrategyContext},
+    Kline, MarketData, MarketDataType, Order, Position, Side, Signal, Timeframe,
+};
 use trader_strategy_macro::StrategyConfig;
 
-use crate::strategies::common::ExitConfig;
+use crate::{strategies::common::ExitConfig, traits::Strategy};
 
 /// 소형주 퀀트 전략 설정.
 #[derive(Debug, Clone, Serialize, Deserialize, StrategyConfig)]

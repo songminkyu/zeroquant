@@ -32,10 +32,11 @@
 //! }
 //! ```
 
+use std::collections::HashMap;
+
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use trader_core::Kline;
 
 /// 섹터 RS 계산 입력 데이터.
@@ -307,10 +308,11 @@ pub fn enrich_screening_with_sector_rs(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
     use rust_decimal_macros::dec;
     use trader_core::Timeframe;
+
+    use super::*;
 
     fn create_test_klines(prices: &[Decimal]) -> Vec<Kline> {
         prices

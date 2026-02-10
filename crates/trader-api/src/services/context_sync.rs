@@ -9,8 +9,8 @@
 //! - 내부적으로 AnalyticsProvider는 ticker를 받아 CachedHistoricalDataProvider를 통해 데이터 조회
 //! - SymbolResolver가 단일 원천(single source of truth)으로 Symbol 정보 관리
 
-use std::sync::Arc;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
+
 use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
 use trader_core::{

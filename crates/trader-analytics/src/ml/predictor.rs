@@ -4,15 +4,17 @@
 //! 모델은 별도로 학습되어야 하며 (예: Python/PyTorch 사용)
 //! ONNX 형식으로 내보내야 합니다.
 
-use crate::ml::{FeatureVector, MlError, MlResult, Prediction, PredictionDirection};
+#[cfg(feature = "ml")]
+use std::path::Path;
+use std::path::PathBuf;
+
 #[cfg(feature = "ml")]
 use ort::session::Session;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "ml")]
-use std::path::Path;
-use std::path::PathBuf;
-#[cfg(feature = "ml")]
 use tracing::{debug, info};
+
+use crate::ml::{FeatureVector, MlError, MlResult, Prediction, PredictionDirection};
 
 /// ONNX predictor 설정.
 #[derive(Debug, Clone, Serialize, Deserialize)]

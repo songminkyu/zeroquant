@@ -28,9 +28,10 @@
 //! assert_eq!(days, 0); // C는 첫날 이후 탈락 → 리셋
 //! ```
 
+use std::collections::HashMap;
+
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// 일별 랭킹 데이터.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -288,8 +289,9 @@ pub fn get_survival_days_map(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::NaiveDate;
+
+    use super::*;
 
     fn create_test_history() -> Vec<DailyRanking> {
         vec![

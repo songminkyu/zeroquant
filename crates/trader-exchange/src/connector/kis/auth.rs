@@ -6,14 +6,16 @@
 //! - 해시 키 생성 (POST /uapi/hashkey)
 //! - WebSocket 접속 키 (POST /oauth2/Approval)
 
-use super::config::KisConfig;
-use crate::ExchangeError;
+use std::sync::Arc;
+
 use chrono::{DateTime, Duration, Utc};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
+
+use super::config::KisConfig;
+use crate::ExchangeError;
 
 /// 토큰 갱신 임계값 (남은 시간이 이 값보다 적으면 갱신).
 const TOKEN_REFRESH_THRESHOLD_HOURS: i64 = 1;
@@ -602,8 +604,9 @@ fn parse_kis_datetime(s: &str) -> Option<DateTime<Utc>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Timelike;
+
+    use super::*;
 
     #[test]
     fn test_token_state_expiry() {

@@ -2,28 +2,31 @@
 //!
 //! 모든 활성 심볼에 대해 GlobalScore를 계산하여 symbol_global_score 테이블에 저장합니다.
 
+use std::{
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+    time::Instant,
+};
+
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
-use std::time::Instant;
 use tracing::{debug, info, warn};
-use uuid::Uuid;
-
-use trader_analytics::indicators::AtrParams;
 use trader_analytics::{
-    GlobalScorer, GlobalScorerParams, IndicatorEngine, StructuralFeaturesCalculator,
+    indicators::AtrParams, GlobalScorer, GlobalScorerParams, IndicatorEngine,
+    StructuralFeaturesCalculator,
 };
 use trader_core::{Symbol, Timeframe};
 use trader_data::cache::historical::CachedHistoricalDataProvider;
+use uuid::Uuid;
 
-use super::checkpoint::{self, CheckpointStatus};
-use super::utils::market_to_market_type;
-use super::watchlist_helper;
-use crate::config::CollectorConfig;
-use crate::error::CollectorError;
-use crate::stats::CollectionStats;
-use crate::Result;
+use super::{
+    checkpoint::{self, CheckpointStatus},
+    utils::market_to_market_type,
+    watchlist_helper,
+};
+use crate::{config::CollectorConfig, error::CollectorError, stats::CollectionStats, Result};
 
 /// 동시 처리 심볼 수 (기본값)
 const DEFAULT_CONCURRENT_LIMIT: usize = 10;

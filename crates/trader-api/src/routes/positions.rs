@@ -8,6 +8,8 @@
 //! - `GET /api/v1/positions/summary` - 포지션 요약 통계
 //! - `GET /api/v1/positions/{symbol}` - 특정 심볼 포지션 조회
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -17,12 +19,10 @@ use axum::{
 };
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use trader_core::{Position, Side};
 use utoipa::ToSchema;
 
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
-use trader_core::{Position, Side};
+use crate::{routes::strategies::ApiError, state::AppState};
 
 // ==================== 응답 타입 ====================
 
@@ -252,12 +252,13 @@ pub fn positions_router() -> Router<Arc<AppState>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axum::{
         body::Body,
         http::{Request, StatusCode},
     };
     use tower::ServiceExt;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_list_positions_empty() {

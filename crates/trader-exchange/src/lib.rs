@@ -24,11 +24,13 @@ pub use circuit_breaker::{
     CategoryThresholds, CircuitBreaker, CircuitBreakerConfig, CircuitBreakerMetrics, CircuitState,
     ErrorCategory,
 };
-pub use connector::bithumb::{BithumbClient, BithumbConfig};
-pub use connector::db_investment::{DbInvestmentClient, DbInvestmentConfig};
-pub use connector::kis::client::KisClient;
-pub use connector::ls_sec::{LsSecClient, LsSecConfig};
-pub use connector::upbit::{UpbitClient, UpbitConfig};
+pub use connector::{
+    bithumb::{BithumbClient, BithumbConfig},
+    db_investment::{DbInvestmentClient, DbInvestmentConfig},
+    kis::client::KisClient,
+    ls_sec::{LsSecClient, LsSecConfig},
+    upbit::{UpbitClient, UpbitConfig},
+};
 pub use error::*;
 pub use historical::{HistoricalDataProvider, UnifiedHistoricalProvider};
 pub use provider::{

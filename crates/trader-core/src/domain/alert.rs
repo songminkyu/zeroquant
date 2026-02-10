@@ -17,10 +17,11 @@
 //!     .with_symbols(vec!["005930".to_string()]);
 //! ```
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use uuid::Uuid;
 
 /// 비교 연산자.

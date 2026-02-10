@@ -14,8 +14,8 @@
 //! }).await;
 //! ```
 
-use std::future::Future;
-use std::time::Duration;
+use std::{future::Future, time::Duration};
+
 use tracing::{debug, warn};
 
 use crate::ExchangeError;
@@ -331,9 +331,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::sync::{
+        atomic::{AtomicU32, Ordering},
+        Arc,
+    };
+
     use super::*;
-    use std::sync::atomic::{AtomicU32, Ordering};
-    use std::sync::Arc;
 
     #[tokio::test]
     async fn test_immediate_success() {

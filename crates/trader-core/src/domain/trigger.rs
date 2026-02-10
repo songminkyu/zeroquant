@@ -3,8 +3,9 @@
 //! 여러 기술적 조건을 종합하여 진입 신호 강도와 트리거 라벨을 생성합니다.
 //! Phase 1-B.2 구현.
 
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
 
 /// 트리거 유형.
 ///

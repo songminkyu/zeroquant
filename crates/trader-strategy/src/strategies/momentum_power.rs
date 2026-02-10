@@ -17,15 +17,14 @@
 //! - `GlobalScore`: 최소 점수 필터
 //! - `MarketRegime`: 추가 진입 조건
 
-use crate::strategies::common::{adjust_strength_by_score, ExitConfig};
-use crate::Strategy;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
 use trader_core::{
@@ -34,6 +33,11 @@ use trader_core::{
     Kline, MarketData, Order, Position, RouteState, Side, Signal, SignalType,
 };
 use trader_strategy_macro::StrategyConfig;
+
+use crate::{
+    strategies::common::{adjust_strength_by_score, ExitConfig},
+    Strategy,
+};
 
 // ============================================================================
 // 설정 (Config)

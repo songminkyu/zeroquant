@@ -10,22 +10,27 @@
 //! - `POST /api/v1/reality-check/snapshot` - 스냅샷 저장 (내부용)
 //! - `POST /api/v1/reality-check/calculate` - Reality Check 계산 (내부용)
 
-use axum::extract::{Query, State};
-use axum::http::StatusCode;
-use axum::response::IntoResponse;
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use std::sync::Arc;
+
+use axum::{
+    extract::{Query, State},
+    http::StatusCode,
+    response::IntoResponse,
+    routing::{get, post},
+    Json, Router,
+};
 use chrono::{NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 use utoipa::{IntoParams, ToSchema};
 
-use crate::repository::{
-    CalculationResult, DailyStats, PriceSnapshot, RankStats, RealityCheckRecord,
-    RealityCheckRepository, SnapshotInput, SourceStats,
+use crate::{
+    repository::{
+        CalculationResult, DailyStats, PriceSnapshot, RankStats, RealityCheckRecord,
+        RealityCheckRepository, SnapshotInput, SourceStats,
+    },
+    state::AppState,
 };
-use crate::state::AppState;
 
 // ==================== Request/Response 타입 ====================
 

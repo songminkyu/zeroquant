@@ -5,8 +5,7 @@
 //! 모든 공개 API는 ticker 문자열을 사용합니다. String 정보가 필요한 경우
 //! StringResolver를 통해 조회합니다.
 
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use trader_core::domain::{RouteState, ScreeningResult, StrategyContext};
 
 /// 스크리닝 결과 활용 trait.
@@ -249,10 +248,12 @@ pub fn get_tickers_by_state_and_score<'a>(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::collections::HashMap;
+
     use chrono::Utc;
     use rust_decimal_macros::dec;
-    use std::collections::HashMap;
+
+    use super::*;
 
     fn create_test_screening_result(
         ticker: &str,

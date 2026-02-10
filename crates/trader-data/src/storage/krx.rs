@@ -11,13 +11,15 @@
 //! let klines = krx.get_ohlcv("005930", "20260101", "20260129").await?;
 //! ```
 
-use crate::error::{DataError, Result};
+use std::str::FromStr;
+
 use chrono::{DateTime, NaiveDate, TimeZone, Utc};
 use rust_decimal::Decimal;
 use serde::Deserialize;
-use std::str::FromStr;
 use tracing::{debug, info};
 use trader_core::{Kline, Timeframe};
+
+use crate::error::{DataError, Result};
 
 /// KRX API 기본 URL.
 const KRX_API_URL: &str = "https://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd";

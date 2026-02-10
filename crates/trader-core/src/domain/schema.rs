@@ -3,9 +3,9 @@
 //! 이 모듈은 전략 설정 UI를 자동 생성하기 위한 스키마 타입을 제공합니다.
 //! Fragment 기반 재사용과 매크로 기반 자동 생성을 지원합니다.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "ts-rs-support")]
 use ts_rs::TS;
 
@@ -326,8 +326,9 @@ impl StrategyUISchema {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_fragment_creation() {

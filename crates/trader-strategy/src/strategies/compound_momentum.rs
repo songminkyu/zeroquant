@@ -24,26 +24,34 @@
 //!
 //! 월간 리밸런싱 (매월 초)
 
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Datelike, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
-use trader_core::domain::{RouteState, StrategyContext};
-use trader_core::types::Timeframe;
+use trader_core::{
+    domain::{RouteState, StrategyContext},
+    types::Timeframe,
+    MarketData, Order, Position, Side, Signal, SignalType,
+};
 use trader_strategy_macro::StrategyConfig;
 
-use crate::strategies::common::rebalance::{
-    PortfolioPosition, RebalanceCalculator, RebalanceConfig, RebalanceOrderSide, TargetAllocation,
+use crate::{
+    strategies::common::{
+        adjust_strength_by_score,
+        rebalance::{
+            PortfolioPosition, RebalanceCalculator, RebalanceConfig, RebalanceOrderSide,
+            TargetAllocation,
+        },
+        ExitConfig,
+    },
+    traits::Strategy,
 };
-use crate::strategies::common::{adjust_strength_by_score, ExitConfig};
-use crate::traits::Strategy;
-use trader_core::{MarketData, Order, Position, Side, Signal, SignalType};
 
 /// CompoundMomentum 전략 설정.
 #[derive(Debug, Clone, Serialize, Deserialize, StrategyConfig)]

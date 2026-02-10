@@ -3,6 +3,8 @@
 //! 백테스트 및 실거래에서 발생한 기술 신호를 조회하고 검색합니다.
 //! 시그널 생성 시 텔레그램 알림 전송 기능을 포함합니다.
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -13,18 +15,19 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
-use std::sync::Arc;
 use tracing::{debug, info, warn};
+use trader_core::{Side, SignalIndicators, SignalMarker, SignalType};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::error::ApiErrorResponse;
-use crate::repository::{
-    BacktestResultsRepository, SignalMarkerRepository, SignalPerformanceRepository,
-    SignalPerformanceResponse, SignalReturnPoint, SignalSymbolStats,
+use crate::{
+    error::ApiErrorResponse,
+    repository::{
+        BacktestResultsRepository, SignalMarkerRepository, SignalPerformanceRepository,
+        SignalPerformanceResponse, SignalReturnPoint, SignalSymbolStats,
+    },
+    AppState,
 };
-use crate::AppState;
-use trader_core::{Side, SignalIndicators, SignalMarker, SignalType};
 
 // ==================== Request/Response 타입 ====================
 

@@ -18,22 +18,26 @@
 //! Grid Trading, MagicSplit, InfinityBot은 `dca.rs`로 이동했습니다.
 //! 이들은 스프레드 기반 전략으로, 레벨별 독립 포지션 관리가 필요합니다.
 
-use crate::strategies::common::{adjust_strength_by_score, ExitConfig};
-use crate::Strategy;
+use std::{collections::VecDeque, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::VecDeque;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
-use trader_core::domain::{RouteState, StrategyContext};
-use trader_core::{MarketData, MarketDataType, Order, Position, Side, Signal, SignalType};
+use trader_core::{
+    domain::{RouteState, StrategyContext},
+    MarketData, MarketDataType, Order, Position, Side, Signal, SignalType,
+};
 use trader_strategy_macro::StrategyConfig;
+
+use crate::{
+    strategies::common::{adjust_strength_by_score, ExitConfig},
+    Strategy,
+};
 
 // ================================================================================================
 // 설정 타입

@@ -31,25 +31,37 @@
 //! let strategy = RotationStrategy::new(config);
 //! ```
 
-use crate::strategies::common::rebalance::{
-    PortfolioPosition, RebalanceCalculator, RebalanceConfig, RebalanceOrderSide, TargetAllocation,
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
 };
-use crate::strategies::common::{adjust_strength_by_score, ExitConfig};
-use crate::Strategy;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Datelike, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
-use trader_core::domain::{RouteState, StrategyContext};
-use trader_core::types::Timeframe;
-use trader_core::{MarketData, MarketDataType, Order, Position, Side, Signal, SignalType};
+use trader_core::{
+    domain::{RouteState, StrategyContext},
+    types::Timeframe,
+    MarketData, MarketDataType, Order, Position, Side, Signal, SignalType,
+};
 use trader_strategy_macro::StrategyConfig;
+
+use crate::{
+    strategies::common::{
+        adjust_strength_by_score,
+        rebalance::{
+            PortfolioPosition, RebalanceCalculator, RebalanceConfig, RebalanceOrderSide,
+            TargetAllocation,
+        },
+        ExitConfig,
+    },
+    Strategy,
+};
 
 // ============================================================================
 // 전략 변형 (Strategy Variant)

@@ -33,23 +33,24 @@
 //! println!("최대 낙폭: {}%", result.metrics.max_drawdown_pct);
 //! ```
 
+use std::{collections::HashMap, sync::Arc};
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::RwLock;
 use trader_core::{
     unrealized_pnl, Kline, MarketData, ScreeningCalculator, Side, Signal, SignalMarker, SignalType,
     StrategyContext, Trade,
 };
+use trader_execution::{ProcessorConfig, SignalProcessor, SimulatedExecutor, TradeResult};
 use uuid::Uuid;
 
-use crate::backtest::candle_processor::CandleProcessor;
-use crate::backtest::slippage::SlippageModel;
-use crate::performance::{EquityPoint, PerformanceMetrics, PerformanceTracker, RoundTrip};
-use trader_execution::{ProcessorConfig, SignalProcessor, SimulatedExecutor, TradeResult};
+use crate::{
+    backtest::{candle_processor::CandleProcessor, slippage::SlippageModel},
+    performance::{EquityPoint, PerformanceMetrics, PerformanceTracker, RoundTrip},
+};
 
 /// 백테스트 오류
 #[derive(Debug, Error)]
@@ -1086,10 +1087,11 @@ impl BacktestEngine {
 /// 간단한 테스트용 전략
 #[cfg(test)]
 pub mod test_strategies {
-    use super::*;
     use async_trait::async_trait;
     use serde_json::Value;
     use trader_core::{MarketDataType, Order, Position};
+
+    use super::*;
 
     /// 단순 이동평균 크로스오버 전략 (테스트용)
     pub struct SimpleSmaStrategy {
@@ -1286,10 +1288,11 @@ pub mod test_strategies {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Duration;
     use rust_decimal_macros::dec;
     use trader_core::Timeframe;
+
+    use super::*;
 
     fn create_test_klines(count: usize, start_price: Decimal, trend: Decimal) -> Vec<Kline> {
         let ticker = "BTC/USDT".to_string();

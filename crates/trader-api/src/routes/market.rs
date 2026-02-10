@@ -8,6 +8,8 @@
 //! - `GET /api/v1/market/klines` - 캔들스틱 데이터 조회 (실시간 거래소 데이터)
 //! - `GET /api/v1/market/ticker` - 현재가 조회
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -16,16 +18,13 @@ use axum::{
 };
 use chrono::{Datelike, NaiveTime, Timelike, Utc, Weekday};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tracing::{debug, error, warn};
+use trader_core::Timeframe;
 use utoipa::{IntoParams, ToSchema};
 
-use trader_core::Timeframe;
 // API 서버는 ohlcv 테이블에서만 읽음 (외부 API 호출 없음)
-
 use crate::repository::KlinesRepository;
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
+use crate::{routes::strategies::ApiError, state::AppState};
 
 // ==================== 응답 타입 ====================
 
@@ -775,12 +774,13 @@ pub fn market_router() -> Router<Arc<AppState>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axum::{
         body::Body,
         http::{Request, StatusCode},
     };
     use tower::ServiceExt;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_get_market_overview() {

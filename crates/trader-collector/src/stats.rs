@@ -1,7 +1,8 @@
 //! 수집 통계 구조체.
 
-use serde::{Deserialize, Serialize};
 use std::time::Duration;
+
+use serde::{Deserialize, Serialize};
 
 /// 수집 작업 통계
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

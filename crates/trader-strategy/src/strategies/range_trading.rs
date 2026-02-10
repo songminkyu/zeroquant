@@ -16,14 +16,13 @@
 //! - `MarketRegime`: Downtrend 시 매수 금지
 //! - `RouteState`: Attack/Armed 시 적극 매수
 
-use crate::strategies::common::ExitConfig;
-use crate::Strategy;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
 use trader_core::{
@@ -32,6 +31,8 @@ use trader_core::{
     Kline, MarketData, MarketDataType, Order, Position, Side, Signal, SignalType,
 };
 use trader_strategy_macro::StrategyConfig;
+
+use crate::{strategies::common::ExitConfig, Strategy};
 
 // ============================================================================
 // 설정 (Config)

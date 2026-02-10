@@ -38,24 +38,21 @@ pub mod trigger_calculator;
 pub mod volume_profile;
 
 // Performance 모듈 re-exports
-pub use performance::metrics::{
-    PerformanceMetrics, RollingMetrics, RoundTrip, DEFAULT_RISK_FREE_RATE, TRADING_DAYS_PER_YEAR,
+// AnalyticsProvider 구현체 re-export
+pub use analytics_provider_impl::AnalyticsProviderImpl;
+// Backtest 모듈 re-exports (backtest feature 필요)
+#[cfg(feature = "backtest")]
+pub use backtest::{
+    BacktestConfig, BacktestEngine, BacktestError, BacktestReport, BacktestResult, CandleProcessor,
+    PartitionedSignals, ProcessCandleContext, MIN_CANDLES_FOR_INDICATORS,
 };
-pub use performance::tracker::{PerformanceEvent, PerformanceThresholds, PerformanceTracker};
-
-// Portfolio 모듈 re-exports
-pub use portfolio::charts::{
-    ChartPoint, MonthlyReturnCell, PerformanceSummary, PeriodPerformance, PortfolioCharts,
+// Correlation re-export
+pub use correlation::{
+    calculate_correlation, calculate_correlation_matrix, calculate_correlation_matrix_decimal,
+    CorrelationMatrix,
 };
-pub use portfolio::equity_curve::{
-    DrawdownPeriod, EquityCurve, EquityCurveBuilder, EquityPoint, TimeFrame,
-};
-
-// Journal Integration 모듈 re-exports
-pub use journal_integration::{
-    export_backtest_to_journal, export_backtest_trades, JournalTradeInput,
-};
-
+// Global Scorer re-export
+pub use global_scorer::{GlobalScorer, GlobalScorerError, GlobalScorerParams, GlobalScorerResult};
 // Indicators 모듈 re-exports
 pub use indicators::{
     AtrParams,
@@ -95,62 +92,14 @@ pub use indicators::{
     VwapParams,
     VwapResult,
 };
-
-// RouteState 계산기 re-export
-pub use route_state_calculator::RouteStateCalculator;
-
-// StructuralFeatures 계산기 re-export
-pub use structural_features::StructuralFeaturesCalculator;
-
-// MarketRegime 계산기 re-export
-pub use market_regime_calculator::{MarketRegimeCalculator, MarketRegimeResult};
-
-// Trigger 계산기 re-export
-pub use trigger_calculator::{TriggerCalculator, TriggerError};
-
-// Global Scorer re-export
-pub use global_scorer::{GlobalScorer, GlobalScorerError, GlobalScorerParams, GlobalScorerResult};
-
+// Journal Integration 모듈 re-exports
+pub use journal_integration::{
+    export_backtest_to_journal, export_backtest_trades, JournalTradeInput,
+};
 // Liquidity Gate re-export
 pub use liquidity_gate::{LiquidityGate, LiquidityLevel};
-
-// 7Factor re-export
-pub use seven_factor::{SevenFactorCalculator, SevenFactorInput, SevenFactorScores};
-
-// Sector RS re-export
-pub use sector_rs::{
-    enrich_screening_with_sector_rs, SectorRsCalculator, SectorRsInput, SectorRsResult,
-    TickerSectorRs,
-};
-
-// Survival Tracker re-export
-pub use survival::{
-    get_survival_days_map, DailyRanking, DailyRankingBuilder, SurvivalResult, SurvivalTracker,
-};
-
-// Volume Profile re-export
-pub use volume_profile::{
-    calculate_volume_profile, PriceLevel, VolumeProfile, VolumeProfileCalculator,
-};
-
-// Correlation re-export
-pub use correlation::{
-    calculate_correlation, calculate_correlation_matrix, calculate_correlation_matrix_decimal,
-    CorrelationMatrix,
-};
-
-// AnalyticsProvider 구현체 re-export
-pub use analytics_provider_impl::AnalyticsProviderImpl;
-
-// Multi-timeframe helpers re-export
-pub use multi_timeframe_helpers::{
-    analyze_trend, combine_signals, default_weights, detect_divergence, CombinedSignal,
-    DivergenceType, SignalDirection, TrendAnalysis, TrendDirection,
-};
-
-// Timeframe Alignment re-export
-pub use timeframe_alignment::TimeframeAligner;
-
+// MarketRegime 계산기 re-export
+pub use market_regime_calculator::{MarketRegimeCalculator, MarketRegimeResult};
 // ML 모듈 re-exports (ml feature 필요)
 #[cfg(feature = "ml")]
 pub use ml::{
@@ -186,10 +135,45 @@ pub use ml::{
     PredictorConfig,
     PricePredictor,
 };
-
-// Backtest 모듈 re-exports (backtest feature 필요)
-#[cfg(feature = "backtest")]
-pub use backtest::{
-    BacktestConfig, BacktestEngine, BacktestError, BacktestReport, BacktestResult, CandleProcessor,
-    PartitionedSignals, ProcessCandleContext, MIN_CANDLES_FOR_INDICATORS,
+// Multi-timeframe helpers re-export
+pub use multi_timeframe_helpers::{
+    analyze_trend, combine_signals, default_weights, detect_divergence, CombinedSignal,
+    DivergenceType, SignalDirection, TrendAnalysis, TrendDirection,
+};
+pub use performance::{
+    metrics::{
+        PerformanceMetrics, RollingMetrics, RoundTrip, DEFAULT_RISK_FREE_RATE,
+        TRADING_DAYS_PER_YEAR,
+    },
+    tracker::{PerformanceEvent, PerformanceThresholds, PerformanceTracker},
+};
+// Portfolio 모듈 re-exports
+pub use portfolio::charts::{
+    ChartPoint, MonthlyReturnCell, PerformanceSummary, PeriodPerformance, PortfolioCharts,
+};
+pub use portfolio::equity_curve::{
+    DrawdownPeriod, EquityCurve, EquityCurveBuilder, EquityPoint, TimeFrame,
+};
+// RouteState 계산기 re-export
+pub use route_state_calculator::RouteStateCalculator;
+// Sector RS re-export
+pub use sector_rs::{
+    enrich_screening_with_sector_rs, SectorRsCalculator, SectorRsInput, SectorRsResult,
+    TickerSectorRs,
+};
+// 7Factor re-export
+pub use seven_factor::{SevenFactorCalculator, SevenFactorInput, SevenFactorScores};
+// StructuralFeatures 계산기 re-export
+pub use structural_features::StructuralFeaturesCalculator;
+// Survival Tracker re-export
+pub use survival::{
+    get_survival_days_map, DailyRanking, DailyRankingBuilder, SurvivalResult, SurvivalTracker,
+};
+// Timeframe Alignment re-export
+pub use timeframe_alignment::TimeframeAligner;
+// Trigger 계산기 re-export
+pub use trigger_calculator::{TriggerCalculator, TriggerError};
+// Volume Profile re-export
+pub use volume_profile::{
+    calculate_volume_profile, PriceLevel, VolumeProfile, VolumeProfileCalculator,
 };

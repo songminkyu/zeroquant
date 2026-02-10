@@ -33,8 +33,11 @@
 //! }
 //! ```
 
-use std::fmt;
-use std::time::{Duration, Instant};
+use std::{
+    fmt,
+    time::{Duration, Instant},
+};
+
 use tokio::sync::RwLock;
 
 use crate::domain::{PendingOrder, StrategyAccountInfo, StrategyPositionInfo};
@@ -292,8 +295,9 @@ impl fmt::Debug for ExchangeCache {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal::Decimal;
+
+    use super::*;
 
     #[tokio::test]
     async fn ttl_cache_basic_operations() {

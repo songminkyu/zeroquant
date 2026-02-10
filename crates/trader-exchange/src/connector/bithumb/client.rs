@@ -1,4 +1,7 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    str::FromStr,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -6,14 +9,14 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use reqwest::{Client, Method};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
-use uuid::Uuid;
-
-use trader_core::domain::{
-    ExchangeProvider, MarketDataProvider, OrderStatusType, PendingOrder, Side, StrategyAccountInfo,
-    StrategyPositionInfo, Trade,
+use trader_core::{
+    domain::{
+        ExchangeProvider, MarketDataProvider, OrderStatusType, PendingOrder, Side,
+        StrategyAccountInfo, StrategyPositionInfo, Trade,
+    },
+    ProviderError, QuoteData,
 };
-use trader_core::{ProviderError, QuoteData};
+use uuid::Uuid;
 
 // ============================================================================
 // 설정

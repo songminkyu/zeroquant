@@ -27,11 +27,12 @@
 //! // 실현손익: 80 * (55 - 50) = $400
 //! ```
 
+use std::collections::VecDeque;
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
 use trader_core::{Side, TradeInfo};
 use uuid::Uuid;
 
@@ -501,8 +502,9 @@ pub fn build_tracker_from_executions(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     fn now() -> DateTime<Utc> {
         Utc::now()

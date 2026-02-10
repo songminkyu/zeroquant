@@ -2,10 +2,6 @@
 //!
 //! SMTP를 통해 트레이딩 알림 및 업데이트를 전송합니다.
 
-use crate::types::{
-    Notification, NotificationError, NotificationEvent, NotificationPriority, NotificationResult,
-    NotificationSender,
-};
 use async_trait::async_trait;
 use lettre::{
     message::{header::ContentType, Mailbox},
@@ -14,6 +10,11 @@ use lettre::{
 };
 use rust_decimal::Decimal;
 use tracing::{debug, error, info};
+
+use crate::types::{
+    Notification, NotificationError, NotificationEvent, NotificationPriority, NotificationResult,
+    NotificationSender,
+};
 
 /// 이메일 알림 전송 설정.
 #[derive(Debug, Clone)]

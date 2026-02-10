@@ -903,7 +903,7 @@ impl SymbolResolver {
     /// * `symbol` - 심볼 (어떤 형식이든 가능)
     ///
     /// # Examples
-    /// ```
+    /// ```ignore
     /// resolver.get_symbol_info("005930").await?;     // Korean stock
     /// resolver.get_symbol_info("005930.KS").await?;  // Yahoo format
     /// resolver.get_symbol_info("AAPL").await?;       // US stock

@@ -20,6 +20,8 @@
 //! - `GET /api/v1/simulation/equity` - 자산 곡선 조회
 //! - `GET /api/v1/simulation/signals` - 신호 마커 조회
 
+use std::{collections::HashMap, sync::Arc};
+
 use axum::{
     extract::State,
     http::StatusCode,
@@ -31,10 +33,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use tokio::task::JoinHandle;
+use tokio::{sync::RwLock, task::JoinHandle};
 use trader_analytics::backtest::CandleProcessor;
 use trader_core::{
     unrealized_pnl, Kline, Side, Signal, SignalMarker, SignalType, StrategyContext, Timeframe,

@@ -26,24 +26,25 @@
 //! trader strategy-test --strategy rsi --symbol 005930 --debug
 //! ```
 
+use std::sync::Arc;
+
 use anyhow::{anyhow, Result};
 use chrono::{NaiveDate, Utc};
-use rust_decimal::prelude::FromPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::FromPrimitive, Decimal};
 use rust_decimal_macros::dec;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, warn};
-
-use trader_analytics::backtest::{
-    BacktestConfig, BacktestEngine, BacktestReport, BacktestScreeningProvider,
-    ScreeningCalculatorConfig,
+use trader_analytics::{
+    backtest::{
+        BacktestConfig, BacktestEngine, BacktestReport, BacktestScreeningProvider,
+        ScreeningCalculatorConfig,
+    },
+    AnalyticsProviderImpl,
 };
-use trader_analytics::AnalyticsProviderImpl;
 use trader_core::{AnalyticsProvider, Kline, MarketType, StrategyContext, Timeframe};
-use trader_data::cache::CachedHistoricalDataProvider;
-use trader_data::storage::ohlcv::OhlcvCache;
-use trader_data::{Database, DatabaseConfig};
+use trader_data::{
+    cache::CachedHistoricalDataProvider, storage::ohlcv::OhlcvCache, Database, DatabaseConfig,
+};
 use trader_strategy::StrategyRegistry;
 
 use crate::commands::download::Market;
@@ -1119,8 +1120,9 @@ pub fn print_available_strategies() {
 // 회귀 테스트 시스템
 // ============================================================================
 
-use serde::{Deserialize, Serialize};
 use std::path::Path;
+
+use serde::{Deserialize, Serialize};
 
 /// 회귀 테스트 Fixture 파일 구조
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1990,8 +1992,9 @@ fn test_strategy_init_only(fixture: &StrategyFixture) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use trader_core::Symbol;
+
+    use super::*;
 
     /// 테스트용 심볼 객체 생성
     fn create_symbol(ticker: &str, market: &Market) -> Symbol {

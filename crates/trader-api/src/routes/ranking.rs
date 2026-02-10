@@ -9,6 +9,8 @@
 //! - `GET /api/v1/ranking/7factor/{ticker}` - 7Factor 데이터 조회
 //! - `POST /api/v1/ranking/7factor/batch` - 7Factor 일괄 조회
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -17,16 +19,17 @@ use axum::{
 };
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tracing::{debug, info};
 use ts_rs::TS;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::repository::{
-    GlobalScoreRepository, RankedSymbol, RankingFilter, ScoreHistoryRepository,
-    ScoreHistorySummary, SevenFactorResponse,
+use crate::{
+    repository::{
+        GlobalScoreRepository, RankedSymbol, RankingFilter, ScoreHistoryRepository,
+        ScoreHistorySummary, SevenFactorResponse,
+    },
+    state::AppState,
 };
-use crate::state::AppState;
 
 // ================================================================================================
 // Request/Response Types

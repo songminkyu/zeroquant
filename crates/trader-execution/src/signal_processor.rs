@@ -33,13 +33,13 @@
 //! executor.process_signal(&signal, current_price, timestamp)?;
 //! ```
 
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use thiserror::Error;
-
 use trader_core::{Side, Signal, SignalType};
 
 /// Signal 처리 에러
@@ -484,8 +484,9 @@ pub fn build_add_trade(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_processor_config_default() {

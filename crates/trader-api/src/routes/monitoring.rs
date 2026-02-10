@@ -11,6 +11,8 @@
 //! - `POST /api/v1/monitoring/stats/reset` - 통계 초기화
 //! - `DELETE /api/v1/monitoring/errors` - 에러 히스토리 삭제
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -19,11 +21,12 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use utoipa::ToSchema;
 
-use crate::monitoring::{global_tracker, ErrorCategory, ErrorRecord, ErrorSeverity, ErrorStats};
-use crate::state::AppState;
+use crate::{
+    monitoring::{global_tracker, ErrorCategory, ErrorRecord, ErrorSeverity, ErrorStats},
+    state::AppState,
+};
 
 /// 에러 목록 조회 쿼리 파라미터.
 #[derive(Debug, Deserialize, ToSchema)]
@@ -386,10 +389,10 @@ pub fn monitoring_router() -> Router<Arc<AppState>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axum::{body::Body, http::Request};
     use tower::ServiceExt;
 
+    use super::*;
     use crate::monitoring::{
         init_global_tracker, ErrorCategory, ErrorRecordBuilder, ErrorSeverity, ErrorTrackerConfig,
     };

@@ -14,22 +14,26 @@
 //! Tokio async runtime의 worker thread를 블로킹하지 않도록
 //! `tokio::task::spawn_blocking`을 사용하여 별도의 blocking thread pool에서 실행합니다.
 
-use chrono::{NaiveDate, TimeZone, Utc};
-use rust_decimal::Decimal;
-use std::collections::{BTreeMap, HashMap};
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use tracing::debug;
-
-use super::loader::parse_symbol;
-use super::types::{
-    BacktestConfigSummary, BacktestMetricsResponse, BacktestMultiRunResponse, BacktestRunResponse,
-    EquityCurvePoint, TradeHistoryItem, TradeResultItem,
+use std::{
+    collections::{BTreeMap, HashMap},
+    sync::Arc,
 };
 
+use chrono::{NaiveDate, TimeZone, Utc};
+use rust_decimal::Decimal;
+use tokio::sync::RwLock;
+use tracing::debug;
 use trader_analytics::backtest::{BacktestConfig, BacktestEngine, BacktestReport};
 use trader_core::{Kline, MarketType, StrategyContext, Symbol, Timeframe};
 use trader_strategy::StrategyRegistry;
+
+use super::{
+    loader::parse_symbol,
+    types::{
+        BacktestConfigSummary, BacktestMetricsResponse, BacktestMultiRunResponse,
+        BacktestRunResponse, EquityCurvePoint, TradeHistoryItem, TradeResultItem,
+    },
+};
 
 /// 전략별 백테스트 실행
 ///

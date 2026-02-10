@@ -1,7 +1,9 @@
 //! 마이그레이션 분석을 위한 데이터 모델.
 
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+};
 
 /// SQL 문장 유형
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

@@ -3,11 +3,12 @@
 //! 자산 곡선(Equity Curve) 데이터의 저장 및 조회를 담당합니다.
 //! PostgreSQL의 window functions를 활용한 효율적인 분석 쿼리를 제공합니다.
 
+use std::collections::{BTreeMap, HashMap};
+
 use chrono::{DateTime, Duration, NaiveDate, TimeZone, Timelike, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
-use std::collections::{BTreeMap, HashMap};
 use tracing::{info, warn};
 use uuid::Uuid;
 
@@ -1035,8 +1036,9 @@ impl EquityHistoryRepository {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_portfolio_snapshot() {

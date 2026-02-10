@@ -3,13 +3,12 @@
 //! DB에서 종목별 20일선 상회 비율을 계산하여 Redis 캐시에 저장합니다.
 //! Collector Group C에서 5분 주기로 실행됩니다.
 
-use sqlx::PgPool;
 use std::time::Instant;
-use tracing::{error, info, warn};
 
+use sqlx::PgPool;
+use tracing::{error, info, warn};
 use trader_core::MarketBreadth;
-use trader_data::cache::RedisCache;
-use trader_data::MarketBreadthCalculator;
+use trader_data::{cache::RedisCache, MarketBreadthCalculator};
 
 use crate::Result;
 

@@ -22,11 +22,13 @@ use tracing::{error, info, warn};
 
 mod commands;
 
-use commands::download::{
-    download_data, parse_date, print_available_symbols, DownloadConfig, Interval, Market,
+use commands::{
+    download::{
+        download_data, parse_date, print_available_symbols, DownloadConfig, Interval, Market,
+    },
+    import::{import_to_db, ImportDbConfig},
+    strategy_test::{run_strategy_test, StrategyTestConfig},
 };
-use commands::import::{import_to_db, ImportDbConfig};
-use commands::strategy_test::{run_strategy_test, StrategyTestConfig};
 
 #[derive(Parser)]
 #[command(name = "trader")]
@@ -723,11 +725,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             charts,
             charts_dir,
         } => {
+            use std::path::Path;
+
             use commands::strategy_test::{
                 load_fixture, run_fixture_tests, run_init_only_regression_tests,
                 run_regression_tests_with_options, RegressionTestOptions,
             };
-            use std::path::Path;
 
             // 전략 목록 출력
             if list_strategies {

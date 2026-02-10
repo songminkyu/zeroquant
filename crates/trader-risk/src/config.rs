@@ -3,9 +3,10 @@
 //! 리스크 한도, 포지션 사이징, 보호 주문(손절/익절)을 위한
 //! 설정 구조체를 정의합니다.
 
+use std::collections::HashMap;
+
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// 전역 리스크 관리 설정.
 #[derive(Debug, Clone, Serialize, Deserialize)]

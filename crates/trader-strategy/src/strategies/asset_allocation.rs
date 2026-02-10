@@ -32,21 +32,22 @@
 //! let strategy = AssetAllocationStrategy::new(config);
 //! ```
 
+use std::{collections::HashMap, sync::Arc};
+
 use async_trait::async_trait;
 use chrono::{DateTime, Datelike, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
+use trader_core::{
+    domain::{RouteState, StrategyContext},
+    types::Timeframe,
+    MarketData, MarketDataType, Order, Position, Side, Signal, SignalType,
+};
 use trader_strategy_macro::StrategyConfig;
-
-use trader_core::domain::{RouteState, StrategyContext};
-use trader_core::types::Timeframe;
-use trader_core::{MarketData, MarketDataType, Order, Position, Side, Signal, SignalType};
 
 use super::common::{
     ExitConfig, MomentumCalculator, MomentumConfig, MomentumResult, PortfolioPosition,

@@ -12,6 +12,8 @@
 //! - `POST /api/v1/strategies/{id}/stop` - 전략 중지
 //! - `PUT /api/v1/strategies/{id}/config` - 전략 설정 변경
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -24,16 +26,17 @@ use futures::FutureExt;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::sync::Arc;
+use trader_strategy::{EngineError, EngineStats, Strategy, StrategyStatus};
 use ts_rs::TS;
 use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::repository::{strategies::CreateStrategyInput, StrategyRepository};
-use crate::state::AppState;
-use crate::websocket::{ServerMessage, StrategyUpdateData};
-use trader_strategy::{EngineError, EngineStats, Strategy, StrategyStatus};
+use crate::{
+    repository::{strategies::CreateStrategyInput, StrategyRepository},
+    state::AppState,
+    websocket::{ServerMessage, StrategyUpdateData},
+};
 
 // ==================== 응답 타입 ====================
 
@@ -2058,12 +2061,13 @@ pub fn strategies_router() -> Router<Arc<AppState>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axum::{
         body::Body,
         http::{Request, StatusCode},
     };
     use tower::ServiceExt;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_list_strategies_empty() {

@@ -2,6 +2,8 @@
 //!
 //! 알림 히스토리 조회 및 관리 기능을 제공합니다.
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -9,14 +11,15 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tracing::{debug, warn};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::repository::{AlertFilter, AlertHistory, AlertsRepository};
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
+use crate::{
+    repository::{AlertFilter, AlertHistory, AlertsRepository},
+    routes::strategies::ApiError,
+    state::AppState,
+};
 
 // ==================== 타입 정의 ====================
 

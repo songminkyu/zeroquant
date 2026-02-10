@@ -6,19 +6,19 @@
 //! 3. 월간 리밸런싱 조건
 //! 4. 리밸런싱 신호 생성
 
+use std::sync::Arc;
+
 use chrono::{TimeZone, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
-use std::sync::Arc;
 use tokio::sync::RwLock;
-use uuid::Uuid;
-
 use trader_core::{Kline, MarketData, Position, Side, StrategyContext, Timeframe};
-use trader_strategy::strategies::asset_allocation::{
-    AssetAllocationConfig, AssetAllocationStrategy,
+use trader_strategy::{
+    strategies::asset_allocation::{AssetAllocationConfig, AssetAllocationStrategy},
+    Strategy,
 };
-use trader_strategy::Strategy;
+use uuid::Uuid;
 
 // ============================================================================
 // 헬퍼 함수

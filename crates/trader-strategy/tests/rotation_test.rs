@@ -8,22 +8,27 @@
 //! - get_state()
 //! - shutdown()
 
+use std::sync::Arc;
+
 use chrono::{DateTime, TimeZone, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use trader_core::{
     GlobalScoreResult, Kline, MarketData, MarketDataType, Order, OrderStatusType, Position, Side,
     StrategyContext, Timeframe,
 };
-use trader_strategy::strategies::common::ExitConfig;
-use trader_strategy::strategies::rotation::{
-    AssetInfo, MarketType, RankingMetric, RebalanceFrequency, RotationConfig, RotationStrategy,
-    RotationVariant, WeightingMethod,
+use trader_strategy::{
+    strategies::{
+        common::ExitConfig,
+        rotation::{
+            AssetInfo, MarketType, RankingMetric, RebalanceFrequency, RotationConfig,
+            RotationStrategy, RotationVariant, WeightingMethod,
+        },
+    },
+    Strategy,
 };
-use trader_strategy::Strategy;
 use uuid::Uuid;
 
 // ============================================================================

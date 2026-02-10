@@ -5,11 +5,10 @@
 //! - 리스크 한도 대비 주문 크기 검증
 //! - 다양한 방법(고정 비율, Kelly)을 사용한 최적 포지션 크기 계산
 
-use crate::config::RiskConfig;
-use crate::manager::RiskValidation;
-use rust_decimal::prelude::ToPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use trader_core::{OrderRequest, Position};
+
+use crate::{config::RiskConfig, manager::RiskValidation};
 
 /// 정밀도를 위해 정수 연산을 사용하여 퍼센트를 금액으로 변환.
 /// 예시: pct_to_amount(1000, 10.0) = 100 (1000의 10%)
@@ -363,9 +362,10 @@ impl PositionSizer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
     use trader_core::{Side, Symbol};
+
+    use super::*;
 
     fn create_test_position(symbol: &Symbol, quantity: Decimal, price: Decimal) -> Position {
         Position::new(

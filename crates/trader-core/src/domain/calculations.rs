@@ -275,8 +275,9 @@ pub fn total_entry_cost(entries: &[TradeEntry], fees: Decimal) -> Decimal {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
+
+    use super::*;
 
     #[test]
     fn test_cost_basis_weighted_average() {

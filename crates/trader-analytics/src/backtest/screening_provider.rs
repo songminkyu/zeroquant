@@ -11,8 +11,10 @@ use trader_core::domain::{Kline, RouteState, ScreeningResult};
 // trader-core에서 정의된 trait과 타입 사용
 use trader_core::{ScreeningCalculator, ScreeningCalculatorConfig, ScreeningUpdateFrequency};
 
-use crate::global_scorer::{GlobalScorer, GlobalScorerParams};
-use crate::route_state_calculator::RouteStateCalculator;
+use crate::{
+    global_scorer::{GlobalScorer, GlobalScorerParams},
+    route_state_calculator::RouteStateCalculator,
+};
 
 /// 백테스트용 스크리닝 결과를 계산하는 최소 캔들 수
 pub const MIN_CANDLES_FOR_SCREENING: usize = 50;
@@ -261,10 +263,11 @@ impl ScreeningCalculator for BacktestScreeningProvider {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::TimeZone;
     use rust_decimal::Decimal;
     use trader_core::Timeframe;
+
+    use super::*;
 
     fn create_test_klines(count: usize, base_price: f64) -> Vec<Kline> {
         (0..count)

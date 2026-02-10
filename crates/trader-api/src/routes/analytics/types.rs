@@ -876,10 +876,11 @@ pub struct SuperTrendParamsResponse {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
     use rust_decimal_macros::dec;
     use trader_analytics::portfolio::ChartPoint;
+
+    use super::*;
 
     #[test]
     fn test_period_return_response() {

@@ -5,13 +5,14 @@
 //! - CRUD operations for exchange credentials
 //! - Connection testing
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
 };
-use std::sync::Arc;
 use tracing::{debug, error, warn};
 use uuid::Uuid;
 
@@ -21,8 +22,7 @@ use super::types::{
     ExchangeCredentialsListResponse, ExchangeTestResponse, SupportedExchange,
     SupportedExchangesResponse, TestNewCredentialRequest, UpdateExchangeCredentialRequest,
 };
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
+use crate::{routes::strategies::ApiError, state::AppState};
 
 // =============================================================================
 // Exchange Credential Handlers

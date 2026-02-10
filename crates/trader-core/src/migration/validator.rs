@@ -4,8 +4,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use super::analyzer::MigrationAnalyzer;
-use super::models::*;
+use super::{analyzer::MigrationAnalyzer, models::*};
 
 /// 마이그레이션 검증기
 pub struct MigrationValidator<'a> {

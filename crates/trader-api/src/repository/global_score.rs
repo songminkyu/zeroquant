@@ -25,8 +25,7 @@ use trader_analytics::{
     SevenFactorScores,
 };
 use trader_core::types::{MarketType, Symbol, Timeframe};
-use trader_data::cache::CachedHistoricalDataProvider;
-use trader_data::RedisCache;
+use trader_data::{cache::CachedHistoricalDataProvider, RedisCache};
 
 /// 글로벌 스코어 캐시 TTL (6시간).
 /// 장 마감 후 계산되며 다음 마감까지 유효.

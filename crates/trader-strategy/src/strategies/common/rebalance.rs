@@ -32,10 +32,11 @@
 //! let result = calculator.calculate_orders(&positions, &targets);
 //! ```
 
+use std::collections::HashMap;
+
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// 리밸런싱 설정.
 #[derive(Debug, Clone, Serialize, Deserialize)]

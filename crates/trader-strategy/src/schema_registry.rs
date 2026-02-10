@@ -3,8 +3,9 @@
 //! 이 모듈은 전략 UI 스키마 Fragment를 관리하고,
 //! 26개 전략에서 재사용 가능한 빌트인 Fragment를 제공합니다.
 
-use serde_json::json;
 use std::collections::HashMap;
+
+use serde_json::json;
 use trader_core::{FieldSchema, FieldType, FragmentCategory, SchemaFragment};
 
 /// Fragment 레지스트리.

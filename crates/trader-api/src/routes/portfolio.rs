@@ -13,29 +13,32 @@
 //!
 //! - `credential_id` (선택): 특정 거래소 자격증명 ID로 조회
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Query, State},
     http::StatusCode,
     routing::get,
     Json, Router,
 };
+use chrono::Utc;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tracing::{debug, error, warn};
-use utoipa::{IntoParams, ToSchema};
-use uuid::Uuid;
-
-use crate::repository::{
-    create_provider_for_mock_credential, EquityHistoryRepository, ExchangeProviderArc,
-    HoldingPosition, PortfolioSnapshot, PositionRepository,
-};
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
-use chrono::Utc;
 use trader_core::{
     ExecutionHistoryRequest, ExecutionHistoryResponse, ExecutionRecord, StrategyAccountInfo,
     StrategyPositionInfo,
+};
+use utoipa::{IntoParams, ToSchema};
+use uuid::Uuid;
+
+use crate::{
+    repository::{
+        create_provider_for_mock_credential, EquityHistoryRepository, ExchangeProviderArc,
+        HoldingPosition, PortfolioSnapshot, PositionRepository,
+    },
+    routes::strategies::ApiError,
+    state::AppState,
 };
 
 // ==================== 캐시 키 및 TTL ====================
@@ -1211,12 +1214,13 @@ pub fn portfolio_router() -> Router<Arc<AppState>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axum::{
         body::Body,
         http::{Request, StatusCode},
     };
     use tower::ServiceExt;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_get_portfolio_summary_mock() {

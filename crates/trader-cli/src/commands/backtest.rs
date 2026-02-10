@@ -18,29 +18,26 @@
 //! trader backtest --list-strategies
 //! ```
 
+use std::{collections::HashMap, path::Path, str::FromStr, sync::Arc};
+
 use anyhow::{anyhow, Result};
 use chrono::{NaiveDate, Utc};
 use rust_decimal::prelude::*;
 use serde::Deserialize;
-use std::collections::HashMap;
-use std::path::Path;
-use std::str::FromStr;
-use tracing::{debug, info, warn};
-
-use crate::commands::chart_gen::RegressionChartGenerator;
-
-use std::sync::Arc;
 use tokio::sync::RwLock;
+use tracing::{debug, info, warn};
 use trader_analytics::backtest::{BacktestConfig, BacktestEngine, BacktestReport};
 use trader_core::{Kline, StrategyContext, Timeframe};
 use trader_data::{Database, DatabaseConfig, OhlcvCache};
-use trader_strategy::strategies::{
-    AssetAllocationStrategy, CompoundMomentumStrategy, DayTradingStrategy, DcaStrategy,
-    MeanReversionStrategy, RotationStrategy,
+use trader_strategy::{
+    strategies::{
+        AssetAllocationStrategy, CompoundMomentumStrategy, DayTradingStrategy, DcaStrategy,
+        MeanReversionStrategy, RotationStrategy,
+    },
+    Strategy, StrategyRegistry,
 };
-use trader_strategy::{Strategy, StrategyRegistry};
 
-use crate::commands::download::Market;
+use crate::commands::{chart_gen::RegressionChartGenerator, download::Market};
 
 /// 백테스트 CLI 설정
 #[derive(Debug, Clone)]
@@ -1248,8 +1245,9 @@ pub fn print_available_strategies() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use trader_core::Symbol;
+
+    use super::*;
 
     /// 테스트용 심볼 객체 생성
     fn create_symbol(config: &BacktestCliConfig) -> Symbol {

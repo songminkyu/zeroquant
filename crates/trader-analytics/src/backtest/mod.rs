@@ -24,6 +24,5 @@ pub use screening_provider::{
     BacktestScreeningConfig, BacktestScreeningProvider, MIN_CANDLES_FOR_SCREENING,
 };
 pub use slippage::{SlippageModel, SlippageResult, SlippageTier};
-
 // Re-export core types for convenience
 pub use trader_core::{ScreeningCalculator, ScreeningCalculatorConfig, ScreeningUpdateFrequency};

@@ -11,8 +11,7 @@
 //! - 롤링 샤프 비율
 
 use chrono::{DateTime, Datelike, NaiveDate, Utc};
-use rust_decimal::prelude::*;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::*, Decimal};
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 
@@ -486,9 +485,10 @@ impl PeriodPerformance {
 
 #[cfg(test)]
 mod tests {
+    use chrono::Duration;
+
     use super::*;
     use crate::portfolio::EquityCurveBuilder;
-    use chrono::Duration;
 
     fn create_test_curve() -> EquityCurve {
         let mut builder = EquityCurveBuilder::new(dec!(10_000_000));

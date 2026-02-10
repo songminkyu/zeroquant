@@ -9,10 +9,10 @@
 //! - OCO(One-Cancels-Other) 주문 관리
 //! - 실행 추적 및 보고
 
+use std::{collections::HashMap, sync::Arc};
+
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
@@ -23,8 +23,10 @@ use trader_core::{
 use trader_risk::RiskManager;
 use uuid::Uuid;
 
-use crate::order_manager::{OrderFill, OrderManager};
-use crate::position_tracker::PositionTracker;
+use crate::{
+    order_manager::{OrderFill, OrderManager},
+    position_tracker::PositionTracker,
+};
 
 /// 실행 오류 유형.
 #[derive(Debug, Error)]
@@ -1034,10 +1036,10 @@ impl OrderExecutor {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal::prelude::FromPrimitive;
-
     use trader_risk::RiskConfig;
+
+    use super::*;
 
     /// 정수로부터 Decimal을 생성하는 헬퍼 매크로
     macro_rules! dec {

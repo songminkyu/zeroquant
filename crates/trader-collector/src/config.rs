@@ -1,7 +1,8 @@
 //! 환경변수 기반 설정 모듈.
 
-use crate::Result;
 use std::time::Duration;
+
+use crate::Result;
 
 /// Collector 전체 설정
 #[derive(Debug, Clone)]

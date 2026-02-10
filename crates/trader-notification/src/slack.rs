@@ -2,14 +2,15 @@
 //!
 //! Slack Incoming Webhook을 통해 트레이딩 알림 및 업데이트를 전송합니다.
 
-use crate::types::{
-    Notification, NotificationError, NotificationEvent, NotificationPriority, NotificationResult,
-    NotificationSender,
-};
 use async_trait::async_trait;
 use rust_decimal::Decimal;
 use serde_json::json;
 use tracing::{debug, error, info, warn};
+
+use crate::types::{
+    Notification, NotificationError, NotificationEvent, NotificationPriority, NotificationResult,
+    NotificationSender,
+};
 
 /// Slack 알림 전송 설정.
 #[derive(Debug, Clone)]

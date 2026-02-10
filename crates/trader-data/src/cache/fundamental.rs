@@ -4,8 +4,7 @@
 //! 주요 지표: 시가총액, PER, PBR, ROE, 배당수익률 등.
 
 use chrono::{DateTime, NaiveDate, TimeZone, Utc};
-use rust_decimal::prelude::FromPrimitive;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::FromPrimitive, Decimal};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
 

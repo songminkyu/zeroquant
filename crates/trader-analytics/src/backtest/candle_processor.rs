@@ -35,25 +35,24 @@
 //! processor.sync_positions(&mut strategy, executor.positions(), kline, exchange, ticker).await?;
 //! ```
 
-use crate::{
-    GlobalScorer, GlobalScorerParams, IndicatorEngine, RouteStateCalculator,
-    StructuralFeaturesCalculator, TimeframeAligner,
-};
+use std::{collections::HashMap, sync::Arc};
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::debug;
-use trader_core::MarketType;
 use trader_core::{
-    unrealized_pnl, Kline, MarketData, Position, RouteState, ScreeningCalculator, Side, Signal,
-    SignalType, StrategyContext, Timeframe,
+    unrealized_pnl, Kline, MarketData, MarketType, Position, RouteState, ScreeningCalculator, Side,
+    Signal, SignalType, StrategyContext, Timeframe,
 };
 use trader_execution::ProcessorPosition;
 use uuid::Uuid;
 
 use super::BacktestError;
+use crate::{
+    GlobalScorer, GlobalScorerParams, IndicatorEngine, RouteStateCalculator,
+    StructuralFeaturesCalculator, TimeframeAligner,
+};
 
 /// 최소 지표 계산에 필요한 캔들 수 (StructuralFeaturesCalculator는 40개 필요)
 pub const MIN_CANDLES_FOR_INDICATORS: usize = 40;

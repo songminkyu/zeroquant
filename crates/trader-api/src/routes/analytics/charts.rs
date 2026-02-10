@@ -2,6 +2,8 @@
 //!
 //! 자산 곡선, CAGR, MDD, Drawdown, 월별 수익률 차트 API를 제공합니다.
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Query, State},
     response::IntoResponse,
@@ -10,18 +12,17 @@ use axum::{
 use chrono::{DateTime, Datelike, Utc};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal_macros::dec;
-use std::sync::Arc;
 use tracing::{debug, warn};
 
-use crate::repository::EquityHistoryRepository;
-use crate::state::AppState;
-
-use super::manager::AnalyticsManager;
-use super::performance::parse_period_duration;
-use super::types::{
-    ChartPointResponse, ChartQuery, ChartResponse, EquityCurveResponse, MonthlyReturnCellResponse,
-    MonthlyReturnsResponse, PeriodQuery,
+use super::{
+    manager::AnalyticsManager,
+    performance::parse_period_duration,
+    types::{
+        ChartPointResponse, ChartQuery, ChartResponse, EquityCurveResponse,
+        MonthlyReturnCellResponse, MonthlyReturnsResponse, PeriodQuery,
+    },
 };
+use crate::{repository::EquityHistoryRepository, state::AppState};
 
 /// 자산 곡선 데이터 조회.
 #[utoipa::path(
@@ -357,9 +358,10 @@ pub async fn get_monthly_returns(State(state): State<Arc<AppState>>) -> impl Int
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axum::{body::Body, http::Request, routing::get, Router};
     use tower::ServiceExt;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_get_equity_curve_endpoint() {

@@ -2,12 +2,13 @@
 //!
 //! 시장별 20일 이동평균선 상회 종목 비율을 계산합니다.
 
-use crate::error::{DataError, Result};
 use chrono::{Duration, Utc};
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use tracing::{debug, info, instrument};
 use trader_core::domain::MarketBreadth;
+
+use crate::error::{DataError, Result};
 
 /// Market Breadth 계산기.
 ///

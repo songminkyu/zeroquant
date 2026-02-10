@@ -4,12 +4,15 @@
 //! - `Position` - 개별 포지션 엔티티
 //! - `PositionSummary` - 포트폴리오 요약
 
-use crate::domain::Side;
-use crate::types::{Price, Quantity};
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::{
+    domain::Side,
+    types::{Price, Quantity},
+};
 
 /// 심볼의 보유량을 나타내는 트레이딩 포지션.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -358,8 +361,9 @@ pub trait PositionAdjustable {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_position_pnl() {

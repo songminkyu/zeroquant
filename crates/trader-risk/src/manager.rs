@@ -6,13 +6,17 @@
 //! - Stop-loss/Take-profit 주문 생성
 //! - 변동성 필터링
 
-use crate::config::RiskConfig;
-use crate::limits::DailyLossTracker;
-use crate::position_sizing::PositionSizer;
-use crate::stop_loss::{StopOrder, StopOrderGenerator, TrailingStopState};
-use rust_decimal::Decimal;
 use std::collections::HashMap;
+
+use rust_decimal::Decimal;
 use trader_core::{OrderRequest, Position, TraderResult};
+
+use crate::{
+    config::RiskConfig,
+    limits::DailyLossTracker,
+    position_sizing::PositionSizer,
+    stop_loss::{StopOrder, StopOrderGenerator, TrailingStopState},
+};
 
 /// 리스크 검증 결과.
 #[derive(Debug, Clone)]
@@ -425,9 +429,10 @@ impl Default for RiskManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
     use trader_core::{Side, Symbol};
+
+    use super::*;
 
     fn create_test_position(
         symbol: &Symbol,

@@ -2,8 +2,9 @@
 //!
 //! 종목의 추세 단계를 5단계로 분류하여 매매 타이밍을 판단합니다.
 
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
 
 /// 종목의 추세 단계를 나타내는 5단계 레짐.
 ///

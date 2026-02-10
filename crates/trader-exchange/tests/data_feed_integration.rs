@@ -1,7 +1,8 @@
 //! Integration tests for DataFeed with downloaded CSV data.
 
-use rust_decimal_macros::dec;
 use std::path::Path;
+
+use rust_decimal_macros::dec;
 use trader_core::Timeframe;
 use trader_exchange::simulated::{DataFeed, DataFeedConfig};
 

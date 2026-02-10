@@ -13,13 +13,13 @@
 //! plotters의 RangedDateTime은 내부적으로 나노초 계산 시 overflow가 발생할 수 있어,
 //! 타임스탬프를 f64로 변환하여 안전하게 처리합니다.
 
+use std::path::Path;
+
 use anyhow::Result;
 use chrono::{DateTime, TimeZone, Utc};
 use plotters::prelude::*;
 use rust_decimal::Decimal;
-use std::path::Path;
-use trader_analytics::backtest::BacktestReport;
-use trader_analytics::performance::EquityPoint;
+use trader_analytics::{backtest::BacktestReport, performance::EquityPoint};
 use trader_core::{Kline, Side, SignalMarker, SignalType};
 
 /// 차트 생성 설정
@@ -1045,9 +1045,10 @@ pub fn generate_regression_charts(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::TimeZone;
     use rust_decimal::prelude::FromPrimitive;
+
+    use super::*;
 
     fn create_test_equity_curve() -> Vec<EquityPoint> {
         let base = Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();

@@ -23,18 +23,18 @@
 //! }
 //! ```
 
-use crate::ExchangeError;
+use std::{str::FromStr, time::Duration};
+
 use chrono::Utc;
 use futures::{SinkExt, StreamExt};
 use rust_decimal::Decimal;
 use serde_json::json;
-use std::str::FromStr;
-use std::time::Duration;
-use tokio::sync::mpsc;
-use tokio::time::interval;
+use tokio::{sync::mpsc, time::interval};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 use tracing::{debug, error, info, warn};
 use trader_core::{OrderBook, OrderBookLevel, QuoteData};
+
+use crate::ExchangeError;
 
 /// 연결 중 동적 구독/해제를 위한 명령.
 #[derive(Debug)]

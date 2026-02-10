@@ -24,8 +24,7 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
 use trader_core::{Kline, MarketData, Position, Side, Timeframe};
-use trader_strategy::strategies::rsi_multi_tf::RsiMultiTfStrategy;
-use trader_strategy::Strategy;
+use trader_strategy::{strategies::rsi_multi_tf::RsiMultiTfStrategy, Strategy};
 
 // ============================================================================
 // 테스트 헬퍼 함수

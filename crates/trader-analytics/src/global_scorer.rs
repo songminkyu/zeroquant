@@ -22,16 +22,16 @@
 //! 6. 저유동성: -4점 (거래대금 하위 20%)
 //! 7. 변동성 스파이크: -2점 (VolZ > 3)
 
+use std::collections::HashMap;
+
 use chrono::Utc;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use std::collections::HashMap;
-use trader_core::{types::MarketType, GlobalScoreResult, Kline};
+use trader_core::{domain::StructuralFeatures, types::MarketType, GlobalScoreResult, Kline};
 
 use crate::indicators::{
     BollingerBandsParams, IndicatorEngine, IndicatorError, MacdParams, RsiParams, SmaParams,
 };
-use trader_core::domain::StructuralFeatures;
 
 /// GlobalScorer 계산 오류.
 #[derive(Debug, thiserror::Error)]
@@ -797,9 +797,10 @@ impl Default for GlobalScorer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
     use trader_core::types::MarketType;
+
+    use super::*;
 
     fn create_test_candles(count: usize) -> Vec<Kline> {
         use trader_core::types::Timeframe;

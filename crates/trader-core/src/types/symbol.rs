@@ -5,8 +5,9 @@
 //! - `Country` - 국가/지역 코드
 //! - `Symbol` - 거래 가능한 상품을 나타내는 심볼
 
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
 
 /// 시장 유형 분류 (정규화).
 ///

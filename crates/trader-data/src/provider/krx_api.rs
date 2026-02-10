@@ -34,11 +34,12 @@
 //! let stocks = client.fetch_kospi_stocks("20240101").await?;
 //! ```
 
+use std::collections::HashMap;
+
 use chrono::{NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use std::collections::HashMap;
 use trader_core::CredentialEncryptor;
 
 /// KRX Open API 클라이언트.

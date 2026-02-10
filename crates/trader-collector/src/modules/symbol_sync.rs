@@ -1,9 +1,11 @@
 //! 심볼 동기화 모듈.
 
-use crate::{CollectionStats, CollectorConfig, Result};
-use sqlx::PgPool;
 use std::time::Instant;
+
+use sqlx::PgPool;
 use trader_data::provider::symbol_info::{KrxSymbolProvider, SymbolInfoProvider};
+
+use crate::{CollectionStats, CollectorConfig, Result};
 
 /// 심볼 정보 동기화
 pub async fn sync_symbols(pool: &PgPool, config: &CollectorConfig) -> Result<CollectionStats> {

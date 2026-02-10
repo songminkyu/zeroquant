@@ -10,8 +10,7 @@
 //!     cargo test -p trader-analytics --test multi_timeframe_perf -- --nocapture
 //! ```
 
-use std::collections::HashMap;
-use std::time::Instant;
+use std::{collections::HashMap, time::Instant};
 
 use rust_decimal::Decimal;
 use trader_core::{Kline, Timeframe};

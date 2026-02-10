@@ -21,10 +21,14 @@
 //! - **Timeout**: 요청 타임아웃 (기본 5회)
 //! - **Service**: 기타 서비스 오류 (기본 5회)
 
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::RwLock;
-use std::time::{Duration, Instant};
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        RwLock,
+    },
+    time::{Duration, Instant},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -657,8 +661,9 @@ impl std::error::Error for CircuitOpenError {}
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::thread;
+
+    use super::*;
 
     #[test]
     fn test_circuit_breaker_initial_state() {

@@ -18,17 +18,16 @@
 //! - `NYSE`: 뉴욕증권거래소
 //! - `AMEX`: 미국증권거래소
 
-use super::auth::KisOAuth;
-use super::config::KisEnvironment;
-use super::exchange_code;
-use super::tr_id;
-use crate::ExchangeError;
+use std::sync::Arc;
+
 use reqwest::Client;
 use rust_decimal::Decimal;
 use serde::Deserialize;
-use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 use trader_core::{RoundMethod, TickSizeProvider};
+
+use super::{auth::KisOAuth, config::KisEnvironment, exchange_code, tr_id};
+use crate::ExchangeError;
 
 /// 미국 시장 세션 유형.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

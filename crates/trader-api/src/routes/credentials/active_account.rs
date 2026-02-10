@@ -7,16 +7,19 @@
 //! - `GET /api/v1/credentials/active` - 활성 계정 조회
 //! - `PUT /api/v1/credentials/active` - 활성 계정 설정
 
+use std::sync::Arc;
+
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use chrono::Utc;
-use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
 use super::types::{ActiveAccountResponse, SetActiveAccountRequest};
-use crate::routes::strategies::ApiError;
-use crate::state::AppState;
-use crate::websocket::{ActiveAccountChangedData, ServerMessage};
+use crate::{
+    routes::strategies::ApiError,
+    state::AppState,
+    websocket::{ActiveAccountChangedData, ServerMessage},
+};
 
 /// 활성 계정 조회.
 ///

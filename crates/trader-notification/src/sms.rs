@@ -2,13 +2,14 @@
 //!
 //! Twilio API를 통해 SMS 트레이딩 알림을 전송합니다.
 
+use async_trait::async_trait;
+use rust_decimal::Decimal;
+use tracing::{debug, error, info, warn};
+
 use crate::types::{
     Notification, NotificationError, NotificationEvent, NotificationPriority, NotificationResult,
     NotificationSender,
 };
-use async_trait::async_trait;
-use rust_decimal::Decimal;
-use tracing::{debug, error, info, warn};
 
 /// SMS 프로바이더 타입.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

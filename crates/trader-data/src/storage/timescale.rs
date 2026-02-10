@@ -3,16 +3,20 @@
 //! TimescaleDB(PostgreSQL + TimescaleDB 확장)를 사용하여 시계열 데이터를 저장하고
 //! 조회하기 위한 repository 패턴 구현을 제공합니다.
 
-use crate::error::{DataError, Result};
+use std::time::Duration;
+
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::Deserialize;
-use sqlx::postgres::{PgPool, PgPoolOptions};
-use sqlx::FromRow;
-use std::time::Duration;
+use sqlx::{
+    postgres::{PgPool, PgPoolOptions},
+    FromRow,
+};
 use tracing::{debug, info, instrument};
 use trader_core::{Order, OrderStatusType, Side, TradeTick};
 use uuid::Uuid;
+
+use crate::error::{DataError, Result};
 
 /// 데이터베이스 설정.
 #[derive(Debug, Clone, Deserialize)]

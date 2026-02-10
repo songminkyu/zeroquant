@@ -3,28 +3,28 @@
 //! AppState는 모든 API 핸들러에서 공유되는 상태를 관리합니다.
 //! Arc로 래핑되어 여러 요청 간에 안전하게 공유됩니다.
 
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
+
 use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
-use trader_analytics::ml::MlService;
-use trader_analytics::AnalyticsProviderImpl;
-use trader_core::crypto::CredentialEncryptor;
-use trader_core::{AnalyticsProvider, ExchangeProvider, MarketDataProvider, StrategyContext};
-use trader_data::cache::CachedHistoricalDataProvider;
-use trader_data::{RedisCache, RedisConfig, SymbolResolver};
-use trader_exchange::connector::kis::KisOAuth;
+use trader_analytics::{ml::MlService, AnalyticsProviderImpl};
+use trader_core::{
+    crypto::CredentialEncryptor, AnalyticsProvider, ExchangeProvider, MarketDataProvider,
+    StrategyContext,
+};
+use trader_data::{cache::CachedHistoricalDataProvider, RedisCache, RedisConfig, SymbolResolver};
+use trader_exchange::{connector::kis::KisOAuth, provider::MockExchangeProvider};
 use trader_execution::OrderExecutor;
 use trader_notification::NotificationManager;
 use trader_risk::RiskManager;
 use trader_strategy::{SignalConflictEvent, StrategyEngine};
 use uuid::Uuid;
 
-use crate::repository::ExchangeProviderArc;
-use crate::services::context_sync::start_context_sync_service;
-use crate::services::MarketStreamHandle;
-use crate::websocket::{ServerMessage, SharedSubscriptionManager};
-use trader_exchange::provider::MockExchangeProvider;
+use crate::{
+    repository::ExchangeProviderArc,
+    services::{context_sync::start_context_sync_service, MarketStreamHandle},
+    websocket::{ServerMessage, SharedSubscriptionManager},
+};
 
 /// 애플리케이션 공유 상태.
 ///

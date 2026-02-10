@@ -5,21 +5,24 @@
 //! - Crossover: 골든/데드 크로스
 //! - VolumeSurge: 거래량 급증 + 연속 상승
 
+use std::sync::Arc;
+
 use chrono::{TimeZone, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde_json::json;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 use trader_core::{
     Kline, MarketData, MarketDataType, Order, OrderStatusType, Position, Side, StrategyContext,
     Timeframe,
 };
-use trader_strategy::strategies::day_trading::{
-    BreakoutConfig, CrossoverConfig, DayTradingConfig, DayTradingStrategy, DayTradingVariant,
-    VolumeSurgeConfig,
+use trader_strategy::{
+    strategies::day_trading::{
+        BreakoutConfig, CrossoverConfig, DayTradingConfig, DayTradingStrategy, DayTradingVariant,
+        VolumeSurgeConfig,
+    },
+    Strategy,
 };
-use trader_strategy::Strategy;
 use uuid::Uuid;
 
 // ====== 헬퍼 함수 ======

@@ -49,7 +49,6 @@ pub use registry::{StrategyCategory, StrategyMeta, StrategyRegistry};
 pub use schema_composer::SchemaComposer;
 pub use schema_registry::FragmentRegistry;
 pub use strategies::{MeanReversionConfig, MeanReversionStrategy, MeanReversionVariant};
-pub use traits::{Strategy, StrategyMetadata};
-
 // 프로시저 매크로 재내보내기
 pub use trader_strategy_macro::StrategyConfig;
+pub use traits::{Strategy, StrategyMetadata};

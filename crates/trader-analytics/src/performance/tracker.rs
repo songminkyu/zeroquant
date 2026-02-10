@@ -33,10 +33,11 @@
 //! }
 //! ```
 
+use std::collections::{HashMap, VecDeque};
+
 use chrono::{DateTime, Duration, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
 use thiserror::Error;
 use tokio::sync::mpsc;
 use trader_core::{Side, Trade};
@@ -864,8 +865,9 @@ impl PerformanceTracker {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     fn create_test_trade(side: Side, price: Decimal, quantity: Decimal, fee: Decimal) -> Trade {
         Trade::new(

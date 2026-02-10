@@ -7,16 +7,17 @@
 //! - `/report` - 일일/주간 리포트
 //! - `/attack` - ATTACK 상태 종목 조회
 
-use std::sync::Arc;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use async_trait::async_trait;
 use serde::Deserialize;
 use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 
-use crate::telegram::TelegramConfig;
-use crate::types::{NotificationError, NotificationResult};
+use crate::{
+    telegram::TelegramConfig,
+    types::{NotificationError, NotificationResult},
+};
 
 /// 텔레그램 봇 업데이트 응답.
 #[derive(Debug, Deserialize)]

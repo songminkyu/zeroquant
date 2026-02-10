@@ -6,11 +6,11 @@
 //!
 //! OHLCV, Indicator, GlobalScore 동기화에서 이 종목들을 먼저 처리합니다.
 
-use sqlx::PgPool;
 use std::collections::HashSet;
 
-use crate::error::CollectorError;
-use crate::Result;
+use sqlx::PgPool;
+
+use crate::{error::CollectorError, Result};
 
 /// Watchlist에 등록된 모든 심볼(ticker) 목록 조회.
 ///

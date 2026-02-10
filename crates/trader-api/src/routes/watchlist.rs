@@ -12,6 +12,8 @@
 //! - `DELETE /api/v1/watchlist/:id/items/:symbol` - 아이템 삭제
 //! - `PUT /api/v1/watchlist/items/:item_id` - 아이템 수정
 
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -19,16 +21,17 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tracing::{debug, info};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::repository::{
-    NewWatchlist, NewWatchlistItem, UpdateWatchlistItem, WatchlistItemRecord, WatchlistRecord,
-    WatchlistRepository, WatchlistWithCount,
+use crate::{
+    repository::{
+        NewWatchlist, NewWatchlistItem, UpdateWatchlistItem, WatchlistItemRecord, WatchlistRecord,
+        WatchlistRepository, WatchlistWithCount,
+    },
+    state::AppState,
 };
-use crate::state::AppState;
 
 // ================================================================================================
 // Request/Response Types

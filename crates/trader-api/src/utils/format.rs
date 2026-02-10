@@ -175,8 +175,9 @@ pub fn format_currency(value: &Decimal, currency: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rust_decimal_macros::dec;
+
+    use super::*;
 
     #[test]
     fn test_format_timestamp() {

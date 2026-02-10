@@ -2,10 +2,10 @@
 //!
 //! StrategyContext에서 GlobalScore를 활용하여 종목을 선택하고 가중치를 계산합니다.
 
-use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
 use std::collections::HashMap;
 
+use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 use trader_core::domain::{GlobalScoreResult, StrategyContext};
 
 /// GlobalScore 기반 종목 필터링 옵션.
@@ -302,9 +302,10 @@ pub fn calculate_weighted_average(scores: &HashMap<String, GlobalScoreResult>) -
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Utc;
     use trader_core::types::MarketType;
+
+    use super::*;
 
     fn create_test_score(
         ticker: &str,

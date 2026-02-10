@@ -10,24 +10,29 @@
 //! - **국내 (KR)**: KRX API 우선 사용, 실패 시 Yahoo Finance fallback
 //! - **해외 (US, JP 등)**: Yahoo Finance 사용
 
-use crate::{CollectionStats, CollectorConfig, Result};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
 use chrono::{NaiveDate, Utc};
 use rust_decimal::Decimal;
 use sqlx::PgPool;
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
-
-use super::watchlist_helper;
 use trader_analytics::{indicators::IndicatorEngine, MarketRegimeCalculator, RouteStateCalculator};
 use trader_core::{CredentialEncryptor, Kline, Timeframe};
-use trader_data::cache::historical::CachedHistoricalDataProvider;
-use trader_data::provider::krx_api::KrxApiClient;
+use trader_data::{
+    cache::historical::CachedHistoricalDataProvider, provider::krx_api::KrxApiClient,
+};
 use uuid::Uuid;
 
-use super::checkpoint::{self, CheckpointStatus};
-use super::utils::{calculate_ttm_squeeze, to_screaming_snake_case};
+use super::{
+    checkpoint::{self, CheckpointStatus},
+    utils::{calculate_ttm_squeeze, to_screaming_snake_case},
+    watchlist_helper,
+};
+use crate::{CollectionStats, CollectorConfig, Result};
 
 /// OHLCV 데이터 범위 조회 결과 타입
 type OhlcvDateRange = Option<(Option<chrono::DateTime<Utc>>, Option<chrono::DateTime<Utc>>)>;

@@ -22,10 +22,11 @@
 //! println!("NASDAQ: {:+.2}%", data.nasdaq_change_pct);
 //! ```
 
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use thiserror::Error;
 use tracing::{debug, error};
 use yahoo_finance_api as yahoo;

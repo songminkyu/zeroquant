@@ -62,19 +62,17 @@ pub mod types;
 // 자주 사용되는 타입 재내보내기
 pub use error::{MlError, MlResult};
 pub use features::{FeatureConfig, FeatureExtractor};
-#[cfg(feature = "ml")]
-pub use predictor::OnnxPredictor;
-pub use predictor::{MockPredictor, PredictionResult, PredictorConfig, PricePredictor};
-pub use types::{ConfidenceLevel, FeatureVector, Prediction, PredictionDirection};
-
 // 패턴 인식 타입 재내보내기
 pub use pattern::{
     CandlestickPattern, CandlestickPatternType, ChartPattern, ChartPatternType, PatternConfig,
     PatternPoint, PatternRecognizer, Trendline,
 };
-
+#[cfg(feature = "ml")]
+pub use predictor::OnnxPredictor;
+pub use predictor::{MockPredictor, PredictionResult, PredictorConfig, PricePredictor};
 // 서비스 타입 재내보내기
 pub use service::{
     CandlestickPatternInfo, ChartPatternInfo, FeatureSummary, MlAnalysisResult, MlService,
     MlServiceConfig, PatternDetectionResult,
 };
+pub use types::{ConfidenceLevel, FeatureVector, Prediction, PredictionDirection};

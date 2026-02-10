@@ -1,9 +1,9 @@
 //! 종목 목록 조회 기능.
 
+use std::{fs::File, io::Write};
+
 use anyhow::{Context, Result};
 use serde::Serialize;
-use std::fs::File;
-use std::io::Write;
 use tracing::info;
 use trader_data::{Database, DatabaseConfig};
 
