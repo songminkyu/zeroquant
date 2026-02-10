@@ -216,9 +216,7 @@ mod tests {
     #[test]
     fn test_filter_entry_only() {
         // min_strength 제거하여 모든 강도 허용
-        let filter = SignalAlertFilter::new()
-            .entry_only()
-            .with_min_strength(0.0);
+        let filter = SignalAlertFilter::new().entry_only().with_min_strength(0.0);
 
         let entry_marker = SignalMarker::new(
             "BTC/USDT".to_string(),

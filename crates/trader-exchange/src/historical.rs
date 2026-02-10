@@ -142,7 +142,11 @@ impl UnifiedHistoricalProvider {
         if Self::needs_minute_data(timeframe) {
             // 분봉 조회
             let minutes = Self::timeframe_to_minutes(timeframe);
-            let minute_data = self.client.kr().get_minute_chart(stock_code, minutes).await?;
+            let minute_data = self
+                .client
+                .kr()
+                .get_minute_chart(stock_code, minutes)
+                .await?;
 
             let klines: Vec<Kline> = minute_data
                 .into_iter()

@@ -38,11 +38,11 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use trader_strategy_macro::StrategyConfig;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
+use trader_strategy_macro::StrategyConfig;
 
 use trader_core::domain::{RouteState, StrategyContext};
 use trader_core::types::Timeframe;
@@ -59,8 +59,7 @@ use crate::traits::Strategy;
 // ================================================================================================
 
 /// 자산 배분 전략 변형.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum StrategyVariant {
     /// HAA (Hybrid Asset Allocation)
     #[default]
@@ -77,10 +76,8 @@ pub enum StrategyVariant {
     Custom,
 }
 
-
 /// 포트폴리오 모드.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum PortfolioMode {
     /// 공격 모드 (주식 위주)
     Offensive,
@@ -88,7 +85,6 @@ pub enum PortfolioMode {
     #[default]
     Defensive,
 }
-
 
 /// 모멘텀 선택 방식.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -248,27 +244,69 @@ pub struct HaaConfig {
     pub cash_ticker: String,
 
     /// 공격 자산 선택 수
-    #[schema(label = "공격 자산 선택 수", section = "filter", field_type = "integer", min = 1, max = 10, default = "2")]
+    #[schema(
+        label = "공격 자산 선택 수",
+        section = "filter",
+        field_type = "integer",
+        min = 1,
+        max = 10,
+        default = "2"
+    )]
     pub offensive_top_n: usize,
 
     /// 방어 자산 선택 수
-    #[schema(label = "방어 자산 선택 수", section = "filter", field_type = "integer", min = 1, max = 10, default = "2")]
+    #[schema(
+        label = "방어 자산 선택 수",
+        section = "filter",
+        field_type = "integer",
+        min = 1,
+        max = 10,
+        default = "2"
+    )]
     pub defensive_top_n: usize,
 
     /// 투자 비율 (0.0 ~ 1.0)
-    #[schema(label = "투자 비율", section = "timing", field_type = "number", min = 0, max = 1, default = "1.0")]
+    #[schema(
+        label = "투자 비율",
+        section = "timing",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "1.0"
+    )]
     pub invest_rate: Decimal,
 
     /// 리밸런싱 임계값 (%)
-    #[schema(label = "리밸런싱 임계값 (%)", section = "timing", field_type = "number", min = 0.01, max = 20, default = "0.01")]
+    #[schema(
+        label = "리밸런싱 임계값 (%)",
+        section = "timing",
+        field_type = "number",
+        min = 0.01,
+        max = 20,
+        default = "0.01"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 최소 Global Score
-    #[schema(label = "최소 GlobalScore", section = "filter", field_type = "number", min = 0, max = 100, default = "0")]
+    #[schema(
+        label = "최소 GlobalScore",
+        section = "filter",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = "0"
+    )]
     pub min_global_score: Decimal,
 
     /// 카나리아 임계값 (양수 모멘텀 비율)
-    #[schema(label = "카나리아 임계값", section = "filter", field_type = "number", min = 0, max = 1, default = "0")]
+    #[schema(
+        label = "카나리아 임계값",
+        section = "filter",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "0"
+    )]
     pub canary_threshold: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -308,31 +346,80 @@ pub struct XaaConfig {
     pub cash_ticker: String,
 
     /// 공격 자산 선택 수
-    #[schema(label = "공격 자산 선택 수", section = "filter", field_type = "integer", min = 1, max = 10, default = "2")]
+    #[schema(
+        label = "공격 자산 선택 수",
+        section = "filter",
+        field_type = "integer",
+        min = 1,
+        max = 10,
+        default = "2"
+    )]
     pub offensive_top_n: usize,
 
     /// 방어 자산 선택 수
-    #[schema(label = "방어 자산 선택 수", section = "filter", field_type = "integer", min = 1, max = 10, default = "2")]
+    #[schema(
+        label = "방어 자산 선택 수",
+        section = "filter",
+        field_type = "integer",
+        min = 1,
+        max = 10,
+        default = "2"
+    )]
     pub defensive_top_n: usize,
 
     /// 채권 모멘텀 기간 (개월)
-    #[schema(label = "채권 모멘텀 기간", section = "indicator", field_type = "integer", min = 1, max = 24, default = "3")]
+    #[schema(
+        label = "채권 모멘텀 기간",
+        section = "indicator",
+        field_type = "integer",
+        min = 1,
+        max = 24,
+        default = "3"
+    )]
     pub bond_momentum_months: usize,
 
     /// 투자 비율 (0.0 ~ 1.0)
-    #[schema(label = "투자 비율", section = "timing", field_type = "number", min = 0, max = 1, default = "1.0")]
+    #[schema(
+        label = "투자 비율",
+        section = "timing",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "1.0"
+    )]
     pub invest_rate: Decimal,
 
     /// 리밸런싱 임계값 (%)
-    #[schema(label = "리밸런싱 임계값 (%)", section = "timing", field_type = "number", min = 0.01, max = 20, default = "0.01")]
+    #[schema(
+        label = "리밸런싱 임계값 (%)",
+        section = "timing",
+        field_type = "number",
+        min = 0.01,
+        max = 20,
+        default = "0.01"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 최소 Global Score
-    #[schema(label = "최소 GlobalScore", section = "filter", field_type = "number", min = 0, max = 100, default = "0")]
+    #[schema(
+        label = "최소 GlobalScore",
+        section = "filter",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = "0"
+    )]
     pub min_global_score: Decimal,
 
     /// 카나리아 임계값
-    #[schema(label = "카나리아 임계값", section = "filter", field_type = "number", min = 0, max = 1, default = "0")]
+    #[schema(
+        label = "카나리아 임계값",
+        section = "filter",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "0"
+    )]
     pub canary_threshold: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -376,27 +463,69 @@ pub struct BaaConfig {
     pub cash_ticker: String,
 
     /// 공격 자산 선택 수 (BAA는 보통 1개)
-    #[schema(label = "공격 자산 선택 수", section = "filter", field_type = "integer", min = 1, max = 5, default = "1")]
+    #[schema(
+        label = "공격 자산 선택 수",
+        section = "filter",
+        field_type = "integer",
+        min = 1,
+        max = 5,
+        default = "1"
+    )]
     pub offensive_top_n: usize,
 
     /// 방어 자산 선택 수
-    #[schema(label = "방어 자산 선택 수", section = "filter", field_type = "integer", min = 1, max = 10, default = "2")]
+    #[schema(
+        label = "방어 자산 선택 수",
+        section = "filter",
+        field_type = "integer",
+        min = 1,
+        max = 10,
+        default = "2"
+    )]
     pub defensive_top_n: usize,
 
     /// 투자 비율 (0.0 ~ 1.0)
-    #[schema(label = "투자 비율", section = "timing", field_type = "number", min = 0, max = 1, default = "1.0")]
+    #[schema(
+        label = "투자 비율",
+        section = "timing",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "1.0"
+    )]
     pub invest_rate: Decimal,
 
     /// 리밸런싱 임계값 (%)
-    #[schema(label = "리밸런싱 임계값 (%)", section = "timing", field_type = "number", min = 0.01, max = 20, default = "0.01")]
+    #[schema(
+        label = "리밸런싱 임계값 (%)",
+        section = "timing",
+        field_type = "number",
+        min = 0.01,
+        max = 20,
+        default = "0.01"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 최소 Global Score
-    #[schema(label = "최소 GlobalScore", section = "filter", field_type = "number", min = 0, max = 100, default = "0")]
+    #[schema(
+        label = "최소 GlobalScore",
+        section = "filter",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = "0"
+    )]
     pub min_global_score: Decimal,
 
     /// 카나리아 임계값 (BAA는 75% 권장)
-    #[schema(label = "카나리아 임계값", section = "filter", field_type = "number", min = 0, max = 1, default = "0")]
+    #[schema(
+        label = "카나리아 임계값",
+        section = "filter",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "0"
+    )]
     pub canary_threshold: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -437,11 +566,25 @@ pub struct AllWeatherConfig {
     pub cash_ticker: String,
 
     /// 투자 비율 (0.0 ~ 1.0)
-    #[schema(label = "투자 비율", section = "timing", field_type = "number", min = 0, max = 1, default = "1.0")]
+    #[schema(
+        label = "투자 비율",
+        section = "timing",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "1.0"
+    )]
     pub invest_rate: Decimal,
 
     /// 리밸런싱 임계값 (%)
-    #[schema(label = "리밸런싱 임계값 (%)", section = "timing", field_type = "number", min = 1, max = 20, default = "5")]
+    #[schema(
+        label = "리밸런싱 임계값 (%)",
+        section = "timing",
+        field_type = "number",
+        min = 1,
+        max = 20,
+        default = "5"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -479,15 +622,36 @@ pub struct DualMomentumConfig {
     pub cash_ticker: String,
 
     /// 투자 비율 (0.0 ~ 1.0)
-    #[schema(label = "투자 비율", section = "timing", field_type = "number", min = 0, max = 1, default = "1.0")]
+    #[schema(
+        label = "투자 비율",
+        section = "timing",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "1.0"
+    )]
     pub invest_rate: Decimal,
 
     /// 리밸런싱 임계값 (%)
-    #[schema(label = "리밸런싱 임계값 (%)", section = "timing", field_type = "number", min = 1, max = 20, default = "5")]
+    #[schema(
+        label = "리밸런싱 임계값 (%)",
+        section = "timing",
+        field_type = "number",
+        min = 1,
+        max = 20,
+        default = "5"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 최소 Global Score
-    #[schema(label = "최소 GlobalScore", section = "filter", field_type = "number", min = 0, max = 100, default = "50")]
+    #[schema(
+        label = "최소 GlobalScore",
+        section = "filter",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = "50"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -1142,9 +1306,12 @@ impl Strategy for AssetAllocationStrategy {
         self.init_momentum_calculator(&config);
 
         // initial_capital 또는 amount가 있으면 cash_balance로 설정
-        let capital_value = config_value.get("initial_capital").or_else(|| config_value.get("amount"));
+        let capital_value = config_value
+            .get("initial_capital")
+            .or_else(|| config_value.get("amount"));
         if let Some(capital_v) = capital_value {
-            let capital_opt = capital_v.as_str()
+            let capital_opt = capital_v
+                .as_str()
                 .and_then(|s| s.parse::<Decimal>().ok())
                 .or_else(|| capital_v.as_i64().map(Decimal::from));
 

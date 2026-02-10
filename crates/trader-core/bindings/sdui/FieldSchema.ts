@@ -20,19 +20,19 @@ label: string,
 /**
  * 설명 (옵션)
  */
-description: string | null, 
+description?: string, 
 /**
  * 기본값 (JSON 값)
  */
-default: unknown, 
+default?: unknown, 
 /**
  * 최소값 (number/integer 타입)
  */
-min: number | null, 
+min?: number, 
 /**
  * 최대값 (number/integer 타입)
  */
-max: number | null, 
+max?: number, 
 /**
  * 선택 옵션 (select/multi_select 타입)
  */
@@ -40,7 +40,7 @@ options: Array<string>,
 /**
  * 조건부 표시 (예: "enabled == true")
  */
-condition: string | null, 
+condition?: string, 
 /**
  * 필수 여부
  */
@@ -52,4 +52,12 @@ hidden: boolean,
 /**
  * 표시 순서 (낮을수록 먼저 표시)
  */
-order: number | null, };
+order?: number, 
+/**
+ * 섹션 ID (같은 섹션의 필드들을 UI에서 그룹화)
+ *
+ * 예: "indicator" → "기술적 지표" 섹션으로 그룹화
+ * 예: "filter" → "필터 조건" 섹션으로 그룹화
+ * 예: "asset" → "자산 선택" 섹션으로 그룹화
+ */
+section?: string, };

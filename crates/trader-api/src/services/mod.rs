@@ -11,5 +11,5 @@ pub mod telegram_bot;
 pub use context_sync::start_context_sync_service;
 pub use market_stream::{get_or_create_market_stream, MarketStreamHandle};
 pub use signal_alert::{SignalAlertFilter, SignalAlertService};
-pub use signal_processor::{SignalProcessingService, start_signal_processing_service};
+pub use signal_processor::{start_signal_processing_service, SignalProcessingService};
 pub use telegram_bot::ApiBotHandler;

@@ -452,11 +452,20 @@ mod tests {
 
         match result {
             Ok(data) => {
-                println!("KOSPI: {} ({:+.2}%)", data.kospi_close, data.kospi_change_pct);
-                println!("KOSDAQ: {} ({:+.2}%)", data.kosdaq_close, data.kosdaq_change_pct);
+                println!(
+                    "KOSPI: {} ({:+.2}%)",
+                    data.kospi_close, data.kospi_change_pct
+                );
+                println!(
+                    "KOSDAQ: {} ({:+.2}%)",
+                    data.kosdaq_close, data.kosdaq_change_pct
+                );
                 println!("USD/KRW: {} ({:+.2}%)", data.usd_krw, data.usd_change_pct);
                 println!("VIX: {} ({:+.2}%)", data.vix_close, data.vix_change_pct);
-                println!("NASDAQ: {} ({:+.2}%)", data.nasdaq_close, data.nasdaq_change_pct);
+                println!(
+                    "NASDAQ: {} ({:+.2}%)",
+                    data.nasdaq_close, data.nasdaq_change_pct
+                );
                 assert!(data.usd_krw > Decimal::ZERO);
                 assert!(data.nasdaq_close > Decimal::ZERO);
             }

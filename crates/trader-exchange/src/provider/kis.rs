@@ -129,7 +129,11 @@ impl KisExchangeProvider {
         // 캐시 확인
         if let Some(cached) = self.order_history_cache.get().await {
             if let Some(remaining) = self.order_history_cache.remaining_ttl_secs().await {
-                info!("체결 내역 캐시 히트: {} 건, 남은 TTL: {:.1}초", cached.len(), remaining);
+                info!(
+                    "체결 내역 캐시 히트: {} 건, 남은 TTL: {:.1}초",
+                    cached.len(),
+                    remaining
+                );
             }
             return Ok(cached);
         }
@@ -175,7 +179,8 @@ impl KisExchangeProvider {
                 }
 
                 let history = match self
-                    .client.kr()
+                    .client
+                    .kr()
                     .get_order_history(&start_str, &end_str, "00", &ctx_fk, &ctx_nk)
                     .await
                 {
@@ -190,7 +195,8 @@ impl KisExchangeProvider {
                             warn!("Rate limit hit, waiting 2 seconds...");
                             tokio::time::sleep(std::time::Duration::from_secs(2)).await;
                             match self
-                                .client.kr()
+                                .client
+                                .kr()
                                 .get_order_history(&start_str, &end_str, "00", &ctx_fk, &ctx_nk)
                                 .await
                             {
@@ -204,7 +210,10 @@ impl KisExchangeProvider {
                                 || error_msg.contains("MDATETIME");
 
                             if is_no_data {
-                                debug!("날짜 범위 {} ~ {}: 조회 결과 없음 (정상)", start_str, end_str);
+                                debug!(
+                                    "날짜 범위 {} ~ {}: 조회 결과 없음 (정상)",
+                                    start_str, end_str
+                                );
                             } else {
                                 warn!("날짜 범위 {} ~ {} 조회 실패: {}", start_str, end_str, e);
                             }
@@ -312,10 +321,8 @@ impl KisExchangeProvider {
         let mut current_start = start;
 
         while current_start <= end {
-            let current_end = std::cmp::min(
-                current_start + chrono::Duration::days(max_days - 1),
-                end,
-            );
+            let current_end =
+                std::cmp::min(current_start + chrono::Duration::days(max_days - 1), end);
             date_ranges.push((
                 current_start.format("%Y%m%d").to_string(),
                 current_end.format("%Y%m%d").to_string(),
@@ -328,7 +335,11 @@ impl KisExchangeProvider {
             start_date,
             end_date,
             date_ranges.len(),
-            if self.is_isa_account() { "ISA" } else { "일반" }
+            if self.is_isa_account() {
+                "ISA"
+            } else {
+                "일반"
+            }
         );
 
         let mut all_executions = Vec::new();
@@ -361,7 +372,8 @@ impl KisExchangeProvider {
                 }
 
                 let history = match self
-                    .client.kr()
+                    .client
+                    .kr()
                     .get_order_history(range_start, range_end, "00", &ctx_fk, &ctx_nk)
                     .await
                 {
@@ -376,7 +388,8 @@ impl KisExchangeProvider {
                             warn!("Rate limit hit, waiting 2 seconds...");
                             tokio::time::sleep(std::time::Duration::from_secs(2)).await;
                             match self
-                                .client.kr()
+                                .client
+                                .kr()
                                 .get_order_history(range_start, range_end, "00", &ctx_fk, &ctx_nk)
                                 .await
                             {
@@ -402,12 +415,7 @@ impl KisExchangeProvider {
                 all_executions.extend(history.executions);
 
                 if count > 0 {
-                    debug!(
-                        "청크 {} 페이지 {}: {} 건",
-                        range_idx + 1,
-                        page,
-                        count
-                    );
+                    debug!("청크 {} 페이지 {}: {} 건", range_idx + 1, page, count);
                 }
 
                 // 종료 조건
@@ -456,8 +464,6 @@ impl KisExchangeProvider {
     pub fn client(&self) -> &KisClient {
         &self.client
     }
-
-
 }
 
 #[async_trait]
@@ -491,7 +497,10 @@ impl ExchangeProvider for KisExchangeProvider {
 
             info!(
                 "ISA 계좌 요약: 투자원금={}, 평가액={}, 미실현손익={}, 종목수={}",
-                total_cost, total_eval, total_unrealized_pnl, positions.len()
+                total_cost,
+                total_eval,
+                total_unrealized_pnl,
+                positions.len()
             );
 
             StrategyAccountInfo {
@@ -504,7 +513,8 @@ impl ExchangeProvider for KisExchangeProvider {
         } else {
             // 일반 계좌: get_balance() API 호출
             let balance = self
-                .client.kr()
+                .client
+                .kr()
                 .get_balance()
                 .await
                 .map_err(|e| ProviderError::Api(format!("잔고 조회 실패: {}", e)))?;
@@ -593,8 +603,10 @@ impl ExchangeProvider for KisExchangeProvider {
                         position.update_price(price.current_price);
                         debug!(
                             "ISA 포지션 현재가 업데이트: {} 매입가={} 현재가={} 손익률={}%",
-                            position.ticker, position.avg_entry_price,
-                            position.current_price, position.unrealized_pnl_pct
+                            position.ticker,
+                            position.avg_entry_price,
+                            position.current_price,
+                            position.unrealized_pnl_pct
                         );
                     }
                     Err(e) => {
@@ -612,7 +624,8 @@ impl ExchangeProvider for KisExchangeProvider {
         } else {
             // 일반 계좌: get_balance()로 보유종목 조회
             let balance = self
-                .client.kr()
+                .client
+                .kr()
                 .get_balance()
                 .await
                 .map_err(|e| ProviderError::Api(format!("보유종목 조회 실패: {}", e)))?;
@@ -649,7 +662,8 @@ impl ExchangeProvider for KisExchangeProvider {
 
         // 미체결 주문 조회 (국내)
         let orders = self
-            .client.kr()
+            .client
+            .kr()
             .get_pending_orders()
             .await
             .map_err(|e| ProviderError::Api(format!("미체결 주문 조회 실패: {}", e)))?;
@@ -719,8 +733,15 @@ impl ExchangeProvider for KisExchangeProvider {
         };
 
         let history = self
-            .client.kr()
-            .get_order_history(&request.start_date, &request.end_date, "00", &ctx_fk, &ctx_nk)
+            .client
+            .kr()
+            .get_order_history(
+                &request.start_date,
+                &request.end_date,
+                "00",
+                &ctx_fk,
+                &ctx_nk,
+            )
             .await
             .map_err(|e| ProviderError::Api(format!("체결 내역 조회 실패: {}", e)))?;
 
@@ -753,7 +774,10 @@ impl ExchangeProvider for KisExchangeProvider {
 
         // next_cursor는 ctx_fk|ctx_nk 형식으로 조합
         let next_cursor = if history.has_more && !history.ctx_area_nk100.is_empty() {
-            Some(format!("{}|{}", history.ctx_area_fk100, history.ctx_area_nk100))
+            Some(format!(
+                "{}|{}",
+                history.ctx_area_fk100, history.ctx_area_nk100
+            ))
         } else {
             None
         };
@@ -772,7 +796,8 @@ impl MarketDataProvider for KisExchangeProvider {
             // 국내 주식 시세 조회
             debug!(symbol = %symbol, "국내 주식 시세 조회");
             let price = self
-                .client.kr()
+                .client
+                .kr()
                 .get_price(symbol)
                 .await
                 .map_err(|e| ProviderError::Api(e.to_string()))?;
@@ -794,7 +819,8 @@ impl MarketDataProvider for KisExchangeProvider {
             // 해외 주식 시세 조회
             debug!(symbol = %symbol, "해외 주식 시세 조회");
             let price = self
-                .client.us()
+                .client
+                .us()
                 .get_price(symbol, None)
                 .await
                 .map_err(|e| ProviderError::Api(e.to_string()))?;
@@ -883,13 +909,7 @@ impl OrderExecutionProvider for KisExchangeProvider {
             match request.side {
                 Side::Buy => {
                     self.client
-                        .place_us_buy_order(
-                            &request.ticker,
-                            quantity,
-                            price,
-                            order_type_code,
-                            None,
-                        )
+                        .place_us_buy_order(&request.ticker, quantity, price, order_type_code, None)
                         .await
                 }
                 Side::Sell => {
@@ -918,9 +938,7 @@ impl OrderExecutionProvider for KisExchangeProvider {
         let result = if is_korean {
             self.client.cancel_kr_order(order_id, ticker, 0).await
         } else {
-            self.client
-                .cancel_us_order(order_id, ticker, 0, None)
-                .await
+            self.client.cancel_us_order(order_id, ticker, 0, None).await
         };
 
         self.invalidate_cache().await;

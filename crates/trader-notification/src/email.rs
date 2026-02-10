@@ -70,10 +70,7 @@ impl EmailConfig {
     /// 환경 변수에서 설정을 생성합니다.
     pub fn from_env() -> Option<Self> {
         let smtp_host = std::env::var("EMAIL_SMTP_HOST").ok()?;
-        let smtp_port = std::env::var("EMAIL_SMTP_PORT")
-            .ok()?
-            .parse::<u16>()
-            .ok()?;
+        let smtp_port = std::env::var("EMAIL_SMTP_PORT").ok()?.parse::<u16>().ok()?;
         let username = std::env::var("EMAIL_USERNAME").ok()?;
         let password = std::env::var("EMAIL_PASSWORD").ok()?;
         let from_email = std::env::var("EMAIL_FROM").ok()?;
@@ -136,7 +133,10 @@ impl EmailSender {
             }
             NotificationEvent::PositionClosed { symbol, pnl, .. } => {
                 let pnl_sign = if *pnl >= Decimal::ZERO { "+" } else { "" };
-                format!("{} 포지션 청산: {} ({}{})", priority_prefix, symbol, pnl_sign, pnl)
+                format!(
+                    "{} 포지션 청산: {} ({}{})",
+                    priority_prefix, symbol, pnl_sign, pnl
+                )
             }
             NotificationEvent::StopLossTriggered { symbol, .. } => {
                 format!("{} 손절 발동: {}", priority_prefix, symbol)
@@ -159,13 +159,19 @@ impl EmailSender {
             NotificationEvent::SystemError { error_code, .. } => {
                 format!("{} 시스템 오류: {}", priority_prefix, error_code)
             }
-            NotificationEvent::SignalAlert { symbol, signal_type, .. } => {
+            NotificationEvent::SignalAlert {
+                symbol,
+                signal_type,
+                ..
+            } => {
                 format!("{} {} 신호: {}", priority_prefix, signal_type, symbol)
             }
             NotificationEvent::Custom { title, .. } => {
                 format!("{} {}", priority_prefix, title)
             }
-            NotificationEvent::RouteStateChanged { symbol, new_state, .. } => {
+            NotificationEvent::RouteStateChanged {
+                symbol, new_state, ..
+            } => {
                 format!("{} 상태 변경: {} → {}", priority_prefix, symbol, new_state)
             }
             NotificationEvent::MacroAlert { risk_level, .. } => {
@@ -194,7 +200,11 @@ impl EmailSender {
                 price,
                 order_id,
             } => {
-                let side_color = if side.to_lowercase() == "buy" { "#28a745" } else { "#dc3545" };
+                let side_color = if side.to_lowercase() == "buy" {
+                    "#28a745"
+                } else {
+                    "#dc3545"
+                };
                 format!(
                     r#"<h2 style="color: {};">주문 체결</h2>
                     <table style="border-collapse: collapse; width: 100%;">
@@ -217,7 +227,11 @@ impl EmailSender {
                 pnl,
                 pnl_percent,
             } => {
-                let pnl_color = if *pnl >= Decimal::ZERO { "#28a745" } else { "#dc3545" };
+                let pnl_color = if *pnl >= Decimal::ZERO {
+                    "#28a745"
+                } else {
+                    "#dc3545"
+                };
                 let pnl_sign = if *pnl >= Decimal::ZERO { "+" } else { "" };
                 format!(
                     r#"<h2>포지션 청산</h2>
@@ -229,7 +243,16 @@ impl EmailSender {
                         <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>청산가</strong></td><td style="padding: 8px; border: 1px solid #ddd;">{}</td></tr>
                         <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>손익</strong></td><td style="padding: 8px; border: 1px solid #ddd; color: {};"><strong>{}{}</strong> ({}{}%)</td></tr>
                     </table>"#,
-                    symbol, side, quantity, entry_price, exit_price, pnl_color, pnl_sign, pnl, pnl_sign, pnl_percent
+                    symbol,
+                    side,
+                    quantity,
+                    entry_price,
+                    exit_price,
+                    pnl_color,
+                    pnl_sign,
+                    pnl,
+                    pnl_sign,
+                    pnl_percent
                 )
             }
 
@@ -260,11 +283,21 @@ impl EmailSender {
                         <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>강도</strong></td><td style="padding: 8px; border: 1px solid #ddd;">{:.0}%</td></tr>
                         <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>이유</strong></td><td style="padding: 8px; border: 1px solid #ddd;">{}</td></tr>
                     </table>"#,
-                    signal_color, signal_type, strategy_name, symbol, side_text, price, strength * 100.0, reason
+                    signal_color,
+                    signal_type,
+                    strategy_name,
+                    symbol,
+                    side_text,
+                    price,
+                    strength * 100.0,
+                    reason
                 )
             }
 
-            NotificationEvent::SystemError { error_code, message } => {
+            NotificationEvent::SystemError {
+                error_code,
+                message,
+            } => {
                 format!(
                     r#"<h2 style="color: #dc3545;">시스템 오류</h2>
                     <table style="border-collapse: collapse; width: 100%;">
@@ -312,10 +345,7 @@ impl EmailSender {
     </div>
 </body>
 </html>"#,
-            priority_color,
-            notification.priority,
-            content,
-            timestamp
+            priority_color, notification.priority, content, timestamp
         )
     }
 
@@ -325,19 +355,20 @@ impl EmailSender {
         let from_mailbox: Mailbox = if let Some(ref name) = self.config.from_name {
             format!("{} <{}>", name, self.config.from_email)
                 .parse()
-                .map_err(|e| NotificationError::InvalidConfig(format!("잘못된 발신자 주소: {}", e)))?
+                .map_err(|e| {
+                    NotificationError::InvalidConfig(format!("잘못된 발신자 주소: {}", e))
+                })?
         } else {
-            self.config
-                .from_email
-                .parse()
-                .map_err(|e| NotificationError::InvalidConfig(format!("잘못된 발신자 주소: {}", e)))?
+            self.config.from_email.parse().map_err(|e| {
+                NotificationError::InvalidConfig(format!("잘못된 발신자 주소: {}", e))
+            })?
         };
 
         // 각 수신자에게 이메일 전송
         for to_email in &self.config.to_emails {
-            let to_mailbox: Mailbox = to_email
-                .parse()
-                .map_err(|e| NotificationError::InvalidConfig(format!("잘못된 수신자 주소: {}", e)))?;
+            let to_mailbox: Mailbox = to_email.parse().map_err(|e| {
+                NotificationError::InvalidConfig(format!("잘못된 수신자 주소: {}", e))
+            })?;
 
             let email = Message::builder()
                 .from(from_mailbox.clone())
@@ -348,10 +379,8 @@ impl EmailSender {
                 .map_err(|e| NotificationError::SendFailed(format!("이메일 생성 실패: {}", e)))?;
 
             // SMTP 전송기 생성
-            let creds = Credentials::new(
-                self.config.username.clone(),
-                self.config.password.clone(),
-            );
+            let creds =
+                Credentials::new(self.config.username.clone(), self.config.password.clone());
 
             let mailer: AsyncSmtpTransport<Tokio1Executor> = if self.config.use_tls {
                 AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&self.config.smtp_host)
@@ -381,7 +410,10 @@ impl EmailSender {
             }
         }
 
-        info!("이메일 알림 전송 완료: {} 수신자", self.config.to_emails.len());
+        info!(
+            "이메일 알림 전송 완료: {} 수신자",
+            self.config.to_emails.len()
+        );
         Ok(())
     }
 

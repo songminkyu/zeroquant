@@ -76,7 +76,7 @@ MarketData → StrategyEngine → Strategy.on_market_data() → Signal[]
 | 거래소 커넥터 추가 | `/add-exchange` 스킬 |
 | DB 마이그레이션 | `/add-migration` 스킬 · `docs/migration_guide.md` · `db-reviewer` 에이전트 |
 | 프론트엔드 컴포넌트 | `/add-component` 스킬 |
-| 커밋 워크플로우 | `/ship` 스킬 |
+| 커밋 워크플로우 | `/shipping-code` 스킬 |
 | 에러 진단 | `/diagnose` 스킬 |
 | API 문서 크롤링 | `/crawl-api-spec` 스킬 |
 | 환경 설정 | `docs/setup_guide.md` |

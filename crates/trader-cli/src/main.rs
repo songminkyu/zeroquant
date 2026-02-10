@@ -724,8 +724,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             charts_dir,
         } => {
             use commands::strategy_test::{
-                run_regression_tests_with_options, run_init_only_regression_tests,
-                run_fixture_tests, load_fixture, RegressionTestOptions,
+                load_fixture, run_fixture_tests, run_init_only_regression_tests,
+                run_regression_tests_with_options, RegressionTestOptions,
             };
             use std::path::Path;
 
@@ -778,14 +778,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         // 전략 존재 여부 확인
                         let available = trader_strategy::StrategyRegistry::list_ids();
                         let exists = available.contains(&strategy_fixture.strategy_id.as_str());
-                        let expected_success = strategy_fixture.expected.initialization == "success";
+                        let expected_success =
+                            strategy_fixture.expected.initialization == "success";
 
                         if exists == expected_success {
                             passed += 1;
-                            println!("  ✅ {} ({})", strategy_fixture.name, strategy_fixture.strategy_id);
+                            println!(
+                                "  ✅ {} ({})",
+                                strategy_fixture.name, strategy_fixture.strategy_id
+                            );
                         } else {
                             failed += 1;
-                            println!("  ❌ {} ({})", strategy_fixture.name, strategy_fixture.strategy_id);
+                            println!(
+                                "  ❌ {} ({})",
+                                strategy_fixture.name, strategy_fixture.strategy_id
+                            );
                         }
                     }
 
@@ -823,7 +830,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             } else if let Some(ref s) = symbol {
                 vec![s.to_uppercase()]
             } else {
-                return Err("종목 코드가 필요합니다. --symbol <CODE> 또는 --symbols <CODES> 지정".into());
+                return Err(
+                    "종목 코드가 필요합니다. --symbol <CODE> 또는 --symbols <CODES> 지정".into(),
+                );
             };
 
             let market = Market::parse(&market)
@@ -869,8 +878,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 let chart_filename = format!("{}_chart.png", result.strategy_id);
                                 let chart_path = charts_path.join(&chart_filename);
 
-                                let generator = commands::chart_gen::RegressionChartGenerator::new();
-                                match generator.generate_combined_chart(report, &result.strategy_id, &chart_path) {
+                                let generator =
+                                    commands::chart_gen::RegressionChartGenerator::new();
+                                match generator.generate_combined_chart(
+                                    report,
+                                    &result.strategy_id,
+                                    &chart_path,
+                                ) {
                                     Ok(()) => {
                                         println!("\n📊 차트 저장: {}", chart_path.display());
                                     }
@@ -999,10 +1013,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             format,
             db_url,
         } => {
-            use commands::migrate::{MigrateConfig, GraphFormat};
+            use commands::migrate::{GraphFormat, MigrateConfig};
 
-            let graph_format = GraphFormat::parse(&format)
-                .ok_or_else(|| format!("Invalid format: {}. Supported: mermaid, dot, text", format))?;
+            let graph_format = GraphFormat::parse(&format).ok_or_else(|| {
+                format!("Invalid format: {}. Supported: mermaid, dot, text", format)
+            })?;
 
             let config = MigrateConfig {
                 migrations_dir: dir.into(),

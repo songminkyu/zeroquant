@@ -16,13 +16,13 @@ use tracing::{debug, info, warn};
 use trader_core::CredentialEncryptor;
 use trader_core::{ExchangeProvider, MarketDataProvider};
 use trader_exchange::connector::kis::{KisAccountType, KisClient, KisConfig, KisOAuth};
-use trader_exchange::{
-    BithumbClient, BithumbConfig, DbInvestmentClient, DbInvestmentConfig,
-    LsSecClient, LsSecConfig, UpbitClient, UpbitConfig,
-};
 use trader_exchange::provider::{
-    BithumbProvider, DbInvestmentProvider, KisProvider, LsSecProvider,
-    MockConfig, MockExchangeProvider, UpbitProvider,
+    BithumbProvider, DbInvestmentProvider, KisProvider, LsSecProvider, MockConfig,
+    MockExchangeProvider, UpbitProvider,
+};
+use trader_exchange::{
+    BithumbClient, BithumbConfig, DbInvestmentClient, DbInvestmentConfig, LsSecClient, LsSecConfig,
+    UpbitClient, UpbitConfig,
 };
 
 /// KIS credential 조회 결과 타입 (복잡한 타입 alias)
@@ -272,7 +272,8 @@ pub async fn create_exchange_providers_from_credential(
                 Ok(token) => {
                     // 발급받은 토큰을 DB에 저장
                     if let Err(e) =
-                        KisTokenRepository::save_token(pool, credential_id, environment, &token).await
+                        KisTokenRepository::save_token(pool, credential_id, environment, &token)
+                            .await
                     {
                         warn!("토큰 DB 저장 실패 (계속 진행): {}", e);
                     }
@@ -281,7 +282,8 @@ pub async fn create_exchange_providers_from_credential(
                     // Fallback: 완화된 조건으로 DB 재조회
                     warn!("토큰 발급 실패, fallback 조회 시도: {}", e);
                     if let Some(fb_token) =
-                        KisTokenRepository::load_any_valid_token(pool, credential_id, environment).await
+                        KisTokenRepository::load_any_valid_token(pool, credential_id, environment)
+                            .await
                     {
                         info!("Fallback 토큰 사용: credential_id={}", credential_id);
                         new_oauth.set_cached_token(fb_token).await;
@@ -296,14 +298,11 @@ pub async fn create_exchange_providers_from_credential(
     };
 
     // 8. 통합 KisClient 생성 (내부적으로 KR/US 클라이언트 자동 생성)
-    let client = Arc::new(
-        KisClient::new(oauth)
-            .map_err(|e| format!("KIS 클라이언트 생성 실패: {}", e))?,
-    );
+    let client =
+        Arc::new(KisClient::new(oauth).map_err(|e| format!("KIS 클라이언트 생성 실패: {}", e))?);
 
     // 9. ExchangeProvider로 래핑 (KisExchangeProvider가 KR+US 모두 처리)
-    let provider: Arc<dyn ExchangeProvider> =
-        Arc::new(KisProvider::new(client));
+    let provider: Arc<dyn ExchangeProvider> = Arc::new(KisProvider::new(client));
 
     Ok(provider)
 }
@@ -398,8 +397,7 @@ pub async fn create_kis_client_from_credential(
 
     // 통합 KisClient 생성
     Ok(Arc::new(
-        KisClient::new(oauth)
-            .map_err(|e| format!("KIS 클라이언트 생성 실패: {}", e))?,
+        KisClient::new(oauth).map_err(|e| format!("KIS 클라이언트 생성 실패: {}", e))?,
     ))
 }
 
@@ -455,38 +453,49 @@ pub async fn create_provider_for_credential(
     credential_id: Uuid,
 ) -> Result<Arc<dyn ExchangeProvider>, String> {
     // 1. exchange_id 조회
-    let exchange_id: String = sqlx::query_scalar(
-        "SELECT exchange_id FROM exchange_credentials WHERE id = $1",
-    )
-    .bind(credential_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| format!("exchange_id 조회 실패: {}", e))?
-    .ok_or_else(|| "해당 credential을 찾을 수 없습니다.".to_string())?;
+    let exchange_id: String =
+        sqlx::query_scalar("SELECT exchange_id FROM exchange_credentials WHERE id = $1")
+            .bind(credential_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| format!("exchange_id 조회 실패: {}", e))?
+            .ok_or_else(|| "해당 credential을 찾을 수 없습니다.".to_string())?;
 
-    info!("Provider 생성: exchange_id={}, credential_id={}", exchange_id, credential_id);
+    info!(
+        "Provider 생성: exchange_id={}, credential_id={}",
+        exchange_id, credential_id
+    );
 
     match exchange_id.as_str() {
         "mock" => create_mock_provider(pool, credential_id).await,
         "kis" => {
             // KIS는 기존 로직 재사용 (KR Provider 반환)
-            let provider = create_exchange_providers_from_credential(
-                pool, encryptor, credential_id, None,
-            ).await?;
+            let provider =
+                create_exchange_providers_from_credential(pool, encryptor, credential_id, None)
+                    .await?;
             Ok(provider)
         }
         "upbit" => {
             let (creds, _row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
-            let config = UpbitConfig { access_key: creds.api_key, secret_key: creds.api_secret };
+            let config = UpbitConfig {
+                access_key: creds.api_key,
+                secret_key: creds.api_secret,
+            };
             let client = Arc::new(UpbitClient::new(config));
             info!("Upbit Provider 생성 완료: credential_id={}", credential_id);
             Ok(Arc::new(UpbitProvider::new(client)))
         }
         "bithumb" => {
             let (creds, _row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
-            let config = BithumbConfig { access_key: creds.api_key, secret_key: creds.api_secret };
+            let config = BithumbConfig {
+                access_key: creds.api_key,
+                secret_key: creds.api_secret,
+            };
             let client = Arc::new(BithumbClient::new(config));
-            info!("Bithumb Provider 생성 완료: credential_id={}", credential_id);
+            info!(
+                "Bithumb Provider 생성 완료: credential_id={}",
+                credential_id
+            );
             Ok(Arc::new(BithumbProvider::new(client)))
         }
         "db_investment" => {
@@ -498,7 +507,10 @@ pub async fn create_provider_for_credential(
                 is_virtual: row.is_testnet,
             };
             let client = Arc::new(DbInvestmentClient::new(config));
-            info!("DB Investment Provider 생성 완료: credential_id={}", credential_id);
+            info!(
+                "DB Investment Provider 생성 완료: credential_id={}",
+                credential_id
+            );
             Ok(Arc::new(DbInvestmentProvider::new(client)))
         }
         "ls_sec" => {
@@ -509,7 +521,10 @@ pub async fn create_provider_for_credential(
                 base_url: "https://openapi.ls-sec.co.kr:8080".to_string(),
             };
             let client = Arc::new(LsSecClient::new(config));
-            info!("LS Securities Provider 생성 완료: credential_id={}", credential_id);
+            info!(
+                "LS Securities Provider 생성 완료: credential_id={}",
+                credential_id
+            );
             Ok(Arc::new(LsSecProvider::new(client)))
         }
         _ => Err(format!("지원하지 않는 거래소입니다: {}", exchange_id)),
@@ -525,14 +540,13 @@ pub async fn create_provider_for_mock_credential(
     credential_id: Uuid,
 ) -> Result<Arc<dyn ExchangeProvider>, String> {
     // exchange_id 확인
-    let exchange_id: String = sqlx::query_scalar(
-        "SELECT exchange_id FROM exchange_credentials WHERE id = $1",
-    )
-    .bind(credential_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| format!("exchange_id 조회 실패: {}", e))?
-    .ok_or_else(|| "해당 credential을 찾을 수 없습니다.".to_string())?;
+    let exchange_id: String =
+        sqlx::query_scalar("SELECT exchange_id FROM exchange_credentials WHERE id = $1")
+            .bind(credential_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| format!("exchange_id 조회 실패: {}", e))?
+            .ok_or_else(|| "해당 credential을 찾을 수 없습니다.".to_string())?;
 
     if exchange_id != "mock" {
         return Err(format!(
@@ -553,14 +567,13 @@ pub async fn create_mock_provider(
     credential_id: Uuid,
 ) -> Result<Arc<dyn ExchangeProvider>, String> {
     // settings에서 Mock 설정 읽기
-    let settings: Option<serde_json::Value> = sqlx::query_scalar(
-        "SELECT settings FROM exchange_credentials WHERE id = $1",
-    )
-    .bind(credential_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| format!("Mock 설정 조회 실패: {}", e))?
-    .flatten();
+    let settings: Option<serde_json::Value> =
+        sqlx::query_scalar("SELECT settings FROM exchange_credentials WHERE id = $1")
+            .bind(credential_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| format!("Mock 설정 조회 실패: {}", e))?
+            .flatten();
 
     // 설정에서 값 추출 (기본값 적용)
     let initial_balance = settings
@@ -626,14 +639,13 @@ pub async fn create_mock_provider_concrete(
     credential_id: Uuid,
 ) -> Result<MockExchangeProvider, String> {
     // settings에서 Mock 설정 읽기
-    let settings: Option<serde_json::Value> = sqlx::query_scalar(
-        "SELECT settings FROM exchange_credentials WHERE id = $1",
-    )
-    .bind(credential_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| format!("Mock 설정 조회 실패: {}", e))?
-    .flatten();
+    let settings: Option<serde_json::Value> =
+        sqlx::query_scalar("SELECT settings FROM exchange_credentials WHERE id = $1")
+            .bind(credential_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| format!("Mock 설정 조회 실패: {}", e))?
+            .flatten();
 
     // 설정에서 값 추출 (기본값 적용)
     let initial_balance = settings
@@ -700,14 +712,13 @@ pub async fn create_provider_bundle(
     credential_id: Uuid,
 ) -> Result<ProviderBundle, String> {
     // exchange_id 조회
-    let exchange_id: String = sqlx::query_scalar(
-        "SELECT exchange_id FROM exchange_credentials WHERE id = $1",
-    )
-    .bind(credential_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| format!("exchange_id 조회 실패: {}", e))?
-    .ok_or_else(|| "해당 credential을 찾을 수 없습니다.".to_string())?;
+    let exchange_id: String =
+        sqlx::query_scalar("SELECT exchange_id FROM exchange_credentials WHERE id = $1")
+            .bind(credential_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| format!("exchange_id 조회 실패: {}", e))?
+            .ok_or_else(|| "해당 credential을 찾을 수 없습니다.".to_string())?;
 
     match exchange_id.as_str() {
         "mock" => {
@@ -737,7 +748,10 @@ pub async fn create_provider_bundle(
         "upbit" => {
             let encryptor = encryptor.ok_or("Upbit은 encryptor가 필요합니다.")?;
             let (creds, _row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
-            let config = UpbitConfig { access_key: creds.api_key, secret_key: creds.api_secret };
+            let config = UpbitConfig {
+                access_key: creds.api_key,
+                secret_key: creds.api_secret,
+            };
             let client = Arc::new(UpbitClient::new(config));
             let provider = Arc::new(UpbitProvider::new(client));
             Ok(ProviderBundle {
@@ -748,7 +762,10 @@ pub async fn create_provider_bundle(
         "bithumb" => {
             let encryptor = encryptor.ok_or("Bithumb은 encryptor가 필요합니다.")?;
             let (creds, _row) = load_and_decrypt_credential(pool, encryptor, credential_id).await?;
-            let config = BithumbConfig { access_key: creds.api_key, secret_key: creds.api_secret };
+            let config = BithumbConfig {
+                access_key: creds.api_key,
+                secret_key: creds.api_secret,
+            };
             let client = Arc::new(BithumbClient::new(config));
             let provider = Arc::new(BithumbProvider::new(client));
             Ok(ProviderBundle {
@@ -853,8 +870,7 @@ async fn create_kis_client(
     );
 
     // OAuth 생성 (토큰 공유)
-    let oauth = KisOAuth::new(config.clone())
-        .map_err(|e| format!("OAuth 생성 실패: {}", e))?;
+    let oauth = KisOAuth::new(config.clone()).map_err(|e| format!("OAuth 생성 실패: {}", e))?;
     let oauth_arc = Arc::new(oauth);
 
     // DB에서 유효한 토큰 조회 (rate limit 대응)
@@ -862,7 +878,10 @@ async fn create_kis_client(
     if let Some(cached_token) =
         KisTokenRepository::load_valid_token(pool, credential_id, environment).await
     {
-        debug!("DB 캐시된 토큰 사용 (create_kis_client): credential_id={}", credential_id);
+        debug!(
+            "DB 캐시된 토큰 사용 (create_kis_client): credential_id={}",
+            credential_id
+        );
         oauth_arc.set_cached_token(cached_token).await;
     } else {
         info!(
@@ -893,8 +912,8 @@ async fn create_kis_client(
     }
 
     // 통합 KisClient 생성 (내부적으로 KR/US 클라이언트 자동 생성)
-    let client = KisClient::new(oauth_arc)
-        .map_err(|e| format!("KIS 클라이언트 생성 실패: {}", e))?;
+    let client =
+        KisClient::new(oauth_arc).map_err(|e| format!("KIS 클라이언트 생성 실패: {}", e))?;
 
     Ok(Arc::new(client))
 }

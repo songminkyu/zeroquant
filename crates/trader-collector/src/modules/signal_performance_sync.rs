@@ -18,8 +18,13 @@ use crate::Result;
 
 /// 신호 성과 조회 결과 타입 (N일 후 종가 + MFE/MAE)
 type SignalPerformanceRow = (
-    Option<Decimal>, Option<Decimal>, Option<Decimal>, Option<Decimal>, Option<Decimal>,
-    Option<Decimal>, Option<Decimal>,
+    Option<Decimal>,
+    Option<Decimal>,
+    Option<Decimal>,
+    Option<Decimal>,
+    Option<Decimal>,
+    Option<Decimal>,
+    Option<Decimal>,
 );
 
 /// 신호 성과 동기화 옵션
@@ -86,11 +91,8 @@ pub async fn sync_signal_performance(
     let mut stats = CollectionStats::new();
 
     // 미완료 신호 조회
-    let pending_signals = get_pending_signals(
-        pool,
-        options.min_days_after,
-        options.batch_size as i64,
-    ).await?;
+    let pending_signals =
+        get_pending_signals(pool, options.min_days_after, options.batch_size as i64).await?;
 
     if pending_signals.is_empty() {
         info!("처리할 미완료 신호가 없습니다");
@@ -140,7 +142,20 @@ async fn get_pending_signals(
 ) -> Result<Vec<PendingSignal>> {
     let cutoff_time = Utc::now() - Duration::days(min_days_after as i64);
 
-    let rows = sqlx::query_as::<_, (Uuid, Uuid, String, DateTime<Utc>, String, Option<String>, Decimal, f64, String)>(
+    let rows = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            Uuid,
+            String,
+            DateTime<Utc>,
+            String,
+            Option<String>,
+            Decimal,
+            f64,
+            String,
+        ),
+    >(
         r#"
         SELECT
             sm.id,
@@ -170,8 +185,8 @@ async fn get_pending_signals(
 
     Ok(rows
         .into_iter()
-        .map(|(id, symbol_id, ticker, timestamp, signal_type, side, price, strength, strategy_id)| {
-            PendingSignal {
+        .map(
+            |(
                 id,
                 symbol_id,
                 ticker,
@@ -181,8 +196,20 @@ async fn get_pending_signals(
                 price,
                 strength,
                 strategy_id,
-            }
-        })
+            )| {
+                PendingSignal {
+                    id,
+                    symbol_id,
+                    ticker,
+                    timestamp,
+                    signal_type,
+                    side,
+                    price,
+                    strength,
+                    strategy_id,
+                }
+            },
+        )
         .collect())
 }
 
@@ -351,10 +378,6 @@ async fn calculate_and_save_performance(
 
     Ok(true)
 }
-
-
-
-
 
 #[cfg(test)]
 mod tests {

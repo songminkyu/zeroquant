@@ -563,21 +563,23 @@ pub async fn run_screening(
     let data_provider = match &state.data_provider {
         Some(dp) => dp,
         None => {
-            return error_response("DATA_PROVIDER_ERROR", "Data provider not available").into_response();
+            return error_response("DATA_PROVIDER_ERROR", "Data provider not available")
+                .into_response();
         }
     };
 
     let filter = to_screening_filter(&request);
 
     let redis_cache = state.cache.as_deref();
-    let results = match ScreeningRepository::screen(db_pool, data_provider, &filter, redis_cache).await {
-        Ok(r) => r,
-        Err(e) => {
-            warn!("스크리닝 실패: {}", e);
-            return error_response("SCREENING_ERROR", &format!("스크리닝 실패: {}", e))
-                .into_response();
-        }
-    };
+    let results =
+        match ScreeningRepository::screen(db_pool, data_provider, &filter, redis_cache).await {
+            Ok(r) => r,
+            Err(e) => {
+                warn!("스크리닝 실패: {}", e);
+                return error_response("SCREENING_ERROR", &format!("스크리닝 실패: {}", e))
+                    .into_response();
+            }
+        };
 
     // 섹터 RS 정보 추가
     let results = match ScreeningRepository::enrich_with_sector_rs(
@@ -785,20 +787,28 @@ pub async fn run_preset_screening(
     let data_provider = match &state.data_provider {
         Some(dp) => dp,
         None => {
-            return error_response("DATA_PROVIDER_ERROR", "Data provider not available").into_response();
+            return error_response("DATA_PROVIDER_ERROR", "Data provider not available")
+                .into_response();
         }
     };
 
     let redis_cache = state.cache.as_deref();
-    let results =
-        match ScreeningRepository::screen_preset(db_pool, data_provider, &preset, query.market.as_deref(), redis_cache).await {
-            Ok(r) => r,
-            Err(e) => {
-                warn!("프리셋 스크리닝 실패: {}", e);
-                return error_response("SCREENING_ERROR", &format!("프리셋 스크리닝 실패: {}", e))
-                    .into_response();
-            }
-        };
+    let results = match ScreeningRepository::screen_preset(
+        db_pool,
+        data_provider,
+        &preset,
+        query.market.as_deref(),
+        redis_cache,
+    )
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            warn!("프리셋 스크리닝 실패: {}", e);
+            return error_response("SCREENING_ERROR", &format!("프리셋 스크리닝 실패: {}", e))
+                .into_response();
+        }
+    };
 
     // 섹터 RS 정보 추가
     let results =
@@ -1014,7 +1024,8 @@ pub async fn get_sector_ranking(
         .collect();
 
     let total = filtered_results.len();
-    let dto_results: Vec<SectorRsDto> = filtered_results.into_iter().map(to_sector_rs_dto).collect();
+    let dto_results: Vec<SectorRsDto> =
+        filtered_results.into_iter().map(to_sector_rs_dto).collect();
 
     Json(SectorRankingResponse {
         total,
@@ -1050,9 +1061,7 @@ async fn fetch_and_evaluate_macro_env(
         .get("macro:data")
         .await
         .map_err(|e| format!("매크로 데이터 캐시 조회 실패: {}", e))?
-        .ok_or_else(|| {
-            "매크로 데이터가 캐시에 없습니다. Collector를 실행하세요.".to_string()
-        })?;
+        .ok_or_else(|| "매크로 데이터가 캐시에 없습니다. Collector를 실행하세요.".to_string())?;
 
     // 매크로 환경 평가
     let env = MacroEnvironment::evaluate(

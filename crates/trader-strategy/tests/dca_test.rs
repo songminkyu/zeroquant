@@ -1156,7 +1156,12 @@ async fn test_grid_buy_timing() {
     // 매수 시그널의 메타데이터 검증
     let signal = &buy_signals[0];
     assert_eq!(signal.signal_type, trader_core::SignalType::Entry);
-    let grid_level = signal.metadata.get("grid_level_index").unwrap().as_i64().unwrap();
+    let grid_level = signal
+        .metadata
+        .get("grid_level_index")
+        .unwrap()
+        .as_i64()
+        .unwrap();
     assert_eq!(grid_level, 0, "Level 1 (index 0) 매수");
 }
 
@@ -1174,8 +1179,13 @@ async fn test_grid_sell_timing() {
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
 
-    let _ = strategy.on_market_data(&create_kline("005930", dec!(100), 1000000)).await;
-    let signals = strategy.on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400)).await.unwrap();
+    let _ = strategy
+        .on_market_data(&create_kline("005930", dec!(100), 1000000))
+        .await;
+    let signals = strategy
+        .on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400))
+        .await
+        .unwrap();
     assert_eq!(
         signals.iter().filter(|s| s.side == Side::Buy).count(),
         1,
@@ -1186,7 +1196,10 @@ async fn test_grid_sell_timing() {
     let prices = vec![dec!(100), dec!(98), dec!(99)];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let signals = strategy.on_market_data(&create_kline("005930", dec!(99), 1000000 + 86400 * 2)).await.unwrap();
+    let signals = strategy
+        .on_market_data(&create_kline("005930", dec!(99), 1000000 + 86400 * 2))
+        .await
+        .unwrap();
     assert!(
         signals.iter().all(|s| s.side != Side::Sell),
         "가격 99: sell_price 100 미달, 매도 안 함"
@@ -1196,7 +1209,10 @@ async fn test_grid_sell_timing() {
     let prices = vec![dec!(100), dec!(98), dec!(99), dec!(100)];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let signals = strategy.on_market_data(&create_kline("005930", dec!(100), 1000000 + 86400 * 3)).await.unwrap();
+    let signals = strategy
+        .on_market_data(&create_kline("005930", dec!(100), 1000000 + 86400 * 3))
+        .await
+        .unwrap();
     let sell_signals: Vec<_> = signals.iter().filter(|s| s.side == Side::Sell).collect();
     assert_eq!(
         sell_signals.len(),
@@ -1222,13 +1238,18 @@ async fn test_grid_multiple_level_buy() {
     let prices = vec![dec!(100)];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let _ = strategy.on_market_data(&create_kline("005930", dec!(100), 1000000)).await;
+    let _ = strategy
+        .on_market_data(&create_kline("005930", dec!(100), 1000000))
+        .await;
 
     // 급락 시 모든 레벨 매수
     let prices = vec![dec!(100), dec!(94)];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let signals = strategy.on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400)).await.unwrap();
+    let signals = strategy
+        .on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400))
+        .await
+        .unwrap();
     let buy_signals: Vec<_> = signals.iter().filter(|s| s.side == Side::Buy).collect();
 
     assert!(
@@ -1244,10 +1265,7 @@ async fn test_grid_multiple_level_buy() {
         .filter(|l| l["state"].as_str().unwrap() == "WaitingSell")
         .count();
 
-    assert!(
-        waiting_sell_count >= 1,
-        "최소 1개 레벨이 WaitingSell 상태"
-    );
+    assert!(waiting_sell_count >= 1, "최소 1개 레벨이 WaitingSell 상태");
 }
 
 /// 그리드 순환 매매 테스트
@@ -1265,27 +1283,38 @@ async fn test_grid_cycle_trading() {
     // 1. 초기화
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let _ = strategy.on_market_data(&create_kline("005930", dec!(100), 1000000)).await;
+    let _ = strategy
+        .on_market_data(&create_kline("005930", dec!(100), 1000000))
+        .await;
 
     // 2. 하락 → Level 1 매수 (98)
     prices.push(dec!(98));
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let signals = strategy.on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400)).await.unwrap();
+    let signals = strategy
+        .on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400))
+        .await
+        .unwrap();
     all_signals.extend(signals);
 
     // 3. 상승 → Level 1 매도 (100)
     prices.push(dec!(100));
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let signals = strategy.on_market_data(&create_kline("005930", dec!(100), 1000000 + 86400 * 2)).await.unwrap();
+    let signals = strategy
+        .on_market_data(&create_kline("005930", dec!(100), 1000000 + 86400 * 2))
+        .await
+        .unwrap();
     all_signals.extend(signals);
 
     // 4. 다시 하락 → Level 1 재매수 (98)
     prices.push(dec!(98));
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let signals = strategy.on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400 * 3)).await.unwrap();
+    let signals = strategy
+        .on_market_data(&create_kline("005930", dec!(98), 1000000 + 86400 * 3))
+        .await
+        .unwrap();
     all_signals.extend(signals);
 
     // 검증: 매수 2회, 매도 1회 발생
@@ -1309,12 +1338,17 @@ async fn test_grid_position_id() {
     let prices = vec![dec!(100)];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let _ = strategy.on_market_data(&create_kline("005930", dec!(100), 1000000)).await;
+    let _ = strategy
+        .on_market_data(&create_kline("005930", dec!(100), 1000000))
+        .await;
 
     let prices = vec![dec!(100), dec!(94)];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let signals = strategy.on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400)).await.unwrap();
+    let signals = strategy
+        .on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400))
+        .await
+        .unwrap();
 
     let buy_signals: Vec<_> = signals.iter().filter(|s| s.side == Side::Buy).collect();
 
@@ -1355,12 +1389,17 @@ async fn test_grid_group_id() {
     let prices = vec![dec!(100)];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let _ = strategy.on_market_data(&create_kline("005930", dec!(100), 1000000)).await;
+    let _ = strategy
+        .on_market_data(&create_kline("005930", dec!(100), 1000000))
+        .await;
 
     let prices = vec![dec!(100), dec!(94)];
     let context = setup_context_with_prices("005930", &prices, 1000000);
     strategy.set_context(context);
-    let signals = strategy.on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400)).await.unwrap();
+    let signals = strategy
+        .on_market_data(&create_kline("005930", dec!(94), 1000000 + 86400))
+        .await
+        .unwrap();
 
     let buy_signals: Vec<_> = signals.iter().filter(|s| s.side == Side::Buy).collect();
 

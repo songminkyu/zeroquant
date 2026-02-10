@@ -503,7 +503,10 @@ pub async fn create_signal(
     let price: Decimal = req.price.parse().map_err(|_| {
         (
             StatusCode::BAD_REQUEST,
-            Json(ApiErrorResponse::new("INVALID_PRICE", "유효하지 않은 가격 형식")),
+            Json(ApiErrorResponse::new(
+                "INVALID_PRICE",
+                "유효하지 않은 가격 형식",
+            )),
         )
     })?;
 
@@ -527,11 +530,14 @@ pub async fn create_signal(
     };
 
     // 방향 파싱
-    let side = req.side.as_ref().and_then(|s| match s.to_lowercase().as_str() {
-        "buy" => Some(Side::Buy),
-        "sell" => Some(Side::Sell),
-        _ => None,
-    });
+    let side = req
+        .side
+        .as_ref()
+        .and_then(|s| match s.to_lowercase().as_str() {
+            "buy" => Some(Side::Buy),
+            "sell" => Some(Side::Sell),
+            _ => None,
+        });
 
     // SignalMarker 생성
     let marker = SignalMarker {

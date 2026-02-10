@@ -22,4 +22,4 @@ pub mod validator;
 pub use analyzer::MigrationAnalyzer;
 pub use consolidator::MigrationConsolidator;
 pub use models::*;
-pub use validator::{MigrationValidator, generate_safety_checklist};
+pub use validator::{generate_safety_checklist, MigrationValidator};

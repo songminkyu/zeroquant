@@ -10,13 +10,13 @@ use std::time::Duration;
 
 use axum::{http::StatusCode, middleware, routing::get, Router};
 use metrics_exporter_prometheus::PrometheusHandle;
-use trader_data::{Database, DatabaseConfig};
 use tokio_util::sync::CancellationToken;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
+use trader_data::{Database, DatabaseConfig};
 
 use trader_api::metrics::setup_metrics_recorder;
 use trader_api::middleware::{
@@ -26,16 +26,15 @@ use trader_api::openapi::swagger_ui_router;
 use trader_api::repository::StrategyRepository;
 use trader_api::routes::create_api_router;
 use trader_api::services::ApiBotHandler;
-use trader_notification::{NotificationManager, TelegramConfig, TelegramSender};
 use trader_api::state::AppState;
 use trader_api::websocket::{
-    create_subscription_manager, standalone_websocket_router, start_simulator,
-    WsState,
+    create_subscription_manager, standalone_websocket_router, start_simulator, WsState,
 };
 use trader_core::crypto::CredentialEncryptor;
 use trader_data::cache::CachedHistoricalDataProvider;
 use trader_data::RedisCache;
 use trader_execution::{ConversionConfig, OrderExecutor};
+use trader_notification::{NotificationManager, TelegramConfig, TelegramSender};
 use trader_risk::{RiskConfig, RiskManager};
 use trader_strategy::{EngineConfig, StrategyEngine};
 
@@ -419,8 +418,7 @@ fn create_router(
     // 프론트엔드 정적 파일 서빙 (FRONTEND_DIR 설정 시)
     let router = if let Some(frontend_dir) = frontend_static_dir() {
         let index_html = frontend_dir.join("index.html");
-        let serve = ServeDir::new(&frontend_dir)
-            .not_found_service(ServeFile::new(index_html));
+        let serve = ServeDir::new(&frontend_dir).not_found_service(ServeFile::new(index_html));
         router.fallback_service(serve)
     } else {
         router
@@ -598,7 +596,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 데이터베이스에서 저장된 전략 로드
     if let Some(ref pool) = state.db_pool {
         let engine = state.strategy_engine.read().await;
-        match StrategyRepository::load_strategies_into_engine(pool, &engine, state.strategy_context.clone()).await {
+        match StrategyRepository::load_strategies_into_engine(
+            pool,
+            &engine,
+            state.strategy_context.clone(),
+        )
+        .await
+        {
             Ok(count) => {
                 if count > 0 {
                     info!(count, "Loaded strategies from database");

@@ -212,13 +212,11 @@ impl SymbolInfoRepository {
         for chunk in symbols.chunks(BATCH_SIZE) {
             let tickers: Vec<&str> = chunk.iter().map(|s| s.ticker.as_str()).collect();
             let names: Vec<&str> = chunk.iter().map(|s| s.name.as_str()).collect();
-            let names_en: Vec<Option<&str>> =
-                chunk.iter().map(|s| s.name_en.as_deref()).collect();
+            let names_en: Vec<Option<&str>> = chunk.iter().map(|s| s.name_en.as_deref()).collect();
             let markets: Vec<&str> = chunk.iter().map(|s| s.market.as_str()).collect();
             let exchanges: Vec<Option<&str>> =
                 chunk.iter().map(|s| s.exchange.as_deref()).collect();
-            let sectors: Vec<Option<&str>> =
-                chunk.iter().map(|s| s.sector.as_deref()).collect();
+            let sectors: Vec<Option<&str>> = chunk.iter().map(|s| s.sector.as_deref()).collect();
             let yahoo_symbols: Vec<Option<&str>> =
                 chunk.iter().map(|s| s.yahoo_symbol.as_deref()).collect();
 
@@ -752,7 +750,10 @@ impl SymbolInfoRepository {
 
         // 결과가 있으면 캐시에 저장
         if let Some(ref info) = result {
-            if let Err(e) = cache.set_with_ttl(&cache_key, info, SYMBOL_CACHE_TTL_SECS).await {
+            if let Err(e) = cache
+                .set_with_ttl(&cache_key, info, SYMBOL_CACHE_TTL_SECS)
+                .await
+            {
                 warn!(error = %e, "심볼 정보 캐시 저장 실패");
             }
         }
@@ -793,7 +794,9 @@ impl SymbolInfoRepository {
             // 조회 결과 캐시에 저장
             for info in &db_results {
                 let cache_key = format!("symbol:search:{}", info.ticker.to_uppercase());
-                let _ = cache.set_with_ttl(&cache_key, info, SYMBOL_CACHE_TTL_SECS).await;
+                let _ = cache
+                    .set_with_ttl(&cache_key, info, SYMBOL_CACHE_TTL_SECS)
+                    .await;
             }
 
             results.extend(db_results);
@@ -833,7 +836,10 @@ impl SymbolInfoRepository {
 
         // 결과가 있으면 캐시에 저장
         if let Some(ref info) = result {
-            if let Err(e) = cache.set_with_ttl(&cache_key, info, SYMBOL_CACHE_TTL_SECS).await {
+            if let Err(e) = cache
+                .set_with_ttl(&cache_key, info, SYMBOL_CACHE_TTL_SECS)
+                .await
+            {
                 warn!(error = %e, "Yahoo 심볼 캐시 저장 실패");
             }
         }
@@ -1109,7 +1115,7 @@ impl SymbolInfoRepository {
         market: &str,
     ) -> Result<Vec<CascadeDeleteResult>, sqlx::Error> {
         let results = sqlx::query_as::<_, CascadeDeleteResult>(
-            "SELECT table_name, deleted_count FROM delete_symbol_cascade($1, $2)"
+            "SELECT table_name, deleted_count FROM delete_symbol_cascade($1, $2)",
         )
         .bind(ticker)
         .bind(market)
@@ -1129,11 +1135,9 @@ impl SymbolInfoRepository {
     /// 고아 데이터 일괄 정리 (cleanup_orphan_symbol_data SQL 함수 호출).
     ///
     /// symbol_info에 존재하지 않는 심볼의 데이터를 모든 관련 테이블에서 삭제합니다.
-    pub async fn cleanup_orphans(
-        pool: &PgPool,
-    ) -> Result<Vec<CascadeDeleteResult>, sqlx::Error> {
+    pub async fn cleanup_orphans(pool: &PgPool) -> Result<Vec<CascadeDeleteResult>, sqlx::Error> {
         let results = sqlx::query_as::<_, CascadeDeleteResult>(
-            "SELECT table_name, deleted_count FROM cleanup_orphan_symbol_data()"
+            "SELECT table_name, deleted_count FROM cleanup_orphan_symbol_data()",
         )
         .fetch_all(pool)
         .await?;

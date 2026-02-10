@@ -19,7 +19,6 @@
 use crate::strategies::common::ExitConfig;
 use crate::Strategy;
 use async_trait::async_trait;
-use trader_strategy_macro::StrategyConfig;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
@@ -32,6 +31,7 @@ use trader_core::{
     types::Timeframe,
     Kline, MarketData, MarketDataType, Order, Position, Side, Signal, SignalType,
 };
+use trader_strategy_macro::StrategyConfig;
 
 // ============================================================================
 // 설정 (Config)
@@ -48,17 +48,34 @@ use trader_core::{
 pub struct RangeTradingConfig {
     /// 대상 티커
     #[serde(default = "default_ticker")]
-    #[schema(label = "대상 종목", field_type = "symbol", default = "005930", section = "asset")]
+    #[schema(
+        label = "대상 종목",
+        field_type = "symbol",
+        default = "005930",
+        section = "asset"
+    )]
     pub ticker: String,
 
     /// 구간 분할 수 (기본: 15)
     #[serde(default = "default_div_num")]
-    #[schema(label = "구간 분할 수", min = 5, max = 50, default = 15, section = "indicator")]
+    #[schema(
+        label = "구간 분할 수",
+        min = 5,
+        max = 50,
+        default = 15,
+        section = "indicator"
+    )]
     pub div_num: usize,
 
     /// 구간 계산 기간 (기본: 20일)
     #[serde(default = "default_target_period")]
-    #[schema(label = "구간 계산 기간 (일)", min = 5, max = 100, default = 20, section = "indicator")]
+    #[schema(
+        label = "구간 계산 기간 (일)",
+        min = 5,
+        max = 100,
+        default = 20,
+        section = "indicator"
+    )]
     pub target_period: usize,
 
     /// MA 필터 사용 여부
@@ -68,17 +85,35 @@ pub struct RangeTradingConfig {
 
     /// 매수 MA 기간 (기본: 20)
     #[serde(default = "default_buy_ma_period")]
-    #[schema(label = "매수 MA 기간", min = 5, max = 60, default = 20, section = "indicator")]
+    #[schema(
+        label = "매수 MA 기간",
+        min = 5,
+        max = 60,
+        default = 20,
+        section = "indicator"
+    )]
     pub buy_ma_period: usize,
 
     /// 매도 MA 기간 (기본: 5)
     #[serde(default = "default_sell_ma_period")]
-    #[schema(label = "매도 MA 기간", min = 3, max = 30, default = 5, section = "indicator")]
+    #[schema(
+        label = "매도 MA 기간",
+        min = 3,
+        max = 30,
+        default = 5,
+        section = "indicator"
+    )]
     pub sell_ma_period: usize,
 
     /// 최소 GlobalScore
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", min = 0, max = 100, default = 50, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        min = 0,
+        max = 100,
+        default = 50,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).

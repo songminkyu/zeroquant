@@ -20,7 +20,9 @@ pub use candle_processor::{
     CandleProcessor, PartitionedSignals, ProcessCandleContext, MIN_CANDLES_FOR_INDICATORS,
 };
 pub use engine::{BacktestConfig, BacktestEngine, BacktestError, BacktestReport, BacktestResult};
-pub use screening_provider::{BacktestScreeningConfig, BacktestScreeningProvider, MIN_CANDLES_FOR_SCREENING};
+pub use screening_provider::{
+    BacktestScreeningConfig, BacktestScreeningProvider, MIN_CANDLES_FOR_SCREENING,
+};
 pub use slippage::{SlippageModel, SlippageResult, SlippageTier};
 
 // Re-export core types for convenience

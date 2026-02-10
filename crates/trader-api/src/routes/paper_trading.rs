@@ -432,7 +432,8 @@ pub async fn list_accounts(
         let mut position_value = Decimal::ZERO;
         let mut unrealized_pnl_total = Decimal::ZERO;
         for pos in &pos_rows {
-            let current_price = get_realtime_price(&state, row.id, &pos.symbol, pos.entry_price).await;
+            let current_price =
+                get_realtime_price(&state, row.id, &pos.symbol, pos.entry_price).await;
             let mv = pos.quantity * current_price;
             position_value += mv;
             let pnl = (current_price - pos.entry_price) * pos.quantity;
@@ -455,8 +456,7 @@ pub async fn list_accounts(
         let total_equity = current_balance + position_value;
         let initial_bal: Decimal = initial_balance.parse().unwrap_or(Decimal::ZERO);
         let return_pct = if initial_bal > Decimal::ZERO {
-            ((total_equity - initial_bal) / initial_bal * Decimal::from(100))
-                .round_dp(2)
+            ((total_equity - initial_bal) / initial_bal * Decimal::from(100)).round_dp(2)
         } else {
             Decimal::ZERO
         };
@@ -585,7 +585,8 @@ pub async fn get_account(
     let mut position_value = Decimal::ZERO;
     let mut unrealized_pnl_total = Decimal::ZERO;
     for pos in &pos_rows {
-        let current_price = get_realtime_price(&state, credential_id, &pos.symbol, pos.entry_price).await;
+        let current_price =
+            get_realtime_price(&state, credential_id, &pos.symbol, pos.entry_price).await;
         let mv = pos.quantity * current_price;
         position_value += mv;
         unrealized_pnl_total += (current_price - pos.entry_price) * pos.quantity;
@@ -685,7 +686,8 @@ pub async fn get_positions(
 
     for row in rows {
         // 실시간 가격 조회 (latest_tickers 캐시 활용)
-        let current_price = get_realtime_price(&state, credential_id, &row.symbol, row.entry_price).await;
+        let current_price =
+            get_realtime_price(&state, credential_id, &row.symbol, row.entry_price).await;
         let market_value = row.quantity * current_price;
         let unrealized_pnl = (current_price - row.entry_price) * row.quantity;
 
@@ -693,15 +695,18 @@ pub async fn get_positions(
         total_unrealized_pnl += unrealized_pnl;
 
         let return_pct = if row.entry_price > Decimal::ZERO {
-            ((current_price - row.entry_price) / row.entry_price * Decimal::from(100))
-                .round_dp(2)
+            ((current_price - row.entry_price) / row.entry_price * Decimal::from(100)).round_dp(2)
         } else {
             Decimal::ZERO
         };
 
         positions.push(PaperTradingPosition {
             symbol: row.symbol,
-            side: if row.side == "Buy" { "Long".to_string() } else { "Short".to_string() },
+            side: if row.side == "Buy" {
+                "Long".to_string()
+            } else {
+                "Short".to_string()
+            },
             quantity: row.quantity.to_string(),
             entry_price: row.entry_price.to_string(),
             current_price: current_price.to_string(),
@@ -1027,9 +1032,8 @@ pub async fn list_paper_trading_sessions(
 
         let mut unrealized_pnl = Decimal::ZERO;
         for pos in &pos_rows {
-            let current_price = get_realtime_price(
-                &state, row.credential_id, &pos.symbol, pos.entry_price
-            ).await;
+            let current_price =
+                get_realtime_price(&state, row.credential_id, &pos.symbol, pos.entry_price).await;
             unrealized_pnl += (current_price - pos.entry_price) * pos.quantity;
         }
 
@@ -1129,9 +1133,9 @@ pub async fn get_paper_trading_status(
 
             let mut unrealized_pnl = Decimal::ZERO;
             for pos in &pos_rows {
-                let current_price = get_realtime_price(
-                    &state, row.credential_id, &pos.symbol, pos.entry_price
-                ).await;
+                let current_price =
+                    get_realtime_price(&state, row.credential_id, &pos.symbol, pos.entry_price)
+                        .await;
                 unrealized_pnl += (current_price - pos.entry_price) * pos.quantity;
             }
 
@@ -1281,12 +1285,8 @@ pub async fn start_paper_trading(
         .unwrap_or("stock_kr");
 
     // Mock 거래소 Provider 생성/조회
-    let mock_provider = get_or_create_mock_provider(
-        &state,
-        credential_id,
-        initial_balance,
-        market_type,
-    ).await?;
+    let mock_provider =
+        get_or_create_mock_provider(&state, credential_id, initial_balance, market_type).await?;
 
     // 해당 계정을 사용하는 모든 활성 전략의 심볼 수집
     let symbols = collect_streaming_symbols(pool, credential_id)
@@ -1312,15 +1312,24 @@ pub async fn start_paper_trading(
                 market_type: market_type.to_string(),
                 spread_multiplier: Decimal::try_from(config_dto.spread_multiplier.unwrap_or(1.0))
                     .unwrap_or(Decimal::ONE),
-                orderbook_base_volume: Decimal::try_from(config_dto.orderbook_base_volume.unwrap_or(100.0))
-                    .unwrap_or(Decimal::from(100)),
+                orderbook_base_volume: Decimal::try_from(
+                    config_dto.orderbook_base_volume.unwrap_or(100.0),
+                )
+                .unwrap_or(Decimal::from(100)),
                 replay_speed: config_dto.replay_speed.unwrap_or(1.0),
             };
 
-            if let Err(e) = mock_provider.start_streaming_with_config(symbols.clone(), streaming_config).await {
+            if let Err(e) = mock_provider
+                .start_streaming_with_config(symbols.clone(), streaming_config)
+                .await
+            {
                 tracing::warn!("Mock 확장 스트리밍 시작 실패: {:?}", e);
             } else {
-                tracing::info!("Mock 확장 스트리밍 시작 (계정: {}): {:?}", credential_id, symbols);
+                tracing::info!(
+                    "Mock 확장 스트리밍 시작 (계정: {}): {:?}",
+                    credential_id,
+                    symbols
+                );
             }
         } else {
             // streaming_config 없으면 기본 RandomWalk 모드 사용 (Yahoo Legacy 아님)
@@ -1335,10 +1344,17 @@ pub async fn start_paper_trading(
                 replay_speed: 1.0,
             };
 
-            if let Err(e) = mock_provider.start_streaming_with_config(symbols.clone(), default_config).await {
+            if let Err(e) = mock_provider
+                .start_streaming_with_config(symbols.clone(), default_config)
+                .await
+            {
                 tracing::warn!("Mock 기본 스트리밍 시작 실패: {:?}", e);
             } else {
-                tracing::info!("Mock RandomWalk 스트리밍 시작 (계정: {}): {:?}", credential_id, symbols);
+                tracing::info!(
+                    "Mock RandomWalk 스트리밍 시작 (계정: {}): {:?}",
+                    credential_id,
+                    symbols
+                );
             }
         }
     }
@@ -1368,7 +1384,8 @@ pub async fn start_paper_trading(
                 }
                 tracing::info!(
                     "Mock MarketStream 파이프라인 연결 완료 (계정: {}, 심볼: {}개)",
-                    credential_id, symbols.len()
+                    credential_id,
+                    symbols.len()
                 );
             }
             Err(e) => {
@@ -1642,7 +1659,11 @@ pub async fn get_strategy_positions(
 
         positions.push(PaperTradingPosition {
             symbol: row.symbol,
-            side: if row.side == "Buy" { "Long".to_string() } else { "Short".to_string() },
+            side: if row.side == "Buy" {
+                "Long".to_string()
+            } else {
+                "Short".to_string()
+            },
             quantity: row.quantity.to_string(),
             entry_price: row.entry_price.to_string(),
             current_price: current_price.to_string(),

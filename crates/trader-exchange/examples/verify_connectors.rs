@@ -1,7 +1,7 @@
-use trader_exchange::connector::upbit::{UpbitClient, UpbitConfig};
+use trader_core::domain::ExchangeProvider;
 use trader_exchange::connector::bithumb::{BithumbClient, BithumbConfig};
 use trader_exchange::connector::db_investment::{DbInvestmentClient, DbInvestmentConfig};
-use trader_core::domain::ExchangeProvider;
+use trader_exchange::connector::upbit::{UpbitClient, UpbitConfig};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -20,8 +20,10 @@ async fn main() -> anyhow::Result<()> {
     // 2. Bithumb Verification
     println!("\n--- Verifying Bithumb Connector ---");
     let bithumb_config = BithumbConfig::new(
-        std::env::var("BITHUMB_ACCESS_KEY").unwrap_or_else(|_| "YOUR_BITHUMB_ACCESS_KEY".to_string()),
-        std::env::var("BITHUMB_SECRET_KEY").unwrap_or_else(|_| "YOUR_BITHUMB_SECRET_KEY".to_string()),
+        std::env::var("BITHUMB_ACCESS_KEY")
+            .unwrap_or_else(|_| "YOUR_BITHUMB_ACCESS_KEY".to_string()),
+        std::env::var("BITHUMB_SECRET_KEY")
+            .unwrap_or_else(|_| "YOUR_BITHUMB_SECRET_KEY".to_string()),
     );
     let bithumb_client = BithumbClient::new(bithumb_config);
     match bithumb_client.fetch_account().await {

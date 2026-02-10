@@ -160,23 +160,32 @@ pub async fn save_slack_settings(
         ));
     }
 
-    if !request.webhook_url.starts_with("https://hooks.slack.com/services/") {
+    if !request
+        .webhook_url
+        .starts_with("https://hooks.slack.com/services/")
+    {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiError::new("INVALID_INPUT", "유효한 Slack Webhook URL이 아닙니다.")),
+            Json(ApiError::new(
+                "INVALID_INPUT",
+                "유효한 Slack Webhook URL이 아닙니다.",
+            )),
         ));
     }
 
     // Webhook URL 암호화
-    let (encrypted_webhook_url, nonce_webhook) = encryptor.encrypt(&request.webhook_url).map_err(|e| {
-        error!("Webhook URL 암호화 실패: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
-        )
-    })?;
+    let (encrypted_webhook_url, nonce_webhook) =
+        encryptor.encrypt(&request.webhook_url).map_err(|e| {
+            error!("Webhook URL 암호화 실패: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
+            )
+        })?;
 
-    let notification_settings = request.notification_settings.as_ref()
+    let notification_settings = request
+        .notification_settings
+        .as_ref()
         .and_then(|s| serde_json::to_value(s).ok());
 
     let settings_id = Uuid::new_v4();
@@ -328,7 +337,10 @@ pub async fn test_new_slack_settings(
         ));
     }
 
-    if !request.webhook_url.starts_with("https://hooks.slack.com/services/") {
+    if !request
+        .webhook_url
+        .starts_with("https://hooks.slack.com/services/")
+    {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ApiError::new(
@@ -473,7 +485,15 @@ pub async fn test_slack_settings(
         }
         Err(e) => {
             let error_msg = format!("Slack 전송 실패: {}", e);
-            log_credential_access(pool, "slack", settings.id, "verify", false, Some(&error_msg)).await;
+            log_credential_access(
+                pool,
+                "slack",
+                settings.id,
+                "verify",
+                false,
+                Some(&error_msg),
+            )
+            .await;
 
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,

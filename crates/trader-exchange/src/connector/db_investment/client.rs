@@ -4,14 +4,14 @@ use async_trait::async_trait;
 use chrono::Utc;
 use reqwest::{Client, Method};
 use rust_decimal::Decimal;
-use std::str::FromStr;
 use serde::Deserialize;
 use serde_json::{json, Value};
+use std::str::FromStr;
 use tokio::sync::Mutex;
 
 use trader_core::domain::{
-    ExchangeProvider, MarketDataProvider, StrategyAccountInfo, PendingOrder,
-    StrategyPositionInfo, OrderStatusType, Side, OrderResponse,
+    ExchangeProvider, MarketDataProvider, OrderResponse, OrderStatusType, PendingOrder, Side,
+    StrategyAccountInfo, StrategyPositionInfo,
 };
 use trader_core::ProviderError;
 use trader_core::QuoteData;
@@ -47,8 +47,6 @@ impl DbInvestmentConfig {
             is_virtual: false,
         }
     }
-
-
 }
 
 // ============================================================================
@@ -117,21 +115,28 @@ impl DbInvestmentClient {
 
         if !response.status().is_success() {
             let status = response.status();
-            let text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+            let text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
             return Err(ProviderError::Authentication(format!(
                 "Failed to get token: {} - {}",
                 status, text
             )));
         }
 
-        let body_text = response.text().await.map_err(|e| ProviderError::Parse(e.to_string()))?;
-        let body: Value = serde_json::from_str(&body_text).map_err(|e| ProviderError::Parse(e.to_string()))?;
-        
+        let body_text = response
+            .text()
+            .await
+            .map_err(|e| ProviderError::Parse(e.to_string()))?;
+        let body: Value =
+            serde_json::from_str(&body_text).map_err(|e| ProviderError::Parse(e.to_string()))?;
+
         if let Some(token) = body["access_token"].as_str() {
             let expires_in = body["expires_in"].as_u64().unwrap_or(3600);
             tm.expires_at = Instant::now() + Duration::from_secs(expires_in.saturating_sub(60));
             tm.access_token = Some(token.to_string());
-            
+
             Ok(token.to_string())
         } else {
             Err(ProviderError::Authentication(
@@ -157,7 +162,7 @@ impl DbInvestmentClient {
         let mut builder = self.client.request(method, &url);
         builder = builder.header("Authorization", format!("Bearer {}", token));
         builder = builder.header("Content-Type", "application/json; charset=utf-8");
-        builder = builder.header("cont_yn", "N"); 
+        builder = builder.header("cont_yn", "N");
         builder = builder.header("cont_key", "");
 
         if let Some(b) = body {
@@ -180,7 +185,10 @@ impl DbInvestmentClient {
             )));
         }
 
-        let text = response.text().await.map_err(|e| ProviderError::Network(e.to_string()))?;
+        let text = response
+            .text()
+            .await
+            .map_err(|e| ProviderError::Network(e.to_string()))?;
         serde_json::from_str::<T>(&text).map_err(|e| {
             ProviderError::Parse(format!("Failed to parse response: {}. Body: {}", e, text))
         })
@@ -188,13 +196,21 @@ impl DbInvestmentClient {
 
     async fn fetch_kr_positions(&self) -> Result<Vec<StrategyPositionInfo>, ProviderError> {
         let body = json!({ "In": { "QryTpCode0": "0" } });
-        let res: KrStockListResponse = self.request(Method::POST, "api/v1/trading/kr-stock/inquiry/balance", Some(body)).await?;
-        
+        let res: KrStockListResponse = self
+            .request(
+                Method::POST,
+                "api/v1/trading/kr-stock/inquiry/balance",
+                Some(body),
+            )
+            .await?;
+
         let mut positions = Vec::new();
         for stock in res.out1 {
             let qty = Decimal::from_str(&stock.bal_qty).unwrap_or_default();
-            if qty.is_zero() { continue; }
-            
+            if qty.is_zero() {
+                continue;
+            }
+
             let mut symbol = stock.isu_no;
             if symbol.len() == 7 && symbol.starts_with('A') {
                 symbol = symbol[1..].to_string();
@@ -219,12 +235,20 @@ impl DbInvestmentClient {
                 "DpntBalTpCode": "0"
             }
         });
-        let res: UsStockListResponse = self.request(Method::POST, "api/v1/trading/overseas-stock/inquiry/balance-margin", Some(body)).await?;
+        let res: UsStockListResponse = self
+            .request(
+                Method::POST,
+                "api/v1/trading/overseas-stock/inquiry/balance-margin",
+                Some(body),
+            )
+            .await?;
 
         let mut positions = Vec::new();
         for stock in res.out2 {
             let qty = Decimal::from_str(&stock.qty).unwrap_or_default();
-            if qty.is_zero() { continue; }
+            if qty.is_zero() {
+                continue;
+            }
 
             positions.push(StrategyPositionInfo::new(
                 stock.sym_code,
@@ -304,7 +328,10 @@ impl DbInvestmentClient {
             )));
         }
 
-        let text = response.text().await.map_err(|e| ProviderError::Network(e.to_string()))?;
+        let text = response
+            .text()
+            .await
+            .map_err(|e| ProviderError::Network(e.to_string()))?;
         let res: DbOrderResponseWrapper = serde_json::from_str(&text).map_err(|e| {
             ProviderError::Parse(format!("주문 응답 파싱 실패: {}. Body: {}", e, text))
         })?;
@@ -337,7 +364,10 @@ impl DbInvestmentClient {
         });
 
         let token = self.get_token().await?;
-        let url = format!("{}/api/v1/trading/kr-stock/order-cancel", self.config.base_url);
+        let url = format!(
+            "{}/api/v1/trading/kr-stock/order-cancel",
+            self.config.base_url
+        );
 
         let response = self
             .client
@@ -362,7 +392,10 @@ impl DbInvestmentClient {
             )));
         }
 
-        let text = response.text().await.map_err(|e| ProviderError::Network(e.to_string()))?;
+        let text = response
+            .text()
+            .await
+            .map_err(|e| ProviderError::Network(e.to_string()))?;
         let _res: DbCancelOrderResponseWrapper = serde_json::from_str(&text).map_err(|e| {
             ProviderError::Parse(format!("주문 취소 응답 파싱 실패: {}. Body: {}", e, text))
         })?;
@@ -391,7 +424,11 @@ impl DbInvestmentClient {
         });
 
         let res: DbExecutionHistoryResponse = self
-            .request(Method::POST, "api/v1/trading/kr-stock/inquiry/transaction-history", Some(body))
+            .request(
+                Method::POST,
+                "api/v1/trading/kr-stock/inquiry/transaction-history",
+                Some(body),
+            )
             .await?;
 
         let mut executions = Vec::new();
@@ -402,7 +439,11 @@ impl DbInvestmentClient {
                 ticker = ticker[1..].to_string();
             }
 
-            let side = if record.bns_tp_code == "1" { Side::Sell } else { Side::Buy };
+            let side = if record.bns_tp_code == "1" {
+                Side::Sell
+            } else {
+                Side::Buy
+            };
 
             executions.push(ExecutionRecord {
                 order_no: record.ord_no,
@@ -441,7 +482,10 @@ impl DbInvestmentClient {
         });
 
         let token = self.get_token().await?;
-        let url = format!("{}/api/v1/trading/kr-stock/order-modify", self.config.base_url);
+        let url = format!(
+            "{}/api/v1/trading/kr-stock/order-modify",
+            self.config.base_url
+        );
 
         let response = self
             .client
@@ -466,7 +510,10 @@ impl DbInvestmentClient {
             )));
         }
 
-        let text = response.text().await.map_err(|e| ProviderError::Network(e.to_string()))?;
+        let text = response
+            .text()
+            .await
+            .map_err(|e| ProviderError::Network(e.to_string()))?;
         let res: DbModifyOrderResponseWrapper = serde_json::from_str(&text).map_err(|e| {
             ProviderError::Parse(format!("주문 정정 응답 파싱 실패: {}. Body: {}", e, text))
         })?;
@@ -552,7 +599,7 @@ struct KrBalanceOut {
 
 #[derive(Debug, Deserialize)]
 struct UsBalanceResponse {
-     #[serde(rename = "Out1")]
+    #[serde(rename = "Out1")]
     out1: Vec<UsBalanceOut1>,
 }
 
@@ -720,7 +767,14 @@ impl ExchangeProvider for DbInvestmentClient {
 
         // KR
         let kr_body = json!({ "In": { "QryTpCode0": "0" } });
-        if let Ok(res) = self.request::<KrBalanceResponse>(Method::POST, "api/v1/trading/kr-stock/inquiry/balance", Some(kr_body)).await {
+        if let Ok(res) = self
+            .request::<KrBalanceResponse>(
+                Method::POST,
+                "api/v1/trading/kr-stock/inquiry/balance",
+                Some(kr_body),
+            )
+            .await
+        {
             available_balance += parse_value(&res.out.dps2);
             total_balance += parse_value(&res.out.dpsast_amt);
         }
@@ -734,16 +788,23 @@ impl ExchangeProvider for DbInvestmentClient {
                 "DpntBalTpCode": "0"
             }
         });
-        if let Ok(res) = self.request::<UsBalanceResponse>(Method::POST, "api/v1/trading/overseas-stock/inquiry/balance-margin", Some(us_body)).await {
+        if let Ok(res) = self
+            .request::<UsBalanceResponse>(
+                Method::POST,
+                "api/v1/trading/overseas-stock/inquiry/balance-margin",
+                Some(us_body),
+            )
+            .await
+        {
             for balance in res.out1 {
-                 if balance.crcy_code == "USD" {
-                     let exrate = parse_value(&balance.xchrat);
-                     let usd_total = parse_value(&balance.astk_asset_eval_amt);
-                     let usd_avail = parse_value(&balance.astk_ord_able_amt);
+                if balance.crcy_code == "USD" {
+                    let exrate = parse_value(&balance.xchrat);
+                    let usd_total = parse_value(&balance.astk_asset_eval_amt);
+                    let usd_avail = parse_value(&balance.astk_ord_able_amt);
 
-                     total_balance += usd_total * exrate;
-                     available_balance += usd_avail * exrate;
-                 }
+                    total_balance += usd_total * exrate;
+                    available_balance += usd_avail * exrate;
+                }
             }
         }
 
@@ -758,7 +819,7 @@ impl ExchangeProvider for DbInvestmentClient {
 
     async fn fetch_positions(&self) -> Result<Vec<StrategyPositionInfo>, ProviderError> {
         let mut all_positions = Vec::new();
-        
+
         // KR
         match self.fetch_kr_positions().await {
             Ok(pos) => all_positions.extend(pos),
@@ -783,16 +844,26 @@ impl ExchangeProvider for DbInvestmentClient {
                 "QryTp": "0"
             }
         });
-        let res: DbPendingOrderResponse = self.request(Method::POST, "api/v1/trading/kr-stock/inquiry/transaction-history", Some(body)).await?;
-        
+        let res: DbPendingOrderResponse = self
+            .request(
+                Method::POST,
+                "api/v1/trading/kr-stock/inquiry/transaction-history",
+                Some(body),
+            )
+            .await?;
+
         let mut pending = Vec::new();
-            for order in res.out1 {
+        for order in res.out1 {
             let mut ticker = order.isu_no;
             if ticker.len() == 7 && ticker.starts_with('A') {
                 ticker = ticker[1..].to_string();
             }
 
-            let side = if order.bns_tp_code == "1" { Side::Sell } else { Side::Buy };
+            let side = if order.bns_tp_code == "1" {
+                Side::Sell
+            } else {
+                Side::Buy
+            };
 
             pending.push(PendingOrder {
                 order_id: order.ord_no,
@@ -818,8 +889,14 @@ impl MarketDataProvider for DbInvestmentClient {
                 "InputIscd1": symbol
             }
         });
-        let res: DbQuoteResponse = self.request(Method::POST, "api/v1/quote/kr-stock/inquiry/price", Some(body)).await?;
-        
+        let res: DbQuoteResponse = self
+            .request(
+                Method::POST,
+                "api/v1/quote/kr-stock/inquiry/price",
+                Some(body),
+            )
+            .await?;
+
         Ok(QuoteData {
             symbol: symbol.to_string(),
             current_price: Decimal::from_str(&res.out.prpr).unwrap_or_default(),
@@ -844,7 +921,7 @@ impl MarketDataProvider for DbInvestmentClient {
         }
         quotes
     }
-    
+
     fn provider_name(&self) -> &str {
         "db_investment"
     }

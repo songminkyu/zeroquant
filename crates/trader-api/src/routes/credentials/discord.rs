@@ -160,24 +160,35 @@ pub async fn save_discord_settings(
         ));
     }
 
-    if !request.webhook_url.starts_with("https://discord.com/api/webhooks/")
-        && !request.webhook_url.starts_with("https://discordapp.com/api/webhooks/") {
+    if !request
+        .webhook_url
+        .starts_with("https://discord.com/api/webhooks/")
+        && !request
+            .webhook_url
+            .starts_with("https://discordapp.com/api/webhooks/")
+    {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiError::new("INVALID_INPUT", "유효한 Discord Webhook URL이 아닙니다.")),
+            Json(ApiError::new(
+                "INVALID_INPUT",
+                "유효한 Discord Webhook URL이 아닙니다.",
+            )),
         ));
     }
 
     // Webhook URL 암호화
-    let (encrypted_webhook_url, nonce_webhook) = encryptor.encrypt(&request.webhook_url).map_err(|e| {
-        error!("Webhook URL 암호화 실패: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
-        )
-    })?;
+    let (encrypted_webhook_url, nonce_webhook) =
+        encryptor.encrypt(&request.webhook_url).map_err(|e| {
+            error!("Webhook URL 암호화 실패: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
+            )
+        })?;
 
-    let notification_settings = request.notification_settings.as_ref()
+    let notification_settings = request
+        .notification_settings
+        .as_ref()
         .and_then(|s| serde_json::to_value(s).ok());
 
     let settings_id = Uuid::new_v4();
@@ -284,7 +295,10 @@ pub async fn delete_discord_settings(
     if result.rows_affected() == 0 {
         return Err((
             StatusCode::NOT_FOUND,
-            Json(ApiError::new("NOT_FOUND", "삭제할 Discord 설정이 없습니다.")),
+            Json(ApiError::new(
+                "NOT_FOUND",
+                "삭제할 Discord 설정이 없습니다.",
+            )),
         ));
     }
 
@@ -329,8 +343,12 @@ pub async fn test_new_discord_settings(
         ));
     }
 
-    if !request.webhook_url.starts_with("https://discord.com/api/webhooks/")
-        && !request.webhook_url.starts_with("https://discordapp.com/api/webhooks/")
+    if !request
+        .webhook_url
+        .starts_with("https://discord.com/api/webhooks/")
+        && !request
+            .webhook_url
+            .starts_with("https://discordapp.com/api/webhooks/")
     {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -462,10 +480,11 @@ pub async fn test_discord_settings(
 
     match sender.send_test().await {
         Ok(()) => {
-            let _ = sqlx::query("UPDATE discord_settings SET last_verified_at = NOW() WHERE id = $1")
-                .bind(settings.id)
-                .execute(pool)
-                .await;
+            let _ =
+                sqlx::query("UPDATE discord_settings SET last_verified_at = NOW() WHERE id = $1")
+                    .bind(settings.id)
+                    .execute(pool)
+                    .await;
 
             log_credential_access(pool, "discord", settings.id, "verify", true, None).await;
 
@@ -476,7 +495,15 @@ pub async fn test_discord_settings(
         }
         Err(e) => {
             let error_msg = format!("Discord 전송 실패: {}", e);
-            log_credential_access(pool, "discord", settings.id, "verify", false, Some(&error_msg)).await;
+            log_credential_access(
+                pool,
+                "discord",
+                settings.id,
+                "verify",
+                false,
+                Some(&error_msg),
+            )
+            .await;
 
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,

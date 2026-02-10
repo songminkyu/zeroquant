@@ -87,8 +87,7 @@ impl MigrationAnalyzer {
 
         let mut files: Vec<MigrationFile> = Vec::new();
 
-        let entries = fs::read_dir(dir)
-            .map_err(|e| format!("디렉토리 읽기 실패: {}", e))?;
+        let entries = fs::read_dir(dir).map_err(|e| format!("디렉토리 읽기 실패: {}", e))?;
 
         for entry in entries.flatten() {
             let path = entry.path();
@@ -107,8 +106,8 @@ impl MigrationAnalyzer {
 
     /// 단일 마이그레이션 파일 파싱
     pub fn parse_file(&self, path: &Path) -> Result<Option<MigrationFile>, String> {
-        let content = fs::read_to_string(path)
-            .map_err(|e| format!("파일 읽기 실패 {:?}: {}", path, e))?;
+        let content =
+            fs::read_to_string(path).map_err(|e| format!("파일 읽기 실패 {:?}: {}", path, e))?;
 
         // 파일명에서 순서 번호 추출 (예: 01_core_foundation.sql → 1)
         let filename = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
@@ -214,7 +213,8 @@ impl MigrationAnalyzer {
 
             // 문장 종료 확인 (블록 내부가 아닐 때만)
             if !in_block && block_depth == 0 && trimmed.ends_with(';') {
-                if let Some(mut stmt) = self.parse_single_statement(&current_stmt, stmt_start_line) {
+                if let Some(mut stmt) = self.parse_single_statement(&current_stmt, stmt_start_line)
+                {
                     stmt.end_line_number = line_num;
                     statements.push(stmt);
                 }
@@ -245,12 +245,8 @@ impl MigrationAnalyzer {
 
         let (stmt_type, object_name) = self.detect_statement_type(&sql_upper, sql)?;
 
-        let mut stmt = SqlStatement::new(
-            stmt_type,
-            object_name,
-            sql_trimmed.to_string(),
-            line_number,
-        );
+        let mut stmt =
+            SqlStatement::new(stmt_type, object_name, sql_trimmed.to_string(), line_number);
 
         // 옵션 플래그 검출
         stmt.if_not_exists = sql_upper.contains("IF NOT EXISTS");
@@ -258,8 +254,8 @@ impl MigrationAnalyzer {
 
         // CASCADE 구분: DDL CASCADE (DROP ... CASCADE) vs FK CASCADE (ON DELETE/UPDATE CASCADE)
         if sql_upper.contains("CASCADE") {
-            let has_fk_cascade = sql_upper.contains("ON DELETE CASCADE")
-                || sql_upper.contains("ON UPDATE CASCADE");
+            let has_fk_cascade =
+                sql_upper.contains("ON DELETE CASCADE") || sql_upper.contains("ON UPDATE CASCADE");
             // DDL CASCADE: DROP ... CASCADE 또는 함수/블록 내 DROP ... CASCADE
             // FK CASCADE가 아닌 CASCADE 사용이 있는지 확인
             let cascade_without_fk = {
@@ -280,7 +276,11 @@ impl MigrationAnalyzer {
     }
 
     /// 문장 유형 및 대상 객체 검출
-    fn detect_statement_type(&self, sql_upper: &str, sql_original: &str) -> Option<(StatementType, String)> {
+    fn detect_statement_type(
+        &self,
+        sql_upper: &str,
+        sql_original: &str,
+    ) -> Option<(StatementType, String)> {
         // CREATE TABLE
         if sql_upper.contains("CREATE TABLE") {
             let name = self.extract_object_name(sql_original, "TABLE")?;
@@ -288,7 +288,10 @@ impl MigrationAnalyzer {
         }
 
         // CREATE OR REPLACE VIEW / CREATE VIEW
-        if sql_upper.contains("CREATE") && sql_upper.contains("VIEW") && !sql_upper.contains("MATERIALIZED") {
+        if sql_upper.contains("CREATE")
+            && sql_upper.contains("VIEW")
+            && !sql_upper.contains("MATERIALIZED")
+        {
             let name = self.extract_object_name(sql_original, "VIEW")?;
             return Some((StatementType::CreateView, name));
         }
@@ -306,7 +309,8 @@ impl MigrationAnalyzer {
         }
 
         // CREATE FUNCTION
-        if sql_upper.contains("CREATE FUNCTION") || sql_upper.contains("CREATE OR REPLACE FUNCTION") {
+        if sql_upper.contains("CREATE FUNCTION") || sql_upper.contains("CREATE OR REPLACE FUNCTION")
+        {
             let name = self.extract_function_name(sql_original)?;
             return Some((StatementType::CreateFunction, name));
         }
@@ -476,10 +480,7 @@ impl MigrationAnalyzer {
     fn extract_function_name(&self, sql: &str) -> Option<String> {
         let sql_upper = sql.to_uppercase();
 
-        let patterns = [
-            "CREATE OR REPLACE FUNCTION",
-            "CREATE FUNCTION",
-        ];
+        let patterns = ["CREATE OR REPLACE FUNCTION", "CREATE FUNCTION"];
 
         for pattern in patterns {
             if sql_upper.contains(pattern) {
@@ -504,10 +505,7 @@ impl MigrationAnalyzer {
     fn extract_drop_function_name(&self, sql: &str) -> Option<String> {
         let sql_upper = sql.to_uppercase();
 
-        let patterns = [
-            "DROP FUNCTION IF EXISTS",
-            "DROP FUNCTION",
-        ];
+        let patterns = ["DROP FUNCTION IF EXISTS", "DROP FUNCTION"];
 
         for pattern in patterns {
             if sql_upper.contains(pattern) {
@@ -532,10 +530,7 @@ impl MigrationAnalyzer {
     fn extract_trigger_name(&self, sql: &str) -> Option<String> {
         let sql_upper = sql.to_uppercase();
 
-        let patterns = [
-            "CREATE OR REPLACE TRIGGER",
-            "CREATE TRIGGER",
-        ];
+        let patterns = ["CREATE OR REPLACE TRIGGER", "CREATE TRIGGER"];
 
         for pattern in patterns {
             if sql_upper.contains(pattern) {
@@ -557,10 +552,7 @@ impl MigrationAnalyzer {
     fn extract_extension_name(&self, sql: &str) -> Option<String> {
         let sql_upper = sql.to_uppercase();
 
-        let patterns = [
-            "CREATE EXTENSION IF NOT EXISTS",
-            "CREATE EXTENSION",
-        ];
+        let patterns = ["CREATE EXTENSION IF NOT EXISTS", "CREATE EXTENSION"];
 
         for pattern in patterns {
             if sql_upper.contains(pattern) {
@@ -676,7 +668,13 @@ impl MigrationAnalyzer {
     }
 
     fn extract_join_references(&self, sql_upper: &str, sql: &str, refs: &mut HashSet<String>) {
-        let join_patterns = ["JOIN ", "INNER JOIN ", "LEFT JOIN ", "RIGHT JOIN ", "OUTER JOIN "];
+        let join_patterns = [
+            "JOIN ",
+            "INNER JOIN ",
+            "LEFT JOIN ",
+            "RIGHT JOIN ",
+            "OUTER JOIN ",
+        ];
 
         for pattern in join_patterns {
             for pos in sql_upper.match_indices(pattern) {
@@ -724,7 +722,8 @@ impl MigrationAnalyzer {
         let mut graph = DependencyGraph::new();
 
         // 파일별 정의 수집
-        let mut object_to_file: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+        let mut object_to_file: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
 
         for file in files {
             for stmt in &file.statements {
@@ -778,7 +777,8 @@ mod tests {
     #[test]
     fn test_parse_create_view() {
         let analyzer = MigrationAnalyzer::new();
-        let sql = "CREATE OR REPLACE VIEW v_active_users AS SELECT * FROM users WHERE active = true;";
+        let sql =
+            "CREATE OR REPLACE VIEW v_active_users AS SELECT * FROM users WHERE active = true;";
         let stmts = analyzer.parse_statements(sql);
 
         assert_eq!(stmts.len(), 1);

@@ -20,7 +20,7 @@ name: string,
 /**
  * 설명
  */
-description: string | null, 
+description?: string, 
 /**
  * 카테고리
  */

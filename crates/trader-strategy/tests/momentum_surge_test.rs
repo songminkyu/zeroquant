@@ -45,8 +45,7 @@ fn setup_context_for_momentum_surge(
     day_count: usize,
 ) -> Arc<RwLock<StrategyContext>> {
     let mut context = StrategyContext::new();
-    let base_timestamp =
-        chrono::DateTime::from_timestamp(1704067200, 0).unwrap(); // 2024-01-01
+    let base_timestamp = chrono::DateTime::from_timestamp(1704067200, 0).unwrap(); // 2024-01-01
 
     for ticker in tickers {
         // "122630/KRW" -> "122630" 변환 (전략의 get_etf_klines와 일치)
@@ -63,12 +62,12 @@ fn setup_context_for_momentum_surge(
                     ticker_base.to_string(),
                     Timeframe::D1,
                     timestamp,
-                    price - dec!(1),    // open
-                    price + dec!(1),    // high
-                    price - dec!(2),    // low
-                    price,              // close
+                    price - dec!(1), // open
+                    price + dec!(1), // high
+                    price - dec!(2), // low
+                    price,           // close
                     volume,
-                    timestamp,          // close_time
+                    timestamp, // close_time
                 )
             })
             .collect();

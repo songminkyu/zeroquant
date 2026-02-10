@@ -1426,25 +1426,30 @@ pub async fn sync_executions(
     })?;
 
     // exchange_id 조회
-    let exchange_id: String = sqlx::query_scalar(
-        "SELECT exchange_id FROM exchange_credentials WHERE id = $1",
-    )
-    .bind(credential_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| {
-        error!("exchange_id 조회 실패: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::new("DB_ERROR", format!("exchange_id 조회 실패: {}", e))),
-        )
-    })?
-    .ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError::new("NOT_FOUND", "해당 credential을 찾을 수 없습니다.")),
-        )
-    })?;
+    let exchange_id: String =
+        sqlx::query_scalar("SELECT exchange_id FROM exchange_credentials WHERE id = $1")
+            .bind(credential_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| {
+                error!("exchange_id 조회 실패: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiError::new(
+                        "DB_ERROR",
+                        format!("exchange_id 조회 실패: {}", e),
+                    )),
+                )
+            })?
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError::new(
+                        "NOT_FOUND",
+                        "해당 credential을 찾을 수 없습니다.",
+                    )),
+                )
+            })?;
 
     // 거래소별 Provider 생성
     let provider: std::sync::Arc<dyn trader_core::ExchangeProvider> = if exchange_id == "mock" {
@@ -1950,20 +1955,22 @@ pub async fn clear_execution_cache(
     debug!("캐시 삭제 요청: credential_id={}", credential_id);
 
     // credential에서 exchange_id 동적 조회
-    let exchange_id: String = sqlx::query_scalar(
-        "SELECT exchange_id FROM exchange_credentials WHERE id = $1",
-    )
-    .bind(credential_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| {
-        error!("exchange_id 조회 실패: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::new("DB_ERROR", format!("exchange_id 조회 실패: {}", e))),
-        )
-    })?
-    .unwrap_or_else(|| "unknown".to_string());
+    let exchange_id: String =
+        sqlx::query_scalar("SELECT exchange_id FROM exchange_credentials WHERE id = $1")
+            .bind(credential_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| {
+                error!("exchange_id 조회 실패: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiError::new(
+                        "DB_ERROR",
+                        format!("exchange_id 조회 실패: {}", e),
+                    )),
+                )
+            })?
+            .unwrap_or_else(|| "unknown".to_string());
 
     let deleted = ExecutionCacheRepository::clear_cache(pool, credential_id, &exchange_id)
         .await

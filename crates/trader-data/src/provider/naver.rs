@@ -37,8 +37,7 @@ pub enum NaverError {
 }
 
 /// 시장 구분 (KOSPI/KOSDAQ/ETF/KONEX 등)
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum KrMarketType {
     /// 유가증권시장 (코스피)
     Kospi,
@@ -54,7 +53,6 @@ pub enum KrMarketType {
     #[default]
     Unknown,
 }
-
 
 impl std::fmt::Display for KrMarketType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -406,7 +404,8 @@ impl NaverFinanceFetcher {
                     let text = tr.text().collect::<String>();
 
                     // ROA (총자산이익률) 추출
-                    if text.contains("ROA") && !text.contains("동일업종") && data.roa.is_none() {
+                    if text.contains("ROA") && !text.contains("동일업종") && data.roa.is_none()
+                    {
                         for td in tr.select(&td_selector) {
                             let td_text = td.text().collect::<String>().trim().to_string();
                             if let Some(val) = parse_decimal_value(&td_text) {
@@ -431,7 +430,10 @@ impl NaverFinanceFetcher {
                     }
 
                     // 부채비율 추출
-                    if text.contains("부채비율") && !text.contains("동일업종") && data.debt_ratio.is_none() {
+                    if text.contains("부채비율")
+                        && !text.contains("동일업종")
+                        && data.debt_ratio.is_none()
+                    {
                         for td in tr.select(&td_selector) {
                             let td_text = td.text().collect::<String>().trim().to_string();
                             if let Some(val) = parse_decimal_value(&td_text) {
@@ -442,7 +444,10 @@ impl NaverFinanceFetcher {
                     }
 
                     // 유동비율 추출
-                    if text.contains("유동비율") && !text.contains("동일업종") && data.current_ratio.is_none() {
+                    if text.contains("유동비율")
+                        && !text.contains("동일업종")
+                        && data.current_ratio.is_none()
+                    {
                         for td in tr.select(&td_selector) {
                             let td_text = td.text().collect::<String>().trim().to_string();
                             if let Some(val) = parse_decimal_value(&td_text) {
@@ -453,7 +458,10 @@ impl NaverFinanceFetcher {
                     }
 
                     // 당좌비율 추출
-                    if text.contains("당좌비율") && !text.contains("동일업종") && data.quick_ratio.is_none() {
+                    if text.contains("당좌비율")
+                        && !text.contains("동일업종")
+                        && data.quick_ratio.is_none()
+                    {
                         for td in tr.select(&td_selector) {
                             let td_text = td.text().collect::<String>().trim().to_string();
                             if let Some(val) = parse_decimal_value(&td_text) {
@@ -485,11 +493,11 @@ impl NaverFinanceFetcher {
     fn extract_growth_rates(&self, document: &Html, data: &mut NaverFundamentalData) {
         // 네이버 금융의 재무정보 테이블 셀렉터들 (다양한 페이지 구조 대응)
         let table_selectors = [
-            "div.cop_analysis table.tb_type1 tr",           // 기업분석 섹션
-            "div.section table.tb_type1 tr",                // 일반 섹션
-            "table.tb_type1.tb_num tr",                     // 숫자 테이블
-            "table.per_table tr",                           // PER 테이블
-            "div#tab_con1 table tr",                        // 탭 콘텐츠
+            "div.cop_analysis table.tb_type1 tr", // 기업분석 섹션
+            "div.section table.tb_type1 tr",      // 일반 섹션
+            "table.tb_type1.tb_num tr",           // 숫자 테이블
+            "table.per_table tr",                 // PER 테이블
+            "div#tab_con1 table tr",              // 탭 콘텐츠
         ];
 
         let td_selector = match Selector::parse("td") {
@@ -564,9 +572,8 @@ impl NaverFinanceFetcher {
                         let growth = ((recent - prev) / prev.abs()) * Decimal::from(100);
 
                         // 성장률이 너무 극단적인 경우 (-1000% ~ +10000%) 제한
-                        let capped_growth = growth
-                            .max(Decimal::from(-1000))
-                            .min(Decimal::from(10000));
+                        let capped_growth =
+                            growth.max(Decimal::from(-1000)).min(Decimal::from(10000));
 
                         if is_revenue && data.revenue_growth_yoy.is_none() {
                             data.revenue_growth_yoy = Some(capped_growth);

@@ -112,10 +112,10 @@ impl RegressionChartGenerator {
         // 캔들 데이터가 충분하면 3패널, 부족하면 2패널 (최소 2개 필요)
         if report.klines.len() >= 2 {
             // 3패널: 캔들(45%) + Equity(30%) + Drawdown(25%)
-            let chart_height = (self.config.height / 10) * 9;  // 900
-            let upper_height = (chart_height * 45) / 100;      // 405 (캔들)
-            let middle_height = (chart_height * 30) / 100;     // 270 (Equity)
-            // lower = 225 (Drawdown)
+            let chart_height = (self.config.height / 10) * 9; // 900
+            let upper_height = (chart_height * 45) / 100; // 405 (캔들)
+            let middle_height = (chart_height * 30) / 100; // 270 (Equity)
+                                                           // lower = 225 (Drawdown)
             let (upper, lower_combined) = chart_area.split_vertically(upper_height);
             let (middle, lower) = lower_combined.split_vertically(middle_height);
 
@@ -360,7 +360,13 @@ impl RegressionChartGenerator {
     /// 캔들 차트에 신호 마커 추가 (f64 타임스탬프 좌표계)
     fn add_signal_markers_to_candle<DB: DrawingBackend>(
         &self,
-        chart: &mut ChartContext<DB, Cartesian2d<plotters::coord::types::RangedCoordf64, plotters::coord::types::RangedCoordf64>>,
+        chart: &mut ChartContext<
+            DB,
+            Cartesian2d<
+                plotters::coord::types::RangedCoordf64,
+                plotters::coord::types::RangedCoordf64,
+            >,
+        >,
         signal_markers: &[SignalMarker],
         klines: &[Kline],
     ) -> Result<(), DrawingAreaErrorKind<DB::ErrorType>> {
@@ -397,11 +403,7 @@ impl RegressionChartGenerator {
                         10,
                         &color,
                         &move |coord, size, style| {
-                            let tri_size = if offset > 0 {
-                                size
-                            } else {
-                                -size
-                            };
+                            let tri_size = if offset > 0 { size } else { -size };
                             EmptyElement::at(coord)
                                 + TriangleMarker::new((0, offset), tri_size, style.filled())
                         },
@@ -419,7 +421,8 @@ impl RegressionChartGenerator {
                         8,
                         &color,
                         &|coord, size, style| {
-                            EmptyElement::at(coord) + Cross::new((0, 0), size, style.stroke_width(2))
+                            EmptyElement::at(coord)
+                                + Cross::new((0, 0), size, style.stroke_width(2))
                         },
                     ))?;
                 }
@@ -681,13 +684,11 @@ impl RegressionChartGenerator {
         drawdown_range: &std::ops::Range<f64>,
     ) -> Result<(), DrawingAreaErrorKind<DB::ErrorType>> {
         // MDD 값 계산
-        let mdd_point = equity_curve
-            .iter()
-            .max_by(|a, b| {
-                a.drawdown_pct
-                    .partial_cmp(&b.drawdown_pct)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            });
+        let mdd_point = equity_curve.iter().max_by(|a, b| {
+            a.drawdown_pct
+                .partial_cmp(&b.drawdown_pct)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         let mdd_value = mdd_point
             .map(|p| decimal_to_f64(p.drawdown_pct))
             .unwrap_or(0.0);
@@ -778,7 +779,10 @@ impl RegressionChartGenerator {
         &self,
         chart: &mut ChartContext<
             DB,
-            Cartesian2d<plotters::coord::types::RangedCoordf64, plotters::coord::types::RangedCoordf64>,
+            Cartesian2d<
+                plotters::coord::types::RangedCoordf64,
+                plotters::coord::types::RangedCoordf64,
+            >,
         >,
         equity_curve: &[EquityPoint],
     ) -> Result<(), DrawingAreaErrorKind<DB::ErrorType>> {
@@ -823,7 +827,10 @@ impl RegressionChartGenerator {
         &self,
         chart: &mut ChartContext<
             DB,
-            Cartesian2d<plotters::coord::types::RangedCoordf64, plotters::coord::types::RangedCoordf64>,
+            Cartesian2d<
+                plotters::coord::types::RangedCoordf64,
+                plotters::coord::types::RangedCoordf64,
+            >,
         >,
         signal_markers: &[SignalMarker],
         equity_curve: &[EquityPoint],
@@ -877,7 +884,8 @@ impl RegressionChartGenerator {
                         6,
                         &color,
                         &|coord, size, style| {
-                            EmptyElement::at(coord) + Cross::new((0, 0), size, style.stroke_width(2))
+                            EmptyElement::at(coord)
+                                + Cross::new((0, 0), size, style.stroke_width(2))
                         },
                     ))?;
                 }

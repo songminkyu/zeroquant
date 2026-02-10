@@ -1,15 +1,15 @@
 use async_trait::async_trait;
-use chrono::{Utc, DateTime};
+use chrono::{DateTime, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use reqwest::{Client, Method};
 use rust_decimal::Decimal;
-use std::str::FromStr;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use uuid::Uuid;
 
 use trader_core::domain::{
-    ExchangeProvider, MarketDataProvider, StrategyAccountInfo,
-    StrategyPositionInfo, PendingOrder, OrderStatusType, Side,
+    ExchangeProvider, MarketDataProvider, OrderStatusType, PendingOrder, Side, StrategyAccountInfo,
+    StrategyPositionInfo,
 };
 use trader_core::ProviderError;
 use trader_core::QuoteData;
@@ -40,8 +40,6 @@ impl UpbitConfig {
             secret_key,
         }
     }
-
-
 }
 
 // ============================================================================
@@ -275,7 +273,8 @@ impl UpbitClient {
             body["price"] = serde_json::Value::String(p.to_string());
         }
 
-        self.request(Method::POST, "/orders", None, Some(&body)).await
+        self.request(Method::POST, "/orders", None, Some(&body))
+            .await
     }
 
     /// 주문 취소 (DELETE /v1/order)
@@ -283,7 +282,8 @@ impl UpbitClient {
         let query = serde_json::json!({
             "uuid": uuid,
         });
-        self.request(Method::DELETE, "/order", Some(&query), None).await
+        self.request(Method::DELETE, "/order", Some(&query), None)
+            .await
     }
 
     /// 주문 조회 (GET /v1/order)
@@ -291,7 +291,8 @@ impl UpbitClient {
         let query = serde_json::json!({
             "uuid": uuid,
         });
-        self.request(Method::GET, "/order", Some(&query), None).await
+        self.request(Method::GET, "/order", Some(&query), None)
+            .await
     }
 
     /// 체결 내역 조회 (완료된 주문 목록).
@@ -312,10 +313,24 @@ impl UpbitClient {
         limit: usize,
     ) -> Result<Vec<UpbitOrderDetail>, ProviderError> {
         // YYYYMMDD → ISO 8601 변환
-        let start_time = format!("{}T00:00:00Z",
-            &format!("{}-{}-{}", &start_date[0..4], &start_date[4..6], &start_date[6..8]));
-        let end_time = format!("{}T23:59:59Z",
-            &format!("{}-{}-{}", &end_date[0..4], &end_date[4..6], &end_date[6..8]));
+        let start_time = format!(
+            "{}T00:00:00Z",
+            &format!(
+                "{}-{}-{}",
+                &start_date[0..4],
+                &start_date[4..6],
+                &start_date[6..8]
+            )
+        );
+        let end_time = format!(
+            "{}T23:59:59Z",
+            &format!(
+                "{}-{}-{}",
+                &end_date[0..4],
+                &end_date[4..6],
+                &end_date[6..8]
+            )
+        );
 
         let query = serde_json::json!({
             "state": "done",
@@ -331,23 +346,26 @@ impl UpbitClient {
             .await?;
 
         // 각 주문을 UpbitOrderDetail로 변환 (간단 버전: trades 배열 없이)
-        let details: Vec<UpbitOrderDetail> = orders.into_iter().map(|o| {
-            UpbitOrderDetail {
-                uuid: o.uuid,
-                side: o.side,
-                ord_type: o.ord_type,
-                price: o.price,
-                state: o.state,
-                market: o.market,
-                created_at: o.created_at,
-                volume: o.volume,
-                remaining_volume: o.remaining_volume,
-                executed_volume: o.executed_volume,
-                paid_fee: o.paid_fee,
-                trades_count: o.trades_count,
-                trades: None, // 주문 수준 조회에서는 trades 없음
-            }
-        }).collect();
+        let details: Vec<UpbitOrderDetail> = orders
+            .into_iter()
+            .map(|o| {
+                UpbitOrderDetail {
+                    uuid: o.uuid,
+                    side: o.side,
+                    ord_type: o.ord_type,
+                    price: o.price,
+                    state: o.state,
+                    market: o.market,
+                    created_at: o.created_at,
+                    volume: o.volume,
+                    remaining_volume: o.remaining_volume,
+                    executed_volume: o.executed_volume,
+                    paid_fee: o.paid_fee,
+                    trades_count: o.trades_count,
+                    trades: None, // 주문 수준 조회에서는 trades 없음
+                }
+            })
+            .collect();
 
         Ok(details)
     }
@@ -364,9 +382,8 @@ impl ExchangeProvider for UpbitClient {
     }
 
     async fn fetch_account(&self) -> Result<StrategyAccountInfo, ProviderError> {
-        let balances: Vec<UpbitBalance> = self
-            .request(Method::GET, "/accounts", None, None)
-            .await?;
+        let balances: Vec<UpbitBalance> =
+            self.request(Method::GET, "/accounts", None, None).await?;
 
         let mut total_balance = Decimal::ZERO;
         let mut available_balance = Decimal::ZERO;
@@ -393,24 +410,26 @@ impl ExchangeProvider for UpbitClient {
     }
 
     async fn fetch_positions(&self) -> Result<Vec<StrategyPositionInfo>, ProviderError> {
-        let balances: Vec<UpbitBalance> = self
-            .request(Method::GET, "/accounts", None, None)
-            .await?;
+        let balances: Vec<UpbitBalance> =
+            self.request(Method::GET, "/accounts", None, None).await?;
 
         let mut positions = Vec::new();
         for b in balances {
-            if b.currency == "KRW" { continue; }
-            
-            let quantity = Decimal::from_str(&b.balance).unwrap_or_default() + Decimal::from_str(&b.locked).unwrap_or_default();
+            if b.currency == "KRW" {
+                continue;
+            }
+
+            let quantity = Decimal::from_str(&b.balance).unwrap_or_default()
+                + Decimal::from_str(&b.locked).unwrap_or_default();
             let avg_price = Decimal::from_str(&b.avg_buy_price).unwrap_or_default();
-            
+
             if quantity > Decimal::ZERO {
                 let ticker = format!("KRW-{}", b.currency);
                 positions.push(StrategyPositionInfo::new(
                     ticker,
                     Side::Buy,
                     quantity,
-                    avg_price
+                    avg_price,
                 ));
             }
         }
@@ -421,27 +440,41 @@ impl ExchangeProvider for UpbitClient {
         let query = serde_json::json!({
             "state": "wait",
         });
-        
-        let orders: Vec<UpbitOrder> = self.request(Method::GET, "/orders", Some(&query), None).await?;
-        
+
+        let orders: Vec<UpbitOrder> = self
+            .request(Method::GET, "/orders", Some(&query), None)
+            .await?;
+
         let mut open_orders = Vec::new();
         for order in orders {
-             let side = if order.side == "bid" { Side::Buy } else { Side::Sell };
-             let price = order.price.and_then(|p| Decimal::from_str(&p).ok()).unwrap_or_default();
-             let quantity = order.remaining_volume.and_then(|v| Decimal::from_str(&v).ok()).unwrap_or_default(); 
+            let side = if order.side == "bid" {
+                Side::Buy
+            } else {
+                Side::Sell
+            };
+            let price = order
+                .price
+                .and_then(|p| Decimal::from_str(&p).ok())
+                .unwrap_or_default();
+            let quantity = order
+                .remaining_volume
+                .and_then(|v| Decimal::from_str(&v).ok())
+                .unwrap_or_default();
 
-             open_orders.push(PendingOrder {
-                 order_id: order.uuid,
-                 ticker: order.market,
-                 side,
-                 price,
-                 quantity,
-                 filled_quantity: Decimal::ZERO,
-                 status: OrderStatusType::Pending,
-                 created_at: DateTime::parse_from_rfc3339(&format!("{}+09:00", order.created_at)).unwrap_or_default().with_timezone(&Utc),
-             });
+            open_orders.push(PendingOrder {
+                order_id: order.uuid,
+                ticker: order.market,
+                side,
+                price,
+                quantity,
+                filled_quantity: Decimal::ZERO,
+                status: OrderStatusType::Pending,
+                created_at: DateTime::parse_from_rfc3339(&format!("{}+09:00", order.created_at))
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
+            });
         }
-        
+
         Ok(open_orders)
     }
 }
@@ -453,8 +486,10 @@ impl MarketDataProvider for UpbitClient {
             "markets": symbol
         });
 
-        let tickers: Vec<UpbitTicker> = self.request(Method::GET, "/ticker", Some(&query), None).await?;
-        
+        let tickers: Vec<UpbitTicker> = self
+            .request(Method::GET, "/ticker", Some(&query), None)
+            .await?;
+
         if let Some(t) = tickers.into_iter().next() {
             Ok(QuoteData {
                 symbol: t.market,
@@ -470,7 +505,7 @@ impl MarketDataProvider for UpbitClient {
                 timestamp: Utc::now(),
             })
         } else {
-             Err(ProviderError::Api("Quote not found".to_string()))
+            Err(ProviderError::Api("Quote not found".to_string()))
         }
     }
 
@@ -478,34 +513,38 @@ impl MarketDataProvider for UpbitClient {
         if symbols.is_empty() {
             return Vec::new();
         }
-        
+
         let markets = symbols.join(",");
         let query = serde_json::json!({
             "markets": markets
         });
 
-        match self.request::<Vec<UpbitTicker>>(Method::GET, "/ticker", Some(&query), None).await {
-            Ok(tickers) => {
-                tickers.into_iter().map(|t| {
-                    QuoteData {
-                         symbol: t.market,
-                         current_price: Decimal::from_f64_retain(t.trade_price).unwrap_or_default(),
-                         price_change: Decimal::from_f64_retain(t.change_price).unwrap_or_default(),
-                         change_percent: Decimal::from_f64_retain(t.change_rate * 100.0).unwrap_or_default(),
-                         high: Decimal::from_f64_retain(t.high_price).unwrap_or_default(),
-                         low: Decimal::from_f64_retain(t.low_price).unwrap_or_default(),
-                         open: Decimal::from_f64_retain(t.opening_price).unwrap_or_default(),
-                         prev_close: Decimal::from_f64_retain(t.prev_closing_price).unwrap_or_default(),
-                         volume: Decimal::from_f64_retain(t.acc_trade_volume_24h).unwrap_or_default(),
-                         trading_value: Decimal::from_f64_retain(t.acc_trade_price_24h).unwrap_or_default(),
-                         timestamp: Utc::now(),
-                    }
-                }).collect()
-            }
+        match self
+            .request::<Vec<UpbitTicker>>(Method::GET, "/ticker", Some(&query), None)
+            .await
+        {
+            Ok(tickers) => tickers
+                .into_iter()
+                .map(|t| QuoteData {
+                    symbol: t.market,
+                    current_price: Decimal::from_f64_retain(t.trade_price).unwrap_or_default(),
+                    price_change: Decimal::from_f64_retain(t.change_price).unwrap_or_default(),
+                    change_percent: Decimal::from_f64_retain(t.change_rate * 100.0)
+                        .unwrap_or_default(),
+                    high: Decimal::from_f64_retain(t.high_price).unwrap_or_default(),
+                    low: Decimal::from_f64_retain(t.low_price).unwrap_or_default(),
+                    open: Decimal::from_f64_retain(t.opening_price).unwrap_or_default(),
+                    prev_close: Decimal::from_f64_retain(t.prev_closing_price).unwrap_or_default(),
+                    volume: Decimal::from_f64_retain(t.acc_trade_volume_24h).unwrap_or_default(),
+                    trading_value: Decimal::from_f64_retain(t.acc_trade_price_24h)
+                        .unwrap_or_default(),
+                    timestamp: Utc::now(),
+                })
+                .collect(),
             Err(_) => Vec::new(),
         }
     }
-    
+
     fn provider_name(&self) -> &str {
         "upbit"
     }

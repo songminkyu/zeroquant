@@ -94,22 +94,27 @@ fn ma_filter_config(ticker: &str) -> serde_json::Value {
 }
 
 /// StrategyContext에 가격 데이터 설정
-fn setup_context_with_prices(ticker: &str, prices: &[Decimal], start_timestamp: i64) -> Arc<RwLock<StrategyContext>> {
+fn setup_context_with_prices(
+    ticker: &str,
+    prices: &[Decimal],
+    start_timestamp: i64,
+) -> Arc<RwLock<StrategyContext>> {
     let mut context = StrategyContext::new();
     let mut klines = Vec::new();
 
     for (i, price) in prices.iter().enumerate() {
-        let timestamp = chrono::DateTime::from_timestamp(start_timestamp + (i as i64 * 86400), 0).unwrap();
+        let timestamp =
+            chrono::DateTime::from_timestamp(start_timestamp + (i as i64 * 86400), 0).unwrap();
         let kline = Kline::new(
             ticker.to_string(),
             Timeframe::D1,
             timestamp,
-            *price,              // open
-            *price + dec!(10),   // high
-            *price - dec!(10),   // low
-            *price,              // close
-            dec!(1000000),       // volume
-            timestamp,           // close_time
+            *price,            // open
+            *price + dec!(10), // high
+            *price - dec!(10), // low
+            *price,            // close
+            dec!(1000000),     // volume
+            timestamp,         // close_time
         );
         klines.push(kline);
     }
@@ -782,5 +787,8 @@ async fn test_reinitialize_and_trade() {
 
     // 재초기화 후에도 정상 동작 (klines_count >= target_period 확인)
     let state = strategy.get_state();
-    assert!(state["klines_count"].as_i64().unwrap_or(0) >= 5, "재초기화 후에도 데이터 축적됨");
+    assert!(
+        state["klines_count"].as_i64().unwrap_or(0) >= 5,
+        "재초기화 후에도 데이터 축적됨"
+    );
 }

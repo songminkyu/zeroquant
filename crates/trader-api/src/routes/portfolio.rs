@@ -116,7 +116,10 @@ pub async fn invalidate_portfolio_cache(state: &AppState, credential_id: uuid::U
             warn!("보유종목 캐시 삭제 실패: {}", e);
         }
 
-        debug!("포트폴리오 캐시 무효화 완료: credential_id={}", credential_id);
+        debug!(
+            "포트폴리오 캐시 무효화 완료: credential_id={}",
+            credential_id
+        );
     }
 }
 
@@ -315,14 +318,13 @@ pub async fn get_or_create_exchange_providers(
         .ok_or("데이터베이스 연결이 설정되지 않았습니다.")?;
 
     // exchange_id 조회하여 Mock인지 확인
-    let exchange_id: String = sqlx::query_scalar(
-        "SELECT exchange_id FROM exchange_credentials WHERE id = $1",
-    )
-    .bind(credential_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| format!("exchange_id 조회 실패: {}", e))?
-    .ok_or_else(|| "해당 credential을 찾을 수 없습니다.".to_string())?;
+    let exchange_id: String =
+        sqlx::query_scalar("SELECT exchange_id FROM exchange_credentials WHERE id = $1")
+            .bind(credential_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| format!("exchange_id 조회 실패: {}", e))?
+            .ok_or_else(|| "해당 credential을 찾을 수 없습니다.".to_string())?;
 
     // 3. 거래소별 Provider 생성
     let provider = if exchange_id == "mock" {
@@ -414,8 +416,15 @@ pub async fn get_portfolio_summary(
 
         // 캐시 미스인 경우 거래소 API 호출
         if !cache_hit {
-            let cache_status = if state.cache.is_some() { "캐시 미스" } else { "캐시 비활성화" };
-            debug!("포트폴리오 조회 ({}): credential_id={}", cache_status, credential_id);
+            let cache_status = if state.cache.is_some() {
+                "캐시 미스"
+            } else {
+                "캐시 비활성화"
+            };
+            debug!(
+                "포트폴리오 조회 ({}): credential_id={}",
+                cache_status, credential_id
+            );
 
             match get_or_create_exchange_providers(&state, credential_id).await {
                 Ok(providers) => {
@@ -727,10 +736,7 @@ pub async fn get_holdings(
 
         // Redis 캐시 확인
         if let Some(cache) = &state.cache {
-            match cache
-                .get::<Vec<StrategyPositionInfo>>(&cache_key)
-                .await
-            {
+            match cache.get::<Vec<StrategyPositionInfo>>(&cache_key).await {
                 Ok(Some(cached_positions)) => {
                     debug!(
                         "보유종목 캐시 히트: credential_id={}, {} 건",
@@ -840,8 +846,13 @@ pub async fn get_holdings(
         // 비동기로 동기화 (API 응답 지연 방지)
         let pool = db_pool.clone();
         tokio::spawn(async move {
-            match PositionRepository::sync_holdings(&pool, credential_id, &exchange_id, sync_holdings)
-                .await
+            match PositionRepository::sync_holdings(
+                &pool,
+                credential_id,
+                &exchange_id,
+                sync_holdings,
+            )
+            .await
             {
                 Ok(result) => {
                     debug!(
@@ -1017,7 +1028,11 @@ pub async fn get_order_history(
         }
     }
 
-    let cache_status = if state.cache.is_some() { "캐시 미스" } else { "캐시 비활성화" };
+    let cache_status = if state.cache.is_some() {
+        "캐시 미스"
+    } else {
+        "캐시 비활성화"
+    };
     debug!(
         "체결 내역 조회 ({}): credential_id={}, 기간={}~{}",
         cache_status, params.credential_id, start_date, end_date
@@ -1075,10 +1090,7 @@ pub async fn get_order_history(
             {
                 warn!("캐시 저장 실패 (무시하고 계속): {}", e);
             } else {
-                debug!(
-                    "체결 내역 캐시 저장: {}, TTL={}초",
-                    cache_key, cache_ttl
-                );
+                debug!("체결 내역 캐시 저장: {}, TTL={}초", cache_key, cache_ttl);
             }
         }
     }

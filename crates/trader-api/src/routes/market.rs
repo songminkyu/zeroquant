@@ -532,7 +532,10 @@ pub async fn get_multi_klines(
                 let cached_provider = state.data_provider.as_ref().ok_or_else(|| {
                     (
                         StatusCode::SERVICE_UNAVAILABLE,
-                        Json(ApiError::new("DB_NOT_CONNECTED", "데이터베이스 연결이 필요합니다")),
+                        Json(ApiError::new(
+                            "DB_NOT_CONNECTED",
+                            "데이터베이스 연결이 필요합니다",
+                        )),
                     )
                 })?;
                 for tf_str in &timeframes {
@@ -756,7 +759,6 @@ pub struct MacroEnvironmentResponse {
     /// 요약 메시지
     pub summary: String,
 }
-
 
 // ==================== 라우터 ====================
 

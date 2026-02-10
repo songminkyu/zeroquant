@@ -17,6 +17,7 @@
 //! - `GlobalScore`: 최소 점수 필터
 //! - `MarketRegime`: 추가 진입 조건
 
+use crate::strategies::common::{adjust_strength_by_score, ExitConfig};
 use crate::Strategy;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -24,8 +25,6 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use trader_strategy_macro::StrategyConfig;
-use crate::strategies::common::{adjust_strength_by_score, ExitConfig};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info};
@@ -34,6 +33,7 @@ use trader_core::{
     types::Timeframe,
     Kline, MarketData, Order, Position, RouteState, Side, Signal, SignalType,
 };
+use trader_strategy_macro::StrategyConfig;
 
 // ============================================================================
 // 설정 (Config)
@@ -65,22 +65,46 @@ pub struct MomentumPowerConfig {
 
     /// TIP 이동평균 기간 (기본: 200일 = 약 10개월)
     #[serde(default = "default_tip_ma_period")]
-    #[schema(label = "TIP MA 기간", min = 50, max = 300, default = 200, section = "indicator")]
+    #[schema(
+        label = "TIP MA 기간",
+        min = 50,
+        max = 300,
+        default = 200,
+        section = "indicator"
+    )]
     pub tip_ma_period: usize,
 
     /// 공격 자산 모멘텀 확인 기간 (기본: 5일)
     #[serde(default = "default_momentum_period")]
-    #[schema(label = "모멘텀 확인 기간", min = 1, max = 30, default = 5, section = "indicator")]
+    #[schema(
+        label = "모멘텀 확인 기간",
+        min = 1,
+        max = 30,
+        default = 5,
+        section = "indicator"
+    )]
     pub momentum_period: usize,
 
     /// 리밸런싱 간격 (일) - 기본: 30일 (월간)
     #[serde(default = "default_rebalance_days")]
-    #[schema(label = "리밸런싱 간격 (일)", min = 1, max = 90, default = 30, section = "timing")]
+    #[schema(
+        label = "리밸런싱 간격 (일)",
+        min = 1,
+        max = 90,
+        default = 30,
+        section = "timing"
+    )]
     pub rebalance_days: u32,
 
     /// 최소 GlobalScore
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", min = 0, max = 100, default = 50, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        min = 0,
+        max = 100,
+        default = 50,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -591,12 +615,17 @@ impl Strategy for MomentumPowerStrategy {
             self.state.current_asset = Some(target.clone());
 
             let strength = self.get_adjusted_strength(&target, 1.0);
-            let signal = Signal::new("momentum_power", target.clone(), Side::Buy, SignalType::Entry)
-                .with_strength(strength)
-                .with_metadata("mode", json!(format!("{:?}", new_mode)))
-                .with_metadata("tip_ma", json!(self.state.tip_ma.map(|d| d.to_string())))
-                .with_metadata("market_safe", json!(self.is_market_safe()))
-                .with_metadata("has_momentum", json!(self.has_momentum()));
+            let signal = Signal::new(
+                "momentum_power",
+                target.clone(),
+                Side::Buy,
+                SignalType::Entry,
+            )
+            .with_strength(strength)
+            .with_metadata("mode", json!(format!("{:?}", new_mode)))
+            .with_metadata("tip_ma", json!(self.state.tip_ma.map(|d| d.to_string())))
+            .with_metadata("market_safe", json!(self.is_market_safe()))
+            .with_metadata("has_momentum", json!(self.has_momentum()));
 
             info!(
                 mode = ?new_mode,
@@ -651,14 +680,18 @@ impl Strategy for MomentumPowerStrategy {
 
     fn get_state(&self) -> Value {
         let config = self.config.as_ref();
-        let tip_klines_count = config.map(|c| {
-            let assets = Assets::for_market(c.market);
-            self.get_klines(assets.indicator).len()
-        }).unwrap_or(0);
-        let attack_klines_count = config.map(|c| {
-            let assets = Assets::for_market(c.market);
-            self.get_klines(assets.attack).len()
-        }).unwrap_or(0);
+        let tip_klines_count = config
+            .map(|c| {
+                let assets = Assets::for_market(c.market);
+                self.get_klines(assets.indicator).len()
+            })
+            .unwrap_or(0);
+        let attack_klines_count = config
+            .map(|c| {
+                let assets = Assets::for_market(c.market);
+                self.get_klines(assets.attack).len()
+            })
+            .unwrap_or(0);
 
         json!({
             "config": self.config,

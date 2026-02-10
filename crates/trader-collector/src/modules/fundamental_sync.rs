@@ -14,7 +14,7 @@
 //! - 외국인 소진율
 
 use chrono::Utc;
-use sqlx::{PgPool, QueryBuilder, Postgres};
+use sqlx::{PgPool, Postgres, QueryBuilder};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
@@ -87,7 +87,9 @@ pub async fn sync_krx_fundamentals(
     };
 
     // T-1 날짜 사용 (KRX API는 전일 데이터만 제공)
-    let yesterday = (Utc::now() - chrono::Duration::days(1)).format("%Y%m%d").to_string();
+    let yesterday = (Utc::now() - chrono::Duration::days(1))
+        .format("%Y%m%d")
+        .to_string();
     let mut stats = FundamentalSyncStats::default();
 
     // NOTE: 가치 지표 API (stk_isu_per_pbr, ksq_isu_per_pbr)는 KRX에서 제공하지 않음
@@ -96,7 +98,8 @@ pub async fn sync_krx_fundamentals(
 
     // 일별 매매정보에서 시가총액, 섹터 정보 수집
     info!(base_date = %yesterday, "시가총액 및 섹터 정보 수집 중 (T-1 데이터)...");
-    let (market_cap_stats, sector_stats) = sync_market_data(pool, &client, &yesterday, config).await?;
+    let (market_cap_stats, sector_stats) =
+        sync_market_data(pool, &client, &yesterday, config).await?;
     stats.market_cap_updated = market_cap_stats;
     stats.sector_updated = sector_stats;
 
@@ -113,10 +116,6 @@ pub async fn sync_krx_fundamentals(
 
     Ok(stats)
 }
-
-
-
-
 
 /// 시가총액 및 섹터 정보 동기화.
 async fn sync_market_data(
@@ -318,7 +317,7 @@ pub async fn sync_naver_fundamentals(
         batch_size,
         resume: false,
         stale_hours: None,
-        force: false,  // 기본: 기존 값 보존
+        force: false, // 기본: 기존 값 보존
         concurrent_limit: None,
     };
     sync_naver_fundamentals_with_options(pool, options).await
@@ -421,13 +420,21 @@ pub async fn sync_naver_fundamentals_with_options(
     // Semaphore 기반 동시성 제한
     let semaphore = Arc::new(Semaphore::new(concurrent_limit));
 
-    info!(concurrent_limit = concurrent_limit, total = total, "네이버 동시 크롤링 시작");
+    info!(
+        concurrent_limit = concurrent_limit,
+        total = total,
+        "네이버 동시 크롤링 시작"
+    );
 
     for (idx, (symbol_info_id, ticker)) in symbols.iter().enumerate() {
         stats.processed += 1;
 
         // Semaphore로 동시 실행 수 제한
-        let _permit = semaphore.clone().acquire_owned().await.expect("세마포어 획득 실패");
+        let _permit = semaphore
+            .clone()
+            .acquire_owned()
+            .await
+            .expect("세마포어 획득 실패");
 
         if (idx + 1) % 100 == 0 || idx + 1 == total {
             info!(
@@ -449,7 +456,8 @@ pub async fn sync_naver_fundamentals_with_options(
         match fetcher.fetch_fundamental(ticker).await {
             Ok(data) => {
                 // DB에 저장 (force 옵션에 따라 기존 값 보존 또는 덮어쓰기)
-                if let Err(e) = upsert_naver_fundamental(pool, *symbol_info_id, &data, force).await {
+                if let Err(e) = upsert_naver_fundamental(pool, *symbol_info_id, &data, force).await
+                {
                     debug!(ticker = ticker, error = %e, "네이버 데이터 저장 실패");
                     stats.failed += 1;
                 } else {
@@ -724,10 +732,6 @@ async fn calculate_avg_volume(pool: &PgPool, symbol_info_id: Uuid, days: i32) ->
     }
 }
 
-
-
-
-
 /// 시장 타입(KOSPI/KOSDAQ/ETF)을 symbol_info의 exchange 필드에 업데이트.
 async fn update_market_type(pool: &PgPool, symbol_info_id: Uuid, market_type: &str) -> Result<()> {
     // UNKNOWN이 아닌 경우에만 업데이트
@@ -958,7 +962,9 @@ pub async fn sync_yahoo_fundamentals(
         // Yahoo Finance에서 데이터 수집
         match fetcher.fetch_fundamental(yahoo_symbol).await {
             Ok(data) => {
-                if let Err(e) = upsert_yahoo_fundamental(pool, *symbol_info_id, &data, options.force).await {
+                if let Err(e) =
+                    upsert_yahoo_fundamental(pool, *symbol_info_id, &data, options.force).await
+                {
                     debug!(yahoo_symbol = yahoo_symbol, error = %e, "Yahoo 데이터 저장 실패");
                     stats.failed += 1;
                 } else {
@@ -981,7 +987,10 @@ pub async fn sync_yahoo_fundamentals(
                     e,
                     trader_data::provider::yahoo_fundamental::YahooFundamentalError::RateLimited
                 ) {
-                    warn!(yahoo_symbol = yahoo_symbol, "Yahoo Rate limit 초과 - 5초 대기");
+                    warn!(
+                        yahoo_symbol = yahoo_symbol,
+                        "Yahoo Rate limit 초과 - 5초 대기"
+                    );
                     tokio::time::sleep(Duration::from_secs(5)).await;
                 } else {
                     debug!(yahoo_symbol = yahoo_symbol, error = %e, "Yahoo 데이터 수집 실패");
@@ -992,13 +1001,11 @@ pub async fn sync_yahoo_fundamentals(
 
         // 요청 간 딜레이
         if idx + 1 < total {
-            tokio::time::sleep(Duration::from_millis(
-                if options.request_delay_ms > 0 {
-                    options.request_delay_ms
-                } else {
-                    500
-                },
-            ))
+            tokio::time::sleep(Duration::from_millis(if options.request_delay_ms > 0 {
+                options.request_delay_ms
+            } else {
+                500
+            }))
             .await;
         }
     }

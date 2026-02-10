@@ -93,8 +93,8 @@ pub async fn get_email_settings(
                 .notification_settings
                 .and_then(|v| serde_json::from_value(v).ok());
 
-            let to_emails: Vec<String> = serde_json::from_value(settings.to_emails)
-                .unwrap_or_default();
+            let to_emails: Vec<String> =
+                serde_json::from_value(settings.to_emails).unwrap_or_default();
 
             Ok(Json(serde_json::json!({
                 "configured": true,
@@ -172,40 +172,49 @@ pub async fn save_email_settings(
     if request.username.is_empty() || request.password.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiError::new("INVALID_INPUT", "사용자명과 비밀번호는 필수입니다.")),
+            Json(ApiError::new(
+                "INVALID_INPUT",
+                "사용자명과 비밀번호는 필수입니다.",
+            )),
         ));
     }
 
     if request.to_emails.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiError::new("INVALID_INPUT", "수신자 이메일은 최소 1개 필요합니다.")),
+            Json(ApiError::new(
+                "INVALID_INPUT",
+                "수신자 이메일은 최소 1개 필요합니다.",
+            )),
         ));
     }
 
     // 사용자명 암호화
-    let (encrypted_username, nonce_username) = encryptor.encrypt(&request.username).map_err(|e| {
-        error!("사용자명 암호화 실패: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
-        )
-    })?;
+    let (encrypted_username, nonce_username) =
+        encryptor.encrypt(&request.username).map_err(|e| {
+            error!("사용자명 암호화 실패: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
+            )
+        })?;
 
     // 비밀번호 암호화
-    let (encrypted_password, nonce_password) = encryptor.encrypt(&request.password).map_err(|e| {
-        error!("비밀번호 암호화 실패: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
-        )
-    })?;
+    let (encrypted_password, nonce_password) =
+        encryptor.encrypt(&request.password).map_err(|e| {
+            error!("비밀번호 암호화 실패: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
+            )
+        })?;
 
-    let notification_settings = request.notification_settings.as_ref()
+    let notification_settings = request
+        .notification_settings
+        .as_ref()
         .and_then(|s| serde_json::to_value(s).ok());
 
-    let to_emails_json = serde_json::to_value(&request.to_emails)
-        .unwrap_or(serde_json::json!([]));
+    let to_emails_json = serde_json::to_value(&request.to_emails).unwrap_or(serde_json::json!([]));
 
     let settings_id = Uuid::new_v4();
 
@@ -520,8 +529,8 @@ pub async fn test_email_settings(
             )
         })?;
 
-    let to_emails: Vec<String> = serde_json::from_value(settings.to_emails.clone())
-        .unwrap_or_default();
+    let to_emails: Vec<String> =
+        serde_json::from_value(settings.to_emails.clone()).unwrap_or_default();
 
     // 실제 이메일 테스트 전송
     let config = trader_notification::EmailConfig::new(
@@ -557,7 +566,15 @@ pub async fn test_email_settings(
         }
         Err(e) => {
             let error_msg = format!("이메일 전송 실패: {}", e);
-            log_credential_access(pool, "email", settings.id, "verify", false, Some(&error_msg)).await;
+            log_credential_access(
+                pool,
+                "email",
+                settings.id,
+                "verify",
+                false,
+                Some(&error_msg),
+            )
+            .await;
 
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,

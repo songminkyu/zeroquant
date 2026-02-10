@@ -37,16 +37,17 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use thiserror::Error;
+use tokio::sync::RwLock;
 use trader_core::{
-    unrealized_pnl, Kline, MarketData, ScreeningCalculator, Side, Signal, SignalMarker, SignalType, StrategyContext, Trade,
+    unrealized_pnl, Kline, MarketData, ScreeningCalculator, Side, Signal, SignalMarker, SignalType,
+    StrategyContext, Trade,
 };
 use uuid::Uuid;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
-use crate::backtest::slippage::SlippageModel;
 use crate::backtest::candle_processor::CandleProcessor;
+use crate::backtest::slippage::SlippageModel;
 use crate::performance::{EquityPoint, PerformanceMetrics, PerformanceTracker, RoundTrip};
 use trader_execution::{ProcessorConfig, SignalProcessor, SimulatedExecutor, TradeResult};
 
@@ -579,18 +580,26 @@ impl BacktestEngine {
         for (idx, kline) in klines.iter().enumerate() {
             // 1. StrategyContext 업데이트 (공통: 지표, klines, 스크리닝)
             let historical_klines = &klines[..=idx];
-            candle_processor.update_context(
-                idx, kline, historical_klines, &context, ticker, screening_calculator,
-            ).await?;
+            candle_processor
+                .update_context(
+                    idx,
+                    kline,
+                    historical_klines,
+                    &context,
+                    ticker,
+                    screening_calculator,
+                )
+                .await?;
 
             // 가격/시간 동기화 (BacktestEngine 내부 메서드용)
             self.current_time = candle_processor.current_time();
-            self.current_prices.clone_from(candle_processor.current_prices());
+            self.current_prices
+                .clone_from(candle_processor.current_prices());
 
             // 2. 시그널 생성 (공통: 멀티 심볼/멀티 TF + Entry/Exit 파티셔닝)
-            let signals = candle_processor.generate_signals(
-                strategy, kline, &context, ticker, &exchange_name,
-            ).await?;
+            let signals = candle_processor
+                .generate_signals(strategy, kline, &context, ticker, &exchange_name)
+                .await?;
 
             // 3. 시그널 처리 (BacktestEngine 고유: PerformanceTracker/SignalMarker 기록)
             for signal in &signals.entry_signals {
@@ -601,9 +610,15 @@ impl BacktestEngine {
             }
 
             // 4. 포지션 동기화 (공통: 전략에 현재 포지션 상태 알림)
-            candle_processor.sync_positions(
-                strategy, self.executor.positions(), kline, &exchange_name, ticker,
-            ).await?;
+            candle_processor
+                .sync_positions(
+                    strategy,
+                    self.executor.positions(),
+                    kline,
+                    &exchange_name,
+                    ticker,
+                )
+                .await?;
 
             // 5. 미실현 손익 반영하여 자산 업데이트 (BacktestEngine 고유)
             let equity = self.calculate_equity(kline);
@@ -616,7 +631,8 @@ impl BacktestEngine {
 
         // 강제 청산 후 최종 자산 업데이트 (실현 손익 반영)
         let final_equity = self.calculate_equity(last_kline);
-        self.tracker.update_equity(last_kline.close_time, final_equity);
+        self.tracker
+            .update_equity(last_kline.close_time, final_equity);
 
         // 심볼별 성과 계산
         let performance_by_symbol = self.calculate_performance_by_symbol();
@@ -666,19 +682,17 @@ impl BacktestEngine {
         }
 
         // SimulatedExecutor에 Signal 처리 위임
-        let result = self.executor
+        let result = self
+            .executor
             .process_signal(signal, current_price, kline.close_time)
             .await
             .map_err(|e| BacktestError::ExecutionError(e.to_string()))?;
 
         // SignalMarker 생성 (실행 결과 반영)
         let executed = result.is_some();
-        let marker = SignalMarker::from_signal(
-            signal,
-            current_price,
-            kline.open_time,
-            &signal.strategy_id,
-        ).with_executed(executed);
+        let marker =
+            SignalMarker::from_signal(signal, current_price, kline.open_time, &signal.strategy_id)
+                .with_executed(executed);
         self.signal_markers.push(marker);
 
         // 거래가 발생한 경우 tracker에 기록
@@ -703,14 +717,19 @@ impl BacktestEngine {
         // 티커 형식 정규화: "TLT/USD" → "TLT"
         let base_ticker = key.split('/').next().unwrap_or(key);
 
-        signal.suggested_price
+        signal
+            .suggested_price
             .or_else(|| self.current_prices.get(key).copied())
             .or_else(|| self.current_prices.get(base_ticker).copied())
             .unwrap_or(kline.close)
     }
 
     /// TradeResult를 PerformanceTracker에 기록
-    fn record_trade_result(&mut self, trade_result: &TradeResult, signal: &Signal) -> BacktestResult<()> {
+    fn record_trade_result(
+        &mut self,
+        trade_result: &TradeResult,
+        signal: &Signal,
+    ) -> BacktestResult<()> {
         // 기존 create_trade 헬퍼 사용
         let trade = self.create_trade(
             signal,
@@ -720,7 +739,10 @@ impl BacktestEngine {
             trade_result.realized_pnl.is_none(), // is_entry: PnL이 없으면 진입
         );
 
-        let is_entry = matches!(signal.signal_type, SignalType::Entry | SignalType::AddToPosition);
+        let is_entry = matches!(
+            signal.signal_type,
+            SignalType::Entry | SignalType::AddToPosition
+        );
 
         // 디버그: 거래 기록 추적
         tracing::debug!(
@@ -746,16 +768,22 @@ impl BacktestEngine {
     /// position_id가 있는 포지션(그리드 등)은 해당 ID로 청산합니다.
     async fn close_all_positions(&mut self, kline: &Kline) -> BacktestResult<()> {
         // executor에서 포지션 정보 가져오기 (symbol, position_id 포함)
-        let positions: Vec<_> = self.executor.positions()
+        let positions: Vec<_> = self
+            .executor
+            .positions()
             .values()
-            .map(|pos| (pos.symbol.clone(), pos.position_id.clone(), pos.side, pos.quantity))
+            .map(|pos| {
+                (
+                    pos.symbol.clone(),
+                    pos.position_id.clone(),
+                    pos.side,
+                    pos.quantity,
+                )
+            })
             .collect();
 
         if !positions.is_empty() {
-            tracing::info!(
-                "백테스트 종료: {} 개 포지션 강제 청산",
-                positions.len()
-            );
+            tracing::info!("백테스트 종료: {} 개 포지션 강제 청산", positions.len());
         }
 
         for (symbol, position_id, side, quantity) in positions {
@@ -766,7 +794,8 @@ impl BacktestEngine {
 
             // 청산 가격 조회
             let base_ticker = symbol.split('/').next().unwrap_or(&symbol);
-            let close_price = self.current_prices
+            let close_price = self
+                .current_prices
                 .get(&symbol)
                 .or_else(|| self.current_prices.get(base_ticker))
                 .copied()
@@ -797,10 +826,7 @@ impl BacktestEngine {
         // 청산 후 남은 포지션 확인
         let remaining = self.executor.positions().len();
         if remaining > 0 {
-            tracing::warn!(
-                "강제 청산 후에도 {} 개 포지션이 남아있음",
-                remaining
-            );
+            tracing::warn!("강제 청산 후에도 {} 개 포지션이 남아있음", remaining);
         }
 
         Ok(())
@@ -1022,7 +1048,8 @@ impl BacktestEngine {
 
         // 강제 청산 후 최종 자산 업데이트 (실현 손익 반영)
         let final_equity = self.calculate_equity(last_kline);
-        self.tracker.update_equity(last_kline.close_time, final_equity);
+        self.tracker
+            .update_equity(last_kline.close_time, final_equity);
 
         // 심볼별 성과 계산
         let performance_by_symbol = self.calculate_performance_by_symbol();
@@ -1324,7 +1351,9 @@ mod tests {
         let mut strategy = test_strategies::AlwaysBuyStrategy::new();
         let context = create_test_context();
 
-        let result = engine.run(&mut strategy, &[], context, "BTC/USDT", None).await;
+        let result = engine
+            .run(&mut strategy, &[], context, "BTC/USDT", None)
+            .await;
         assert!(result.is_err());
     }
 
@@ -1341,7 +1370,9 @@ mod tests {
         // 상승 추세 데이터
         let klines = create_test_klines(10, dec!(50000), dec!(100));
 
-        let result = engine.run(&mut strategy, &klines, context, "BTC/USDT", None).await;
+        let result = engine
+            .run(&mut strategy, &klines, context, "BTC/USDT", None)
+            .await;
         assert!(result.is_ok());
 
         let report = result.unwrap();
@@ -1370,7 +1401,9 @@ mod tests {
             k.close_time = k.open_time + Duration::hours(1);
         }
 
-        let result = engine.run(&mut strategy, &klines, context, "BTC/USDT", None).await;
+        let result = engine
+            .run(&mut strategy, &klines, context, "BTC/USDT", None)
+            .await;
         assert!(result.is_ok());
 
         let report = result.unwrap();
@@ -1387,7 +1420,10 @@ mod tests {
 
         let klines = create_test_klines(20, dec!(50000), dec!(50));
 
-        let result = engine.run(&mut strategy, &klines, context, "BTC/USDT", None).await.unwrap();
+        let result = engine
+            .run(&mut strategy, &klines, context, "BTC/USDT", None)
+            .await
+            .unwrap();
 
         // 리포트 확인
         assert!(!result.equity_curve.is_empty());

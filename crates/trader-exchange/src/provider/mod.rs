@@ -26,5 +26,7 @@ pub use kis::{KisExchangeProvider, KisProvider};
 pub use ls_sec::{LsSecExchangeProvider, LsSecProvider};
 pub use mock::{MockConfig, MockExchangeProvider, MockMarketStream};
 pub use mock_order_engine::{MockOrderEngine, RawPendingOrder};
-pub use mock_streaming::{MockOrderBookGenerator, MockPriceGenerator, MockPriceMode, MockStreamingConfig};
+pub use mock_streaming::{
+    MockOrderBookGenerator, MockPriceGenerator, MockPriceMode, MockStreamingConfig,
+};
 pub use upbit::{UpbitExchangeProvider, UpbitProvider};

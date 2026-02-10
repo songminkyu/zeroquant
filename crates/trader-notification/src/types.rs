@@ -22,7 +22,6 @@ pub enum NotificationPriority {
     Critical,
 }
 
-
 /// 알림 이벤트 타입.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]

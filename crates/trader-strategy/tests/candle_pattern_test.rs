@@ -120,7 +120,15 @@ async fn test_ignores_unregistered_ticker() {
     strategy.initialize(config).await.unwrap();
 
     // 등록되지 않은 티커
-    let data = create_market_data_ohlcv("000660", dec!(100000), dec!(101000), dec!(99000), dec!(100500), dec!(100000), 0);
+    let data = create_market_data_ohlcv(
+        "000660",
+        dec!(100000),
+        dec!(101000),
+        dec!(99000),
+        dec!(100500),
+        dec!(100000),
+        0,
+    );
     let signals = strategy.on_market_data(&data).await.unwrap();
 
     assert!(signals.is_empty(), "등록되지 않은 티커는 무시");
@@ -131,7 +139,15 @@ async fn test_process_data_before_initialization() {
     let mut strategy = CandlePatternStrategy::new();
 
     // 초기화 없이 데이터 처리
-    let data = create_market_data_ohlcv("005930", dec!(70000), dec!(71000), dec!(69000), dec!(70500), dec!(100000), 0);
+    let data = create_market_data_ohlcv(
+        "005930",
+        dec!(70000),
+        dec!(71000),
+        dec!(69000),
+        dec!(70500),
+        dec!(100000),
+        0,
+    );
     let signals = strategy.on_market_data(&data).await.unwrap();
 
     assert!(signals.is_empty(), "초기화 전에는 신호 없어야 함");
@@ -186,10 +202,20 @@ async fn test_bullish_engulfing_generates_buy_signal() {
     let signals = strategy.on_market_data(&engulfing_candle).await.unwrap();
 
     // 검증: Bullish Engulfing → Buy 신호 생성
-    assert!(!signals.is_empty(), "Bullish Engulfing 패턴에서 신호가 생성되어야 함");
+    assert!(
+        !signals.is_empty(),
+        "Bullish Engulfing 패턴에서 신호가 생성되어야 함"
+    );
     let buy_signal = signals.iter().find(|s| s.side == Side::Buy);
-    assert!(buy_signal.is_some(), "Bullish 패턴은 Buy 신호를 생성해야 함");
-    assert_eq!(buy_signal.unwrap().signal_type, SignalType::Entry, "진입 신호여야 함");
+    assert!(
+        buy_signal.is_some(),
+        "Bullish 패턴은 Buy 신호를 생성해야 함"
+    );
+    assert_eq!(
+        buy_signal.unwrap().signal_type,
+        SignalType::Entry,
+        "진입 신호여야 함"
+    );
 }
 
 /// Bearish Engulfing 패턴 테스트
@@ -236,10 +262,20 @@ async fn test_bearish_engulfing_generates_sell_signal() {
     let signals = strategy.on_market_data(&engulfing_candle).await.unwrap();
 
     // 검증: Bearish Engulfing → Sell 신호 생성
-    assert!(!signals.is_empty(), "Bearish Engulfing 패턴에서 신호가 생성되어야 함");
+    assert!(
+        !signals.is_empty(),
+        "Bearish Engulfing 패턴에서 신호가 생성되어야 함"
+    );
     let sell_signal = signals.iter().find(|s| s.side == Side::Sell);
-    assert!(sell_signal.is_some(), "Bearish 패턴은 Sell 신호를 생성해야 함");
-    assert_eq!(sell_signal.unwrap().signal_type, SignalType::Entry, "진입 신호여야 함");
+    assert!(
+        sell_signal.is_some(),
+        "Bearish 패턴은 Sell 신호를 생성해야 함"
+    );
+    assert_eq!(
+        sell_signal.unwrap().signal_type,
+        SignalType::Entry,
+        "진입 신호여야 함"
+    );
 }
 
 /// Morning Star 패턴 테스트 (3봉 패턴)
@@ -299,9 +335,15 @@ async fn test_morning_star_generates_buy_signal() {
     let signals = strategy.on_market_data(&day3).await.unwrap();
 
     // 검증: Morning Star → Buy 신호 생성
-    assert!(!signals.is_empty(), "Morning Star 패턴에서 신호가 생성되어야 함");
+    assert!(
+        !signals.is_empty(),
+        "Morning Star 패턴에서 신호가 생성되어야 함"
+    );
     let buy_signal = signals.iter().find(|s| s.side == Side::Buy);
-    assert!(buy_signal.is_some(), "Morning Star 패턴은 Buy 신호를 생성해야 함");
+    assert!(
+        buy_signal.is_some(),
+        "Morning Star 패턴은 Buy 신호를 생성해야 함"
+    );
 }
 
 /// Doji 패턴 테스트
@@ -385,15 +427,23 @@ async fn test_stop_loss_generates_exit_signal() {
     // 먼저 Bullish Engulfing 패턴으로 포지션 진입
     let bearish = create_market_data_ohlcv(
         "005930",
-        dec!(70500), dec!(70800), dec!(69800), dec!(70000),
-        dec!(100000), 0,
+        dec!(70500),
+        dec!(70800),
+        dec!(69800),
+        dec!(70000),
+        dec!(100000),
+        0,
     );
     let _ = strategy.on_market_data(&bearish).await;
 
     let engulfing = create_market_data_ohlcv(
         "005930",
-        dec!(69800), dec!(71000), dec!(69500), dec!(70800),
-        dec!(200000), 1,
+        dec!(69800),
+        dec!(71000),
+        dec!(69500),
+        dec!(70800),
+        dec!(200000),
+        1,
     );
     let entry_signals = strategy.on_market_data(&engulfing).await.unwrap();
     assert!(!entry_signals.is_empty(), "진입 신호가 생성되어야 함");
@@ -412,7 +462,10 @@ async fn test_stop_loss_generates_exit_signal() {
     let signals = strategy.on_market_data(&stop_loss_data).await.unwrap();
 
     // 검증: 손절 조건 충족 → Exit 신호 생성
-    assert!(!signals.is_empty(), "손절 조건에서 Exit 신호가 생성되어야 함");
+    assert!(
+        !signals.is_empty(),
+        "손절 조건에서 Exit 신호가 생성되어야 함"
+    );
     let exit_signal = signals.iter().find(|s| s.signal_type == SignalType::Exit);
     assert!(exit_signal.is_some(), "손절은 Exit 신호여야 함");
     assert_eq!(exit_signal.unwrap().side, Side::Sell, "손절은 Sell 방향");
@@ -439,15 +492,23 @@ async fn test_take_profit_generates_exit_signal() {
     // Bullish Engulfing으로 포지션 진입
     let bearish = create_market_data_ohlcv(
         "005930",
-        dec!(70500), dec!(70800), dec!(69800), dec!(70000),
-        dec!(100000), 0,
+        dec!(70500),
+        dec!(70800),
+        dec!(69800),
+        dec!(70000),
+        dec!(100000),
+        0,
     );
     let _ = strategy.on_market_data(&bearish).await;
 
     let engulfing = create_market_data_ohlcv(
         "005930",
-        dec!(69800), dec!(71000), dec!(69500), dec!(70800),
-        dec!(200000), 1,
+        dec!(69800),
+        dec!(71000),
+        dec!(69500),
+        dec!(70800),
+        dec!(200000),
+        1,
     );
     let entry_signals = strategy.on_market_data(&engulfing).await.unwrap();
     assert!(!entry_signals.is_empty(), "진입 신호가 생성되어야 함");
@@ -466,7 +527,10 @@ async fn test_take_profit_generates_exit_signal() {
     let signals = strategy.on_market_data(&take_profit_data).await.unwrap();
 
     // 검증: 익절 조건 충족 → Exit 신호 생성
-    assert!(!signals.is_empty(), "익절 조건에서 Exit 신호가 생성되어야 함");
+    assert!(
+        !signals.is_empty(),
+        "익절 조건에서 Exit 신호가 생성되어야 함"
+    );
     let exit_signal = signals.iter().find(|s| s.signal_type == SignalType::Exit);
     assert!(exit_signal.is_some(), "익절은 Exit 신호여야 함");
     assert_eq!(exit_signal.unwrap().side, Side::Sell, "익절은 Sell 방향");
@@ -495,15 +559,23 @@ async fn test_pattern_strength_filter() {
     // 약한 Engulfing 패턴 (curr_body가 prev_body보다 약간만 큼)
     let bearish = create_market_data_ohlcv(
         "005930",
-        dec!(70500), dec!(70800), dec!(69800), dec!(70000), // body = 500
-        dec!(100000), 0,
+        dec!(70500),
+        dec!(70800),
+        dec!(69800),
+        dec!(70000), // body = 500
+        dec!(100000),
+        0,
     );
     let _ = strategy.on_market_data(&bearish).await;
 
     let weak_engulfing = create_market_data_ohlcv(
         "005930",
-        dec!(69900), dec!(71000), dec!(69500), dec!(70600), // body = 700, strength ≈ 700/500 = 1.4 but capped at 1.0
-        dec!(200000), 1,
+        dec!(69900),
+        dec!(71000),
+        dec!(69500),
+        dec!(70600), // body = 700, strength ≈ 700/500 = 1.4 but capped at 1.0
+        dec!(200000),
+        1,
     );
     let _signals = strategy.on_market_data(&weak_engulfing).await.unwrap();
 
@@ -551,11 +623,17 @@ async fn test_volume_confirmation_filter() {
     // 낮은 거래량으로 Engulfing 패턴 시도
     let low_volume_engulfing = create_market_data_ohlcv(
         "005930",
-        dec!(69800), dec!(71000), dec!(69500), dec!(70800),
+        dec!(69800),
+        dec!(71000),
+        dec!(69500),
+        dec!(70800),
         dec!(100000), // 평균과 동일 (1.2배 미만)
         10,
     );
-    let _signals = strategy.on_market_data(&low_volume_engulfing).await.unwrap();
+    let _signals = strategy
+        .on_market_data(&low_volume_engulfing)
+        .await
+        .unwrap();
 
     // 볼륨 확인 실패 → 신호 생성 안함
     // (이전 캔들이 음봉이 아니라서 Engulfing 아닐 수 있음)
@@ -595,8 +673,12 @@ async fn test_high_volume_passes_confirmation() {
     // 마지막 캔들: 음봉 (Engulfing 조건 충족을 위해)
     let bearish = create_market_data_ohlcv(
         "005930",
-        dec!(70500), dec!(70800), dec!(69800), dec!(70000),
-        dec!(100000), 9,
+        dec!(70500),
+        dec!(70800),
+        dec!(69800),
+        dec!(70000),
+        dec!(100000),
+        9,
     );
     let _ = strategy.on_market_data(&bearish).await;
 
@@ -604,11 +686,17 @@ async fn test_high_volume_passes_confirmation() {
     // 조건: 현재 거래량 > 평균 * 1.2 = 100000 * 1.2 = 120000
     let high_volume_engulfing = create_market_data_ohlcv(
         "005930",
-        dec!(69800), dec!(71000), dec!(69500), dec!(70800),
+        dec!(69800),
+        dec!(71000),
+        dec!(69500),
+        dec!(70800),
         dec!(150000), // 평균의 1.5배 (> 1.2배 ✓)
         10,
     );
-    let signals = strategy.on_market_data(&high_volume_engulfing).await.unwrap();
+    let signals = strategy
+        .on_market_data(&high_volume_engulfing)
+        .await
+        .unwrap();
 
     // 높은 거래량 → 볼륨 확인 통과 → 신호 생성
     assert!(!signals.is_empty(), "높은 거래량에서 신호가 생성되어야 함");
@@ -636,15 +724,23 @@ async fn test_no_new_entry_when_position_exists() {
     // 첫 번째 Engulfing으로 진입
     let bearish1 = create_market_data_ohlcv(
         "005930",
-        dec!(70500), dec!(70800), dec!(69800), dec!(70000),
-        dec!(100000), 0,
+        dec!(70500),
+        dec!(70800),
+        dec!(69800),
+        dec!(70000),
+        dec!(100000),
+        0,
     );
     let _ = strategy.on_market_data(&bearish1).await;
 
     let engulfing1 = create_market_data_ohlcv(
         "005930",
-        dec!(69800), dec!(71000), dec!(69500), dec!(70800),
-        dec!(200000), 1,
+        dec!(69800),
+        dec!(71000),
+        dec!(69500),
+        dec!(70800),
+        dec!(200000),
+        1,
     );
     let signals1 = strategy.on_market_data(&engulfing1).await.unwrap();
     assert!(!signals1.is_empty(), "첫 진입 신호 생성");
@@ -652,21 +748,35 @@ async fn test_no_new_entry_when_position_exists() {
     // 두 번째 Engulfing 패턴 - 이미 포지션이 있으므로 신호 생성 안함
     let bearish2 = create_market_data_ohlcv(
         "005930",
-        dec!(71500), dec!(71800), dec!(70800), dec!(71000),
-        dec!(100000), 2,
+        dec!(71500),
+        dec!(71800),
+        dec!(70800),
+        dec!(71000),
+        dec!(100000),
+        2,
     );
     let _ = strategy.on_market_data(&bearish2).await;
 
     let engulfing2 = create_market_data_ohlcv(
         "005930",
-        dec!(70800), dec!(72000), dec!(70500), dec!(71800),
-        dec!(200000), 3,
+        dec!(70800),
+        dec!(72000),
+        dec!(70500),
+        dec!(71800),
+        dec!(200000),
+        3,
     );
     let signals2 = strategy.on_market_data(&engulfing2).await.unwrap();
 
     // 이미 포지션이 있으므로 새 진입 신호 생성 안함
-    let entry_signals: Vec<_> = signals2.iter().filter(|s| s.signal_type == SignalType::Entry).collect();
-    assert!(entry_signals.is_empty(), "이미 포지션이 있으면 새 진입 신호 없음");
+    let entry_signals: Vec<_> = signals2
+        .iter()
+        .filter(|s| s.signal_type == SignalType::Entry)
+        .collect();
+    assert!(
+        entry_signals.is_empty(),
+        "이미 포지션이 있으면 새 진입 신호 없음"
+    );
 }
 
 #[tokio::test]

@@ -111,11 +111,7 @@ impl ExchangeProvider for BinanceExchangeProvider {
             return Ok(cached);
         }
 
-        let account_info = self
-            .client
-            .get_account()
-            .await
-            .map_err(to_provider_error)?;
+        let account_info = self.client.get_account().await.map_err(to_provider_error)?;
 
         // 총 자산 계산 (USDT 기준)
         let mut total_balance = Decimal::ZERO;
@@ -149,11 +145,7 @@ impl ExchangeProvider for BinanceExchangeProvider {
         }
 
         // Binance Spot은 포지션 개념이 없으므로 보유 자산을 포지션으로 변환
-        let account_info = self
-            .client
-            .get_account()
-            .await
-            .map_err(to_provider_error)?;
+        let account_info = self.client.get_account().await.map_err(to_provider_error)?;
 
         let mut positions = Vec::new();
 
@@ -253,10 +245,7 @@ impl ExchangeProvider for BinanceExchangeProvider {
         let (symbol, from_id) = if let Some(ref cursor) = request.cursor {
             let parts: Vec<&str> = cursor.splitn(2, '|').collect();
             if parts.len() == 2 {
-                (
-                    parts[0].to_string(),
-                    parts[1].parse::<u64>().ok(),
-                )
+                (parts[0].to_string(), parts[1].parse::<u64>().ok())
             } else {
                 return Err(ProviderError::Parse(format!(
                     "잘못된 cursor 형식: {}",
@@ -270,10 +259,7 @@ impl ExchangeProvider for BinanceExchangeProvider {
             let first_symbol = account
                 .balances
                 .iter()
-                .find(|b| {
-                    b.asset != "USDT"
-                        && (b.free > Decimal::ZERO || b.locked > Decimal::ZERO)
-                })
+                .find(|b| b.asset != "USDT" && (b.free > Decimal::ZERO || b.locked > Decimal::ZERO))
                 .map(|b| format!("{}/USDT", b.asset));
 
             match first_symbol {
@@ -313,8 +299,7 @@ impl ExchangeProvider for BinanceExchangeProvider {
                 let price: Decimal = t.price.parse().unwrap_or(Decimal::ZERO);
                 let qty: Decimal = t.qty.parse().unwrap_or(Decimal::ZERO);
                 let fee: Decimal = t.commission.parse().unwrap_or(Decimal::ZERO);
-                let executed_at = DateTime::from_timestamp_millis(t.time)
-                    .unwrap_or_else(Utc::now);
+                let executed_at = DateTime::from_timestamp_millis(t.time).unwrap_or_else(Utc::now);
 
                 Trade {
                     id: Uuid::new_v4(),
@@ -339,9 +324,7 @@ impl ExchangeProvider for BinanceExchangeProvider {
 
         // 다음 페이지 커서: 마지막 거래 ID 기반
         let next_cursor = if trades.len() >= 500 {
-            my_trades
-                .last()
-                .map(|t| format!("{}|{}", symbol, t.id))
+            my_trades.last().map(|t| format!("{}|{}", symbol, t.id))
         } else {
             // 현재 심볼 완료, 다음 심볼로 이동
             let account = self.client.get_account().await.map_err(to_provider_error)?;
@@ -474,8 +457,7 @@ fn parse_date_to_millis(date_str: &str) -> Option<u64> {
     }
 
     let naive = chrono::NaiveDate::parse_from_str(date_str, "%Y%m%d").ok()?;
-    let datetime = naive
-        .and_hms_opt(0, 0, 0)?;
+    let datetime = naive.and_hms_opt(0, 0, 0)?;
     let utc = chrono::TimeZone::from_utc_datetime(&Utc, &datetime);
     Some(utc.timestamp_millis() as u64)
 }

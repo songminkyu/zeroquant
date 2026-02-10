@@ -329,7 +329,7 @@ fn test_ttm_squeeze_basic() {
     // 모든 결과에 대해 기본 검증
     for (i, result) in squeeze.iter().enumerate() {
         // Squeeze 카운트는 u32 타입이므로 항상 0 이상 (타입 시스템으로 보장됨)
-        let _ = i;  // 루프 인덱스 사용
+        let _ = i; // 루프 인덱스 사용
 
         // Squeeze 상태가 false면 카운트는 0
         if !result.is_squeeze {

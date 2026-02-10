@@ -32,9 +32,9 @@
 use crate::indicators::{IndicatorEngine, IndicatorError, IndicatorResult};
 use crate::StructuralFeaturesCalculator;
 use rust_decimal::prelude::ToPrimitive;
-use trader_core::domain::StructuralFeatures;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use trader_core::domain::StructuralFeatures;
 use trader_core::{Kline, RouteState};
 
 /// RouteState 계산기.
@@ -501,8 +501,8 @@ mod tests {
     use super::*;
     use chrono::Utc;
     use rust_decimal_macros::dec;
-    use trader_core::Timeframe;
     use trader_core::domain::StructuralFeatures;
+    use trader_core::Timeframe;
 
     fn create_test_candles(count: usize, trend: &str) -> Vec<Kline> {
         let ticker = "TEST/USD".to_string();

@@ -68,9 +68,9 @@ pub use screening_integration::{
 pub use risk_checks::{DefaultRiskChecker, RiskCheckError, RiskChecker, RiskManager, RiskParams};
 
 pub use signal_filters::{
-    CompositeFilter, ConfirmationPattern, FilteredSignal, SignalContext, SignalFilter,
-    SignalStrength, TrendFilter, ValidationResult, VolumeFilter,
-    can_execute_signal, validate_signals_with_context,
+    can_execute_signal, validate_signals_with_context, CompositeFilter, ConfirmationPattern,
+    FilteredSignal, SignalContext, SignalFilter, SignalStrength, TrendFilter, ValidationResult,
+    VolumeFilter,
 };
 
 pub use exit_config::{

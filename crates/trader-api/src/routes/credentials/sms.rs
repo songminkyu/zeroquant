@@ -92,8 +92,8 @@ pub async fn get_sms_settings(
                 .notification_settings
                 .and_then(|v| serde_json::from_value(v).ok());
 
-            let to_numbers: Vec<String> = serde_json::from_value(settings.to_numbers)
-                .unwrap_or_default();
+            let to_numbers: Vec<String> =
+                serde_json::from_value(settings.to_numbers).unwrap_or_default();
 
             Ok(Json(serde_json::json!({
                 "configured": true,
@@ -161,21 +161,30 @@ pub async fn save_sms_settings(
     if request.account_sid.is_empty() || request.auth_token.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiError::new("INVALID_INPUT", "Account SID와 Auth Token은 필수입니다.")),
+            Json(ApiError::new(
+                "INVALID_INPUT",
+                "Account SID와 Auth Token은 필수입니다.",
+            )),
         ));
     }
 
     if request.from_number.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiError::new("INVALID_INPUT", "발신 전화번호는 필수입니다.")),
+            Json(ApiError::new(
+                "INVALID_INPUT",
+                "발신 전화번호는 필수입니다.",
+            )),
         ));
     }
 
     if request.to_numbers.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiError::new("INVALID_INPUT", "수신 전화번호는 최소 1개 필요합니다.")),
+            Json(ApiError::new(
+                "INVALID_INPUT",
+                "수신 전화번호는 최소 1개 필요합니다.",
+            )),
         ));
     }
 
@@ -183,33 +192,40 @@ pub async fn save_sms_settings(
     if !request.from_number.starts_with('+') {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiError::new("INVALID_INPUT", "전화번호는 E.164 형식이어야 합니다 (예: +15551234567).")),
+            Json(ApiError::new(
+                "INVALID_INPUT",
+                "전화번호는 E.164 형식이어야 합니다 (예: +15551234567).",
+            )),
         ));
     }
 
     // Account SID 암호화
-    let (encrypted_account_sid, nonce_sid) = encryptor.encrypt(&request.account_sid).map_err(|e| {
-        error!("Account SID 암호화 실패: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
-        )
-    })?;
+    let (encrypted_account_sid, nonce_sid) =
+        encryptor.encrypt(&request.account_sid).map_err(|e| {
+            error!("Account SID 암호화 실패: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
+            )
+        })?;
 
     // Auth Token 암호화
-    let (encrypted_auth_token, nonce_token) = encryptor.encrypt(&request.auth_token).map_err(|e| {
-        error!("Auth Token 암호화 실패: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
-        )
-    })?;
+    let (encrypted_auth_token, nonce_token) =
+        encryptor.encrypt(&request.auth_token).map_err(|e| {
+            error!("Auth Token 암호화 실패: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError::new("ENCRYPTION_FAILED", "암호화 실패")),
+            )
+        })?;
 
-    let notification_settings = request.notification_settings.as_ref()
+    let notification_settings = request
+        .notification_settings
+        .as_ref()
         .and_then(|s| serde_json::to_value(s).ok());
 
-    let to_numbers_json = serde_json::to_value(&request.to_numbers)
-        .unwrap_or(serde_json::json!([]));
+    let to_numbers_json =
+        serde_json::to_value(&request.to_numbers).unwrap_or(serde_json::json!([]));
 
     let settings_id = Uuid::new_v4();
 
@@ -373,7 +389,10 @@ pub async fn test_new_sms_settings(
     if request.from_number.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiError::new("INVALID_INPUT", "발신 전화번호는 필수입니다.")),
+            Json(ApiError::new(
+                "INVALID_INPUT",
+                "발신 전화번호는 필수입니다.",
+            )),
         ));
     }
 
@@ -522,8 +541,8 @@ pub async fn test_sms_settings(
             )
         })?;
 
-    let to_numbers: Vec<String> = serde_json::from_value(settings.to_numbers.clone())
-        .unwrap_or_default();
+    let to_numbers: Vec<String> =
+        serde_json::from_value(settings.to_numbers.clone()).unwrap_or_default();
 
     // 실제 SMS 테스트 전송
     let config = trader_notification::SmsConfig::new_twilio(
@@ -551,7 +570,8 @@ pub async fn test_sms_settings(
         }
         Err(e) => {
             let error_msg = format!("SMS 전송 실패: {}", e);
-            log_credential_access(pool, "sms", settings.id, "verify", false, Some(&error_msg)).await;
+            log_credential_access(pool, "sms", settings.id, "verify", false, Some(&error_msg))
+                .await;
 
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,

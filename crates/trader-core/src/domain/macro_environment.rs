@@ -134,7 +134,6 @@ impl fmt::Display for MacroRisk {
     }
 }
 
-
 /// 매크로 환경 상태.
 ///
 /// # 필드 설명

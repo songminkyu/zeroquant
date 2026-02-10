@@ -274,7 +274,11 @@ impl AnalyticsProvider for AnalyticsProviderImpl {
                 Ok(candles) => {
                     // IndicatorEngine 기반 StructuralFeatures 계산
                     let indicator_engine = IndicatorEngine::new();
-                    match StructuralFeaturesCalculator::from_candles(ticker, &candles, &indicator_engine) {
+                    match StructuralFeaturesCalculator::from_candles(
+                        ticker,
+                        &candles,
+                        &indicator_engine,
+                    ) {
                         Ok(features) => {
                             results.insert(ticker.to_string(), features);
                         }

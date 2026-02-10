@@ -652,7 +652,11 @@ impl BinanceClient {
         })
     }
 
-    pub async fn get_order_book(&self, symbol: &str, limit: Option<u32>) -> ExchangeResult<OrderBook> {
+    pub async fn get_order_book(
+        &self,
+        symbol: &str,
+        limit: Option<u32>,
+    ) -> ExchangeResult<OrderBook> {
         let binance_symbol = Self::from_symbol(symbol);
         let limit_str = limit.unwrap_or(100).to_string();
 

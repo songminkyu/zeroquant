@@ -424,7 +424,10 @@ impl KisUsWebSocket {
                     }
                     let tr_key = Self::make_tr_key(&sub_info.exchange_code, &sub_info.symbol);
                     let msg = self.create_subscribe_message(
-                        &approval_key, tr_id::WS_US_TRADE, &tr_key, false,
+                        &approval_key,
+                        tr_id::WS_US_TRADE,
+                        &tr_key,
+                        false,
                     );
                     let _ = write.send(Message::Text(msg)).await;
                 }
@@ -434,7 +437,10 @@ impl KisUsWebSocket {
                     }
                     let tr_key = Self::make_tr_key(&sub_info.exchange_code, &sub_info.symbol);
                     let msg = self.create_subscribe_message(
-                        &approval_key, tr_id::WS_US_ORDERBOOK, &tr_key, false,
+                        &approval_key,
+                        tr_id::WS_US_ORDERBOOK,
+                        &tr_key,
+                        false,
                     );
                     let _ = write.send(Message::Text(msg)).await;
                 }

@@ -274,7 +274,10 @@ pub struct StrategyUISchema {
 
     /// 기본 설정값 (옵션)
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[cfg_attr(feature = "ts-rs-support", ts(optional, type = "Record<string, unknown> | null"))]
+    #[cfg_attr(
+        feature = "ts-rs-support",
+        ts(optional, type = "Record<string, unknown> | null")
+    )]
     pub defaults: Option<HashMap<String, serde_json::Value>>,
 }
 

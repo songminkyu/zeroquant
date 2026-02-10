@@ -42,7 +42,6 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use trader_strategy_macro::StrategyConfig;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -50,14 +49,14 @@ use tracing::{debug, info, warn};
 use trader_core::domain::{RouteState, StrategyContext};
 use trader_core::types::Timeframe;
 use trader_core::{MarketData, MarketDataType, Order, Position, Side, Signal, SignalType};
+use trader_strategy_macro::StrategyConfig;
 
 // ============================================================================
 // 전략 변형 (Strategy Variant)
 // ============================================================================
 
 /// 로테이션 전략 변형.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum RotationVariant {
     /// 섹터 모멘텀 - 섹터 ETF 모멘텀 순위 기반
     #[default]
@@ -67,7 +66,6 @@ pub enum RotationVariant {
     /// 시가총액 상위 - 시총 순위 기반 (선택적 모멘텀 필터)
     MarketCapTop,
 }
-
 
 // ============================================================================
 // 시장 타입 (Market Type)
@@ -174,8 +172,7 @@ pub enum WeightingMethod {
 // ============================================================================
 
 /// 리밸런싱 빈도.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum RebalanceFrequency {
     /// 월간 (매월 초)
     #[default]
@@ -183,7 +180,6 @@ pub enum RebalanceFrequency {
     /// 일수 기반
     Days(u32),
 }
-
 
 // ============================================================================
 // 자산 정보 (Asset Info)
@@ -361,17 +357,38 @@ impl Default for RotationConfig {
 pub struct SectorMomentumConfig {
     /// 상위 N개 선택
     #[serde(default = "default_sector_top_n")]
-    #[schema(label = "상위 섹터 수", field_type = "integer", min = 1, max = 11, default = "3", section = "filter")]
+    #[schema(
+        label = "상위 섹터 수",
+        field_type = "integer",
+        min = 1,
+        max = 11,
+        default = "3",
+        section = "filter"
+    )]
     pub top_n: usize,
 
     /// 총 투자 금액
     #[serde(default = "default_total_amount")]
-    #[schema(label = "투자 금액", field_type = "number", min = 100000, max = 1000000000, default = "10000000", section = "asset")]
+    #[schema(
+        label = "투자 금액",
+        field_type = "number",
+        min = 100000,
+        max = 1000000000,
+        default = "10000000",
+        section = "asset"
+    )]
     pub total_amount: Decimal,
 
     /// 리밸런싱 허용 오차 (%)
     #[serde(default = "default_rebalance_threshold")]
-    #[schema(label = "리밸런싱 허용 오차 (%)", field_type = "number", min = 1, max = 20, default = "5", section = "filter")]
+    #[schema(
+        label = "리밸런싱 허용 오차 (%)",
+        field_type = "number",
+        min = 1,
+        max = 20,
+        default = "5",
+        section = "filter"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 최소 모멘텀 (이 이하면 투자 안 함)
@@ -381,12 +398,26 @@ pub struct SectorMomentumConfig {
 
     /// 현금 보유 비율 (0.0 ~ 1.0)
     #[serde(default = "default_cash_reserve_rate")]
-    #[schema(label = "현금 보유 비율", field_type = "number", min = 0, max = 1, default = "0", section = "filter")]
+    #[schema(
+        label = "현금 보유 비율",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "0",
+        section = "filter"
+    )]
     pub cash_reserve_rate: Decimal,
 
     /// 최소 GlobalScore
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", field_type = "number", min = 0, max = 100, default = "60", section = "indicator")]
+    #[schema(
+        label = "최소 GlobalScore",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = "60",
+        section = "indicator"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -420,17 +451,38 @@ impl From<SectorMomentumConfig> for RotationConfig {
 pub struct SectorMomentumKrConfig {
     /// 상위 N개 선택
     #[serde(default = "default_kr_sector_top_n")]
-    #[schema(label = "상위 섹터 수", field_type = "integer", min = 1, max = 10, default = "2", section = "filter")]
+    #[schema(
+        label = "상위 섹터 수",
+        field_type = "integer",
+        min = 1,
+        max = 10,
+        default = "2",
+        section = "filter"
+    )]
     pub top_n: usize,
 
     /// 총 투자 금액
     #[serde(default = "default_total_amount")]
-    #[schema(label = "투자 금액", field_type = "number", min = 100000, max = 1000000000, default = "10000000", section = "asset")]
+    #[schema(
+        label = "투자 금액",
+        field_type = "number",
+        min = 100000,
+        max = 1000000000,
+        default = "10000000",
+        section = "asset"
+    )]
     pub total_amount: Decimal,
 
     /// 리밸런싱 허용 오차 (%)
     #[serde(default = "default_rebalance_threshold")]
-    #[schema(label = "리밸런싱 허용 오차 (%)", field_type = "number", min = 1, max = 20, default = "5", section = "filter")]
+    #[schema(
+        label = "리밸런싱 허용 오차 (%)",
+        field_type = "number",
+        min = 1,
+        max = 20,
+        default = "5",
+        section = "filter"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 최소 모멘텀
@@ -440,12 +492,26 @@ pub struct SectorMomentumKrConfig {
 
     /// 현금 보유 비율
     #[serde(default = "default_cash_reserve_rate")]
-    #[schema(label = "현금 보유 비율", field_type = "number", min = 0, max = 1, default = "0", section = "filter")]
+    #[schema(
+        label = "현금 보유 비율",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "0",
+        section = "filter"
+    )]
     pub cash_reserve_rate: Decimal,
 
     /// 최소 GlobalScore
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", field_type = "number", min = 0, max = 100, default = "60", section = "indicator")]
+    #[schema(
+        label = "최소 GlobalScore",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = "60",
+        section = "indicator"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -479,17 +545,38 @@ impl From<SectorMomentumKrConfig> for RotationConfig {
 pub struct StockRotationConfig {
     /// 상위 N개 선택
     #[serde(default = "default_top_n")]
-    #[schema(label = "상위 종목 수", field_type = "integer", min = 1, max = 20, default = "5", section = "filter")]
+    #[schema(
+        label = "상위 종목 수",
+        field_type = "integer",
+        min = 1,
+        max = 20,
+        default = "5",
+        section = "filter"
+    )]
     pub top_n: usize,
 
     /// 총 투자 금액
     #[serde(default = "default_total_amount")]
-    #[schema(label = "투자 금액", field_type = "number", min = 100000, max = 1000000000, default = "10000000", section = "asset")]
+    #[schema(
+        label = "투자 금액",
+        field_type = "number",
+        min = 100000,
+        max = 1000000000,
+        default = "10000000",
+        section = "asset"
+    )]
     pub total_amount: Decimal,
 
     /// 리밸런싱 허용 오차 (%)
     #[serde(default = "default_rebalance_threshold")]
-    #[schema(label = "리밸런싱 허용 오차 (%)", field_type = "number", min = 1, max = 20, default = "5", section = "filter")]
+    #[schema(
+        label = "리밸런싱 허용 오차 (%)",
+        field_type = "number",
+        min = 1,
+        max = 20,
+        default = "5",
+        section = "filter"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 최소 모멘텀
@@ -499,12 +586,26 @@ pub struct StockRotationConfig {
 
     /// 현금 보유 비율
     #[serde(default = "default_cash_reserve_rate")]
-    #[schema(label = "현금 보유 비율", field_type = "number", min = 0, max = 1, default = "0", section = "filter")]
+    #[schema(
+        label = "현금 보유 비율",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "0",
+        section = "filter"
+    )]
     pub cash_reserve_rate: Decimal,
 
     /// 최소 GlobalScore
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", field_type = "number", min = 0, max = 100, default = "60", section = "indicator")]
+    #[schema(
+        label = "최소 GlobalScore",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = "60",
+        section = "indicator"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -538,17 +639,38 @@ impl From<StockRotationConfig> for RotationConfig {
 pub struct StockRotationKrConfig {
     /// 상위 N개 선택
     #[serde(default = "default_top_n")]
-    #[schema(label = "상위 종목 수", field_type = "integer", min = 1, max = 20, default = "5", section = "filter")]
+    #[schema(
+        label = "상위 종목 수",
+        field_type = "integer",
+        min = 1,
+        max = 20,
+        default = "5",
+        section = "filter"
+    )]
     pub top_n: usize,
 
     /// 총 투자 금액
     #[serde(default = "default_total_amount")]
-    #[schema(label = "투자 금액", field_type = "number", min = 100000, max = 1000000000, default = "10000000", section = "asset")]
+    #[schema(
+        label = "투자 금액",
+        field_type = "number",
+        min = 100000,
+        max = 1000000000,
+        default = "10000000",
+        section = "asset"
+    )]
     pub total_amount: Decimal,
 
     /// 리밸런싱 허용 오차 (%)
     #[serde(default = "default_rebalance_threshold")]
-    #[schema(label = "리밸런싱 허용 오차 (%)", field_type = "number", min = 1, max = 20, default = "5", section = "filter")]
+    #[schema(
+        label = "리밸런싱 허용 오차 (%)",
+        field_type = "number",
+        min = 1,
+        max = 20,
+        default = "5",
+        section = "filter"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 최소 모멘텀
@@ -558,12 +680,26 @@ pub struct StockRotationKrConfig {
 
     /// 현금 보유 비율
     #[serde(default = "default_cash_reserve_rate")]
-    #[schema(label = "현금 보유 비율", field_type = "number", min = 0, max = 1, default = "0", section = "filter")]
+    #[schema(
+        label = "현금 보유 비율",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "0",
+        section = "filter"
+    )]
     pub cash_reserve_rate: Decimal,
 
     /// 최소 GlobalScore
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", field_type = "number", min = 0, max = 100, default = "60", section = "indicator")]
+    #[schema(
+        label = "최소 GlobalScore",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = "60",
+        section = "indicator"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -597,32 +733,72 @@ impl From<StockRotationKrConfig> for RotationConfig {
 pub struct MarketCapTopConfig {
     /// 상위 N개 선택
     #[serde(default = "default_market_cap_top_n")]
-    #[schema(label = "상위 종목 수", field_type = "integer", min = 1, max = 30, default = "10", section = "filter")]
+    #[schema(
+        label = "상위 종목 수",
+        field_type = "integer",
+        min = 1,
+        max = 30,
+        default = "10",
+        section = "filter"
+    )]
     pub top_n: usize,
 
     /// 총 투자 금액
     #[serde(default = "default_total_amount")]
-    #[schema(label = "투자 금액", field_type = "number", min = 100000, max = 1000000000, default = "10000000", section = "asset")]
+    #[schema(
+        label = "투자 금액",
+        field_type = "number",
+        min = 100000,
+        max = 1000000000,
+        default = "10000000",
+        section = "asset"
+    )]
     pub total_amount: Decimal,
 
     /// 리밸런싱 허용 오차 (%)
     #[serde(default = "default_rebalance_threshold")]
-    #[schema(label = "리밸런싱 허용 오차 (%)", field_type = "number", min = 1, max = 20, default = "5", section = "filter")]
+    #[schema(
+        label = "리밸런싱 허용 오차 (%)",
+        field_type = "number",
+        min = 1,
+        max = 20,
+        default = "5",
+        section = "filter"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 모멘텀 필터 사용 여부
     #[serde(default = "default_false")]
-    #[schema(label = "모멘텀 필터 사용", field_type = "boolean", default = "false", section = "filter")]
+    #[schema(
+        label = "모멘텀 필터 사용",
+        field_type = "boolean",
+        default = "false",
+        section = "filter"
+    )]
     pub use_momentum_filter: bool,
 
     /// 현금 보유 비율
     #[serde(default = "default_cash_reserve_rate")]
-    #[schema(label = "현금 보유 비율", field_type = "number", min = 0, max = 1, default = "0", section = "filter")]
+    #[schema(
+        label = "현금 보유 비율",
+        field_type = "number",
+        min = 0,
+        max = 1,
+        default = "0",
+        section = "filter"
+    )]
     pub cash_reserve_rate: Decimal,
 
     /// 최소 GlobalScore
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", field_type = "number", min = 0, max = 100, default = "60", section = "indicator")]
+    #[schema(
+        label = "최소 GlobalScore",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = "60",
+        section = "indicator"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).

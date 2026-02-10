@@ -1,11 +1,12 @@
 ---
 name: diagnose
-description: 에러 진단 워크플로우. 빌드/런타임/DB/API/프론트엔드 에러 체계적 분류 및 수정.
+description: Systematically diagnoses build, runtime, DB, API, and frontend errors with classification and fix workflow. Use when encountering errors or test failures.
+disable-model-invocation: true
 user-invocable: true
 argument-hint: "[에러 메시지 또는 증상 설명]"
 allowed-tools: Read, Grep, Edit, Bash(cargo *), Bash(npm *), Bash(podman *), Bash(git *), Bash(curl *)
 context: fork
-  agent: debugger
+agent: debugger
 ---
 
 # 체계적 에러 진단

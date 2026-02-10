@@ -433,10 +433,7 @@ impl ExecutionCacheRepository {
     // ================================================================================================
 
     /// 해당 credential에 체결 기록이 있는지 확인.
-    pub async fn has_executions(
-        pool: &PgPool,
-        credential_id: Uuid,
-    ) -> Result<bool, sqlx::Error> {
+    pub async fn has_executions(pool: &PgPool, credential_id: Uuid) -> Result<bool, sqlx::Error> {
         let count = sqlx::query_scalar::<_, i64>(
             "SELECT COUNT(*) FROM execution_cache WHERE credential_id = $1",
         )

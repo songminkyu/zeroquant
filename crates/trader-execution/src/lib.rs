@@ -33,11 +33,11 @@ pub use order_manager::{OrderEvent, OrderFill, OrderManager, OrderManagerError, 
 pub use position_tracker::{PositionEvent, PositionTracker, PositionTrackerError};
 
 // Signal 처리 추상화
-pub use signal_processor::{
-    apply_slippage, build_add_trade, build_entry_trade, build_exit_trade,
-    calculate_position_size, calculate_realized_pnl, convert_signal_metadata,
-    determine_close_quantity, update_position_average, validate_funds, ProcessorConfig,
-    ProcessorPosition, SignalProcessor, SignalProcessorError, TradeResult,
-};
 pub use live_executor::LiveExecutor;
+pub use signal_processor::{
+    apply_slippage, build_add_trade, build_entry_trade, build_exit_trade, calculate_position_size,
+    calculate_realized_pnl, convert_signal_metadata, determine_close_quantity,
+    update_position_average, validate_funds, ProcessorConfig, ProcessorPosition, SignalProcessor,
+    SignalProcessorError, TradeResult,
+};
 pub use simulated_executor::SimulatedExecutor;

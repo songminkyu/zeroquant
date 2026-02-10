@@ -51,32 +51,68 @@ use crate::strategies::common::ExitConfig;
 pub struct SmallCapQuantConfig {
     /// 선택할 종목 수
     #[serde(default = "default_target_count")]
-    #[schema(label = "선택 종목 수", min = 5, max = 50, default = 20, section = "sizing")]
+    #[schema(
+        label = "선택 종목 수",
+        min = 5,
+        max = 50,
+        default = 20,
+        section = "sizing"
+    )]
     pub target_count: usize,
 
     /// 이동평균 기간
     #[serde(default = "default_ma_period")]
-    #[schema(label = "이동평균 기간", min = 5, max = 200, default = 20, section = "indicator")]
+    #[schema(
+        label = "이동평균 기간",
+        min = 5,
+        max = 200,
+        default = 20,
+        section = "indicator"
+    )]
     pub ma_period: usize,
 
     /// 총 투자 금액
     #[serde(default = "default_total_amount")]
-    #[schema(label = "총 투자 금액", min = 1000000, max = 1000000000, default = 10000000, section = "asset")]
+    #[schema(
+        label = "총 투자 금액",
+        min = 1000000,
+        max = 1000000000,
+        default = 10000000,
+        section = "asset"
+    )]
     pub total_amount: Decimal,
 
     /// 최소 시가총액 (억원)
     #[serde(default = "default_min_market_cap")]
-    #[schema(label = "최소 시가총액 (억원)", min = 10, max = 1000, default = 50, section = "filter")]
+    #[schema(
+        label = "최소 시가총액 (억원)",
+        min = 10,
+        max = 1000,
+        default = 50,
+        section = "filter"
+    )]
     pub min_market_cap: f64,
 
     /// 최소 ROE (%)
     #[serde(default = "default_min_roe")]
-    #[schema(label = "최소 ROE (%)", min = 0, max = 50, default = 5, section = "filter")]
+    #[schema(
+        label = "최소 ROE (%)",
+        min = 0,
+        max = 50,
+        default = 5,
+        section = "filter"
+    )]
     pub min_roe: f64,
 
     /// 최소 PBR
     #[serde(default = "default_min_pbr")]
-    #[schema(label = "최소 PBR", min = 0.1, max = 5, default = 0.2, section = "filter")]
+    #[schema(
+        label = "최소 PBR",
+        min = 0.1,
+        max = 5,
+        default = 0.2,
+        section = "filter"
+    )]
     pub min_pbr: f64,
 
     /// 최소 PER
@@ -86,12 +122,23 @@ pub struct SmallCapQuantConfig {
 
     /// 기준 지수 티커 (기본: 코스닥150 ETF)
     #[serde(default = "default_index_ticker")]
-    #[schema(label = "기준 지수 티커", field_type = "symbol", default = "229200", section = "asset")]
+    #[schema(
+        label = "기준 지수 티커",
+        field_type = "symbol",
+        default = "229200",
+        section = "asset"
+    )]
     pub index_ticker: String,
 
     /// 최소 글로벌 스코어 (기본값: 60)
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", min = 0, max = 100, default = 60, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        min = 0,
+        max = 100,
+        default = 60,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -304,7 +351,9 @@ impl SmallCapQuantStrategy {
             Ok(l) => l,
             Err(_) => return vec![],
         };
-        ctx_lock.get_klines(&config.index_ticker, Timeframe::D1).to_vec()
+        ctx_lock
+            .get_klines(&config.index_ticker, Timeframe::D1)
+            .to_vec()
     }
 
     /// 지수가 MA 위에 있는지 확인 (StrategyContext 기반)
@@ -440,7 +489,8 @@ impl SmallCapQuantStrategy {
         let mut signals = Vec::new();
 
         // stock_data에서 지수가 아닌 종목들 중 가격이 있는 것들 선택
-        let candidates: Vec<_> = self.stock_data
+        let candidates: Vec<_> = self
+            .stock_data
             .iter()
             .filter(|(ticker, data)| {
                 *ticker != &config.index_ticker && data.current_price > Decimal::ZERO
@@ -469,8 +519,6 @@ impl SmallCapQuantStrategy {
 
         signals
     }
-
-
 }
 
 impl Default for SmallCapQuantStrategy {
@@ -723,7 +771,6 @@ mod tests {
         };
         assert!(!small_stock.passes_filter(&config));
     }
-
 }
 
 // 전략 레지스트리에 자동 등록

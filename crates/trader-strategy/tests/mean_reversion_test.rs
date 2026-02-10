@@ -68,10 +68,7 @@ fn create_ticker_data(ticker_name: &str, price: Decimal) -> MarketData {
 }
 
 /// StrategyContext에 klines 데이터 설정.
-fn setup_context_with_klines(
-    ticker: &str,
-    prices: &[Decimal],
-) -> Arc<RwLock<StrategyContext>> {
+fn setup_context_with_klines(ticker: &str, prices: &[Decimal]) -> Arc<RwLock<StrategyContext>> {
     let mut context = StrategyContext::new();
     let now = Utc::now();
     let day = chrono::Duration::days(1);
@@ -190,7 +187,11 @@ mod bollinger_tests {
 
         let result = strategy.initialize(config).await;
 
-        assert!(result.is_ok(), "Bollinger 전략 초기화 실패: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "Bollinger 전략 초기화 실패: {:?}",
+            result.err()
+        );
         assert_eq!(strategy.name(), "MeanReversion-Bollinger");
     }
 
@@ -263,12 +264,18 @@ mod common_tests {
     async fn test_strategy_name_reflects_variant() {
         // RSI variant
         let mut rsi_strategy = MeanReversionStrategy::rsi();
-        rsi_strategy.initialize(json!({"variant": "rsi", "ticker": "TEST"})).await.unwrap();
+        rsi_strategy
+            .initialize(json!({"variant": "rsi", "ticker": "TEST"}))
+            .await
+            .unwrap();
         assert_eq!(rsi_strategy.name(), "MeanReversion-RSI");
 
         // Bollinger variant
         let mut bb_strategy = MeanReversionStrategy::bollinger();
-        bb_strategy.initialize(json!({"variant": "bollinger", "ticker": "TEST"})).await.unwrap();
+        bb_strategy
+            .initialize(json!({"variant": "bollinger", "ticker": "TEST"}))
+            .await
+            .unwrap();
         assert_eq!(bb_strategy.name(), "MeanReversion-Bollinger");
     }
 

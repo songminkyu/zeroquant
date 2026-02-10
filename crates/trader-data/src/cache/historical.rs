@@ -138,7 +138,6 @@ impl CachedHistoricalDataProvider {
         self
     }
 
-
     /// Redis 캐시 설정 (3계층 캐시 활성화).
     ///
     /// Redis가 설정되면 OHLCV 조회 시 다음 순서로 확인:
@@ -644,8 +643,6 @@ fn timeframe_to_duration(timeframe: Timeframe) -> Duration {
         Timeframe::MN1 => Duration::days(30),
     }
 }
-
-
 
 /// 심볼에서 통화 코드 추정.
 pub(crate) fn guess_currency(symbol: &str) -> &'static str {

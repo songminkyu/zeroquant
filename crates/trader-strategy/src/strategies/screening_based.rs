@@ -396,7 +396,9 @@ impl ScreeningBasedStrategy {
                 }
 
                 // RouteState 필터 (옵션)
-                if config.use_route_filter && !matches!(r.route_state, RouteState::Attack | RouteState::Armed) {
+                if config.use_route_filter
+                    && !matches!(r.route_state, RouteState::Attack | RouteState::Armed)
+                {
                     return false;
                 }
 
@@ -499,11 +501,9 @@ impl ScreeningBasedStrategy {
                         (current_time - t).num_days() >= 5
                     })
             }
-            RebalanceFrequency::Days(days) => {
-                self.last_rebalance_time.map_or(true, |t| {
-                    (current_time - t).num_days() >= *days as i64
-                })
-            }
+            RebalanceFrequency::Days(days) => self
+                .last_rebalance_time
+                .map_or(true, |t| (current_time - t).num_days() >= *days as i64),
         }
     }
 
@@ -709,7 +709,10 @@ impl Strategy for ScreeningBasedStrategy {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // 보유 수량 업데이트
         let ticker = order.ticker.split('/').next().unwrap_or(&order.ticker);
-        let entry = self.holdings.entry(ticker.to_string()).or_insert(Decimal::ZERO);
+        let entry = self
+            .holdings
+            .entry(ticker.to_string())
+            .or_insert(Decimal::ZERO);
 
         match order.side {
             Side::Buy => *entry += order.filled_quantity,

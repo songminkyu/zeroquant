@@ -558,7 +558,10 @@ impl KisUsClient {
     ///
     /// # 인자
     /// * `currency` - 통화 코드: "USD", "HKD", "CNY" 등
-    pub async fn get_balance(&self, currency: &str) -> Result<trader_core::AccountBalance, ExchangeError> {
+    pub async fn get_balance(
+        &self,
+        currency: &str,
+    ) -> Result<trader_core::AccountBalance, ExchangeError> {
         let tr_id = self.get_tr_id(tr_id::US_BALANCE_REAL, tr_id::US_BALANCE_PAPER);
         let url = format!(
             "{}/uapi/overseas-stock/v1/trading/inquire-balance",
@@ -615,12 +618,8 @@ impl KisUsClient {
 
         // 보유 종목 변환
         for h in resp.output1 {
-            let mut holding = trader_core::Holding::new(
-                &h.symbol,
-                &h.name,
-                h.quantity,
-                h.avg_price,
-            );
+            let mut holding =
+                trader_core::Holding::new(&h.symbol, &h.name, h.quantity, h.avg_price);
             holding.update_price(h.current_price);
             balance.add_holding(holding);
         }

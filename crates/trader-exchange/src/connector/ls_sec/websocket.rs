@@ -1,16 +1,16 @@
-use std::sync::Arc;
-use std::str::FromStr;
-use std::time::Duration;
 use futures::{SinkExt, StreamExt};
+use std::str::FromStr;
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::{mpsc, RwLock};
 use tokio::time::interval;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 
-use serde_json::json;
-use trader_core::{OrderBook, OrderBookLevel, ProviderError, QuoteData};
-use rust_decimal::Decimal;
 use chrono::Utc;
-use tracing::{info, error, debug};
+use rust_decimal::Decimal;
+use serde_json::json;
+use tracing::{debug, error, info};
+use trader_core::{OrderBook, OrderBookLevel, ProviderError, QuoteData};
 
 const LS_WS_URL: &str = "wss://openapi.ls-sec.co.kr:9443/websocket";
 const MAX_RECONNECT_ATTEMPTS: u32 = 5;
@@ -76,7 +76,10 @@ impl LsSecWebSocket {
                     attempts += 1;
                     error!("LS WebSocket error (attempt {}): {:?}", attempts, e);
                     if attempts >= MAX_RECONNECT_ATTEMPTS {
-                        let _ = self.tx.send(LsWsMessage::Error("Max reconnect attempts reached".into())).await;
+                        let _ = self
+                            .tx
+                            .send(LsWsMessage::Error("Max reconnect attempts reached".into()))
+                            .await;
                         break;
                     }
                     tokio::time::sleep(RECONNECT_DELAY).await;
@@ -85,10 +88,14 @@ impl LsSecWebSocket {
         }
     }
 
-    async fn run_session(&self, cmd_rx: &mut mpsc::Receiver<LsWsCommand>) -> Result<(), ProviderError> {
-        let (ws_stream, _) = connect_async(LS_WS_URL).await
+    async fn run_session(
+        &self,
+        cmd_rx: &mut mpsc::Receiver<LsWsCommand>,
+    ) -> Result<(), ProviderError> {
+        let (ws_stream, _) = connect_async(LS_WS_URL)
+            .await
             .map_err(|e| ProviderError::Network(e.to_string()))?;
-        
+
         let (mut ws_tx, mut ws_rx) = ws_stream.split::<Message>();
         info!("Connected to LS Securities WebSocket");
 
@@ -169,8 +176,15 @@ impl LsSecWebSocket {
         Ok(())
     }
 
-    async fn send_sub_msg<S>(&self, ws_tx: &mut S, tr_cd: &str, tr_key: &str, subscribe: bool) -> Result<(), ProviderError>
-    where S: futures::Sink<Message, Error = tokio_tungstenite::tungstenite::Error> + Unpin
+    async fn send_sub_msg<S>(
+        &self,
+        ws_tx: &mut S,
+        tr_cd: &str,
+        tr_key: &str,
+        subscribe: bool,
+    ) -> Result<(), ProviderError>
+    where
+        S: futures::Sink<Message, Error = tokio_tungstenite::tungstenite::Error> + Unpin,
     {
         let msg = json!({
             "header": {
@@ -183,9 +197,11 @@ impl LsSecWebSocket {
             }
         });
 
-        ws_tx.send(Message::Text(msg.to_string())).await
+        ws_tx
+            .send(Message::Text(msg.to_string()))
+            .await
             .map_err(|e| ProviderError::Network(e.to_string()))?;
-        
+
         Ok(())
     }
 
@@ -230,7 +246,9 @@ impl LsSecWebSocket {
         let fields: Vec<&str> = data.split('^').collect();
         // LS 체결가 데이터 (간략화된 파싱)
         // 필드: [symbol, time, price, sign, change, rate, volume, ...]
-        if fields.len() < 10 { return None; }
+        if fields.len() < 10 {
+            return None;
+        }
 
         Some(QuoteData {
             symbol: fields[0].to_string(),
@@ -241,7 +259,7 @@ impl LsSecWebSocket {
             low: Decimal::ZERO,
             open: Decimal::ZERO,
             prev_close: Decimal::ZERO,
-            volume: Decimal::from_str(fields[fields.len()-1]).unwrap_or_default(),
+            volume: Decimal::from_str(fields[fields.len() - 1]).unwrap_or_default(),
             trading_value: Decimal::ZERO,
             timestamp: Utc::now(),
         })
@@ -277,15 +295,18 @@ impl LsSecWebSocket {
         // 매도 호가 파싱 (5호가만 사용, 실제로는 10호가 모두 사용 가능)
         for i in 0..5 {
             let ask_price_idx = 7 + i; // 매도5~1호가 (필드 인덱스 조정)
-            let ask_qty_idx = 17 + i;  // 매도5~1잔량
+            let ask_qty_idx = 17 + i; // 매도5~1잔량
 
             if ask_price_idx < fields.len() && ask_qty_idx < fields.len() {
                 if let (Ok(price), Ok(qty)) = (
                     Decimal::from_str(fields[ask_price_idx]),
-                    Decimal::from_str(fields[ask_qty_idx])
+                    Decimal::from_str(fields[ask_qty_idx]),
                 ) {
                     if price > Decimal::ZERO && qty > Decimal::ZERO {
-                        asks.push(OrderBookLevel { price, quantity: qty });
+                        asks.push(OrderBookLevel {
+                            price,
+                            quantity: qty,
+                        });
                     }
                 }
             }
@@ -294,15 +315,18 @@ impl LsSecWebSocket {
         // 매수 호가 파싱 (5호가만 사용)
         for i in 0..5 {
             let bid_price_idx = 22 + i; // 매수1~5호가
-            let bid_qty_idx = 32 + i;   // 매수1~5잔량
+            let bid_qty_idx = 32 + i; // 매수1~5잔량
 
             if bid_price_idx < fields.len() && bid_qty_idx < fields.len() {
                 if let (Ok(price), Ok(qty)) = (
                     Decimal::from_str(fields[bid_price_idx]),
-                    Decimal::from_str(fields[bid_qty_idx])
+                    Decimal::from_str(fields[bid_qty_idx]),
                 ) {
                     if price > Decimal::ZERO && qty > Decimal::ZERO {
-                        bids.push(OrderBookLevel { price, quantity: qty });
+                        bids.push(OrderBookLevel {
+                            price,
+                            quantity: qty,
+                        });
                     }
                 }
             }

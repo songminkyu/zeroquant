@@ -397,7 +397,10 @@ impl KisKrWebSocket {
                         tokio::time::sleep(Duration::from_millis(SUBSCRIBE_INTERVAL_MS)).await;
                     }
                     let msg = self.create_subscribe_message(
-                        &approval_key, tr_id::WS_KR_TRADE, symbol, false,
+                        &approval_key,
+                        tr_id::WS_KR_TRADE,
+                        symbol,
+                        false,
                     );
                     let _ = write.send(Message::Text(msg)).await;
                 }
@@ -406,7 +409,10 @@ impl KisKrWebSocket {
                         tokio::time::sleep(Duration::from_millis(SUBSCRIBE_INTERVAL_MS)).await;
                     }
                     let msg = self.create_subscribe_message(
-                        &approval_key, tr_id::WS_KR_ORDERBOOK, symbol, false,
+                        &approval_key,
+                        tr_id::WS_KR_ORDERBOOK,
+                        symbol,
+                        false,
                     );
                     let _ = write.send(Message::Text(msg)).await;
                 }

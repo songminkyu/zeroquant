@@ -609,32 +609,30 @@ impl PatternRecognizer {
         // Tweezer Bottom (동일 저가)
         let tolerance =
             prev.range() * Decimal::try_from(self.config.price_tolerance).unwrap_or(dec!(0.02));
-        if (prev.low - curr.low).abs() <= tolerance
-            && prev.is_bearish() && curr.is_bullish() {
-                patterns.push(CandlestickPattern {
-                    pattern_type: CandlestickPatternType::TweezerBottom,
-                    end_index: index,
-                    candle_count: 2,
-                    confidence: 0.7,
-                    bullish: true,
-                    timestamp: curr.open_time,
-                    metadata: HashMap::new(),
-                });
-            }
+        if (prev.low - curr.low).abs() <= tolerance && prev.is_bearish() && curr.is_bullish() {
+            patterns.push(CandlestickPattern {
+                pattern_type: CandlestickPatternType::TweezerBottom,
+                end_index: index,
+                candle_count: 2,
+                confidence: 0.7,
+                bullish: true,
+                timestamp: curr.open_time,
+                metadata: HashMap::new(),
+            });
+        }
 
         // Tweezer Top (동일 고가)
-        if (prev.high - curr.high).abs() <= tolerance
-            && prev.is_bullish() && curr.is_bearish() {
-                patterns.push(CandlestickPattern {
-                    pattern_type: CandlestickPatternType::TweezerTop,
-                    end_index: index,
-                    candle_count: 2,
-                    confidence: 0.7,
-                    bullish: false,
-                    timestamp: curr.open_time,
-                    metadata: HashMap::new(),
-                });
-            }
+        if (prev.high - curr.high).abs() <= tolerance && prev.is_bullish() && curr.is_bearish() {
+            patterns.push(CandlestickPattern {
+                pattern_type: CandlestickPatternType::TweezerTop,
+                end_index: index,
+                candle_count: 2,
+                confidence: 0.7,
+                bullish: false,
+                timestamp: curr.open_time,
+                metadata: HashMap::new(),
+            });
+        }
 
         patterns
     }

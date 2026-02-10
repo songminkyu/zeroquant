@@ -100,7 +100,7 @@ async fn sync_krx_symbols(pool: &PgPool) -> Result<usize> {
              sector = EXCLUDED.sector, \
              yahoo_symbol = EXCLUDED.yahoo_symbol, \
              is_active = true, \
-             updated_at = NOW()"
+             updated_at = NOW()",
         );
 
         match query_builder.build().execute(pool).await {

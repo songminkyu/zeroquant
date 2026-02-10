@@ -145,7 +145,6 @@ pub struct ProcessorConfig {
     pub take_profit_pct: Decimal,
 }
 
-
 fn default_stop_loss_pct() -> Decimal {
     Decimal::new(5, 2) // 5%
 }
@@ -157,15 +156,15 @@ fn default_take_profit_pct() -> Decimal {
 impl Default for ProcessorConfig {
     fn default() -> Self {
         Self {
-            commission_rate: Decimal::new(1, 3),     // 0.1%
-            slippage_rate: Decimal::new(5, 4),       // 0.05%
+            commission_rate: Decimal::new(1, 3),       // 0.1%
+            slippage_rate: Decimal::new(5, 4),         // 0.05%
             max_position_size_pct: Decimal::new(2, 1), // 20%
             max_positions: 10,
             allow_short: false,
             min_strength: 0.0,
             auto_stop_loss: false,
             auto_take_profit: false,
-            stop_loss_pct: Decimal::new(5, 2),  // 5%
+            stop_loss_pct: Decimal::new(5, 2),    // 5%
             take_profit_pct: Decimal::new(10, 2), // 10%
         }
     }
@@ -215,7 +214,10 @@ pub trait SignalProcessor: Send + Sync {
         self.positions()
             .values()
             .map(|p| {
-                let price = current_prices.get(&p.symbol).copied().unwrap_or(p.entry_price);
+                let price = current_prices
+                    .get(&p.symbol)
+                    .copied()
+                    .unwrap_or(p.entry_price);
                 if p.side == Side::Buy {
                     (price - p.entry_price) * p.quantity
                 } else {
@@ -227,10 +229,7 @@ pub trait SignalProcessor: Send + Sync {
 
     /// 실현 손익 합계
     fn realized_pnl(&self) -> Decimal {
-        self.trades()
-            .iter()
-            .filter_map(|t| t.realized_pnl)
-            .sum()
+        self.trades().iter().filter_map(|t| t.realized_pnl).sum()
     }
 
     /// 총 자산 (잔고 + 포지션 평가액)
@@ -239,7 +238,10 @@ pub trait SignalProcessor: Send + Sync {
             .positions()
             .values()
             .map(|p| {
-                let price = current_prices.get(&p.symbol).copied().unwrap_or(p.entry_price);
+                let price = current_prices
+                    .get(&p.symbol)
+                    .copied()
+                    .unwrap_or(p.entry_price);
                 price * p.quantity
             })
             .sum();
@@ -269,7 +271,10 @@ pub trait SignalProcessor: Send + Sync {
         self.positions_by_group(group_id)
             .iter()
             .map(|p| {
-                let price = current_prices.get(&p.symbol).copied().unwrap_or(p.entry_price);
+                let price = current_prices
+                    .get(&p.symbol)
+                    .copied()
+                    .unwrap_or(p.entry_price);
                 if p.side == Side::Buy {
                     (price - p.entry_price) * p.quantity
                 } else {
@@ -312,8 +317,8 @@ pub fn calculate_position_size(
     price: Decimal,
 ) -> (Decimal, Decimal) {
     let max_amount = balance * max_position_size_pct;
-    let strength_dec = rust_decimal::prelude::FromPrimitive::from_f64(strength)
-        .unwrap_or(Decimal::ONE);
+    let strength_dec =
+        rust_decimal::prelude::FromPrimitive::from_f64(strength).unwrap_or(Decimal::ONE);
     let position_amount = max_amount * strength_dec;
     let quantity = position_amount / price;
     (position_amount, quantity)
@@ -358,10 +363,7 @@ pub fn calculate_realized_pnl(
 /// 청산 수량 결정.
 ///
 /// position_id 기반 전략은 전량 청산, 레거시 ReducePosition은 분할 청산합니다.
-pub fn determine_close_quantity(
-    signal: &Signal,
-    position_quantity: Decimal,
-) -> Decimal {
+pub fn determine_close_quantity(signal: &Signal, position_quantity: Decimal) -> Decimal {
     if signal.position_id.is_some() {
         // 개별 position_id 사용 시: 해당 포지션 전량 청산
         position_quantity
@@ -503,7 +505,7 @@ mod tests {
         let buy_price = apply_slippage(price, slippage_rate, Side::Buy);
         let sell_price = apply_slippage(price, slippage_rate, Side::Sell);
 
-        assert_eq!(buy_price, dec!(10010));  // 10000 + 10
+        assert_eq!(buy_price, dec!(10010)); // 10000 + 10
         assert_eq!(sell_price, dec!(9990)); // 10000 - 10
     }
 }

@@ -302,14 +302,15 @@ pub async fn get_seven_factor(
         )
     })?;
 
-    let result = GlobalScoreRepository::get_seven_factor(db_pool, data_provider, &ticker, &query.market)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("7Factor 조회 실패: {}", e),
-            )
-        })?;
+    let result =
+        GlobalScoreRepository::get_seven_factor(db_pool, data_provider, &ticker, &query.market)
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("7Factor 조회 실패: {}", e),
+                )
+            })?;
 
     result
         .ok_or_else(|| {
@@ -362,13 +363,13 @@ pub async fn get_seven_factor_batch(
         &request.tickers,
         &request.market,
     )
-            .await
-            .map_err(|e| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("7Factor 일괄 조회 실패: {}", e),
-                )
-            })?;
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("7Factor 일괄 조회 실패: {}", e),
+        )
+    })?;
 
     let total = factors.len();
 

@@ -368,12 +368,7 @@ impl KrxApiClient {
         api_id: &str,
         params: &HashMap<&str, &str>,
     ) -> Result<Vec<T>, Box<dyn std::error::Error + Send + Sync>> {
-        let url = format!(
-            "{}/svc/apis/{}/{}",
-            self.base_url,
-            category.path(),
-            api_id
-        );
+        let url = format!("{}/svc/apis/{}/{}", self.base_url, category.path(), api_id);
 
         tracing::debug!(
             api_id = api_id,

@@ -15,7 +15,9 @@ use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use trader_core::{Kline, MarketData, Position, Side, StrategyContext, Timeframe};
-use trader_strategy::strategies::asset_allocation::{AssetAllocationConfig, AssetAllocationStrategy};
+use trader_strategy::strategies::asset_allocation::{
+    AssetAllocationConfig, AssetAllocationStrategy,
+};
 use trader_strategy::Strategy;
 
 // ============================================================================
@@ -130,8 +132,6 @@ async fn feed_rising_prices_in_month(
         let _ = strategy.on_market_data(&data).await;
     }
 }
-
-
 
 /// 상승 추세 klines 데이터 생성 (StrategyContext용)
 fn generate_rising_klines(ticker: &str, days: usize, base_price: Decimal) -> Vec<Kline> {
@@ -304,7 +304,7 @@ mod initialize_tests {
     async fn custom_config_initializes_via_json() {
         // JSON으로 Custom variant 직접 전달하는 경우 테스트
         let mut strategy = AssetAllocationStrategy::new();
-        let config = simple_test_config();  // variant: "Custom"
+        let config = simple_test_config(); // variant: "Custom"
 
         let result = strategy.initialize(config).await;
         assert!(result.is_ok());
@@ -388,11 +388,8 @@ mod canary_mode_tests {
         strategy.initialize(config).await.unwrap();
 
         // StrategyContext에 상승 추세 데이터 설정 (1개월 모멘텀용 35일)
-        let context = setup_context_with_rising_prices(
-            &["VWO", "SPY", "VEA", "AGG", "BIL"],
-            35,
-            dec!(100),
-        );
+        let context =
+            setup_context_with_rising_prices(&["VWO", "SPY", "VEA", "AGG", "BIL"], 35, dec!(100));
         strategy.set_context(context);
 
         // 현재 시점 데이터로 리밸런싱 트리거
@@ -420,8 +417,8 @@ mod canary_mode_tests {
 
         // StrategyContext에 혼합 데이터 설정 (VWO만 하락)
         let context = setup_context_with_mixed_prices(
-            &["SPY", "VEA", "AGG", "BIL"],  // 상승 추세
-            &["VWO"],                        // 하락 추세 (카나리아)
+            &["SPY", "VEA", "AGG", "BIL"], // 상승 추세
+            &["VWO"],                      // 하락 추세 (카나리아)
             35,
             dec!(100),
         );

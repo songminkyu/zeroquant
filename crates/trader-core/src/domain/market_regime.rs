@@ -124,7 +124,6 @@ impl fmt::Display for MarketRegime {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

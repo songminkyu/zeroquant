@@ -4,14 +4,14 @@
 
 use crate::connector::bithumb::BithumbClient;
 use async_trait::async_trait;
+use rust_decimal::Decimal;
 use std::sync::Arc;
 use tracing::{debug, info};
 use trader_core::cache::ExchangeCache;
-use rust_decimal::Decimal;
 use trader_core::domain::{
     ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse, MarketDataProvider,
-    OrderExecutionProvider, OrderRequest, OrderResponse, OrderType,
-    PendingOrder, ProviderError, QuoteData, Side, StrategyAccountInfo, StrategyPositionInfo,
+    OrderExecutionProvider, OrderRequest, OrderResponse, OrderType, PendingOrder, ProviderError,
+    QuoteData, Side, StrategyAccountInfo, StrategyPositionInfo,
 };
 
 /// Bithumb ExchangeProvider 구현.
@@ -129,10 +129,7 @@ impl MarketDataProvider for BithumbExchangeProvider {
 
 #[async_trait]
 impl OrderExecutionProvider for BithumbExchangeProvider {
-    async fn place_order(
-        &self,
-        request: &OrderRequest,
-    ) -> Result<OrderResponse, ProviderError> {
+    async fn place_order(&self, request: &OrderRequest) -> Result<OrderResponse, ProviderError> {
         // Side 변환: Buy → bid, Sell → ask
         let side = match request.side {
             Side::Buy => "bid",
@@ -150,8 +147,10 @@ impl OrderExecutionProvider for BithumbExchangeProvider {
                     Side::Sell => ("market", true, false),
                 }
             }
-            OrderType::StopLoss | OrderType::StopLossLimit
-            | OrderType::TakeProfit | OrderType::TakeProfitLimit => {
+            OrderType::StopLoss
+            | OrderType::StopLossLimit
+            | OrderType::TakeProfit
+            | OrderType::TakeProfitLimit => {
                 // Bithumb 미지원 → 지정가로 대체
                 ("limit", true, true)
             }
@@ -184,13 +183,16 @@ impl OrderExecutionProvider for BithumbExchangeProvider {
             "Bithumb 주문 생성"
         );
 
-        let result = self.client.place_order(
-            &request.ticker,
-            side,
-            ord_type,
-            volume_str.as_deref(),
-            price_str.as_deref(),
-        ).await?;
+        let result = self
+            .client
+            .place_order(
+                &request.ticker,
+                side,
+                ord_type,
+                volume_str.as_deref(),
+                price_str.as_deref(),
+            )
+            .await?;
 
         // 캐시 무효화
         self.cache.invalidate_all().await;
@@ -236,17 +238,18 @@ impl OrderExecutionProvider for BithumbExchangeProvider {
         let volume = quantity
             .map(|q| q.to_string())
             .or(original.remaining_volume.clone());
-        let new_price = price
-            .map(|p| p.to_string())
-            .or(original.price.clone());
+        let new_price = price.map(|p| p.to_string()).or(original.price.clone());
 
-        let result = self.client.place_order(
-            &original.market,
-            &original.side,
-            &original.ord_type,
-            volume.as_deref(),
-            new_price.as_deref(),
-        ).await?;
+        let result = self
+            .client
+            .place_order(
+                &original.market,
+                &original.side,
+                &original.ord_type,
+                volume.as_deref(),
+                new_price.as_deref(),
+            )
+            .await?;
 
         // 캐시 무효화
         self.cache.invalidate_all().await;

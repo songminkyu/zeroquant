@@ -35,27 +35,23 @@
 //! processor.sync_positions(&mut strategy, executor.positions(), kline, exchange, ticker).await?;
 //! ```
 
+use crate::{
+    GlobalScorer, GlobalScorerParams, IndicatorEngine, RouteStateCalculator,
+    StructuralFeaturesCalculator, TimeframeAligner,
+};
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use std::collections::HashMap;
-use tracing::debug;
-use trader_core::{
-    unrealized_pnl, Kline, MarketData, Position, RouteState, ScreeningCalculator,
-    Side, Signal, SignalType, StrategyContext, Timeframe,
-};
-use uuid::Uuid;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use crate::{
-    IndicatorEngine,
-    StructuralFeaturesCalculator,
-    RouteStateCalculator,
-    GlobalScorer,
-    GlobalScorerParams,
-    TimeframeAligner,
-};
+use tracing::debug;
 use trader_core::MarketType;
+use trader_core::{
+    unrealized_pnl, Kline, MarketData, Position, RouteState, ScreeningCalculator, Side, Signal,
+    SignalType, StrategyContext, Timeframe,
+};
 use trader_execution::ProcessorPosition;
+use uuid::Uuid;
 
 use super::BacktestError;
 
@@ -167,19 +163,22 @@ impl CandleProcessor {
     ) -> Result<(), BacktestError> {
         // 현재 시간/가격 업데이트
         self.current_time = kline.close_time;
-        self.current_prices.insert(kline.ticker.to_string(), kline.close);
+        self.current_prices
+            .insert(kline.ticker.to_string(), kline.close);
 
         // === 멀티 심볼 klines 업데이트 ===
         self.update_multi_symbol_klines(context, ticker).await;
 
         // === 주 심볼 지표 계산 (StructuralFeatures, RouteState, GlobalScore) ===
         if idx >= MIN_CANDLES_FOR_INDICATORS {
-            self.update_primary_indicators(idx, historical_klines, context, ticker).await;
+            self.update_primary_indicators(idx, historical_klines, context, ticker)
+                .await;
         }
 
         // === 스크리닝 파이프라인 ===
         if let Some(screening_calc) = screening_calculator {
-            self.update_screening(idx, kline, context, screening_calc).await;
+            self.update_screening(idx, kline, context, screening_calc)
+                .await;
         }
 
         Ok(())
@@ -233,10 +232,8 @@ impl CandleProcessor {
             };
 
             // TimeframeAligner로 현재 시점 기준 유효한 데이터만 필터링
-            let aligned_secondary = TimeframeAligner::align_multi_timeframe(
-                &secondary_data,
-                kline.close_time,
-            );
+            let aligned_secondary =
+                TimeframeAligner::align_multi_timeframe(&secondary_data, kline.close_time);
 
             strategy
                 .on_multi_timeframe_data(&market_data, &aligned_secondary)
@@ -254,7 +251,8 @@ impl CandleProcessor {
         // 2. 다른 심볼들의 시장 데이터도 전달
         let other_klines: Vec<Kline> = {
             let ctx_read = context.read().await;
-            ctx_read.klines_by_timeframe
+            ctx_read
+                .klines_by_timeframe
                 .iter()
                 .filter(|(symbol, _)| *symbol != ticker)
                 .filter_map(|(_, tf_map)| tf_map.get(&Timeframe::D1))
@@ -277,9 +275,13 @@ impl CandleProcessor {
         }
 
         // Entry/Exit 파티셔닝
-        let (entry_signals, exit_signals): (Vec<_>, Vec<_>) = all_signals.into_iter().partition(|s| {
-            matches!(s.signal_type, SignalType::Entry | SignalType::AddToPosition | SignalType::Scale)
-        });
+        let (entry_signals, exit_signals): (Vec<_>, Vec<_>) =
+            all_signals.into_iter().partition(|s| {
+                matches!(
+                    s.signal_type,
+                    SignalType::Entry | SignalType::AddToPosition | SignalType::Scale
+                )
+            });
 
         Ok(PartitionedSignals {
             entry_signals,
@@ -332,7 +334,9 @@ impl CandleProcessor {
                 closed_at: None,
                 metadata: serde_json::Value::Null,
             };
-            strategy.on_position_update(&position).await
+            strategy
+                .on_position_update(&position)
+                .await
                 .map_err(|e| BacktestError::StrategyError(e.to_string()))?;
         }
 
@@ -354,7 +358,9 @@ impl CandleProcessor {
                 closed_at: None,
                 metadata: serde_json::Value::Null,
             };
-            strategy.on_position_update(&empty_position).await
+            strategy
+                .on_position_update(&empty_position)
+                .await
                 .map_err(|e| BacktestError::StrategyError(e.to_string()))?;
         }
 
@@ -383,16 +389,19 @@ impl CandleProcessor {
             ctx.context,
             ctx.ticker,
             ctx.screening_calculator,
-        ).await?;
+        )
+        .await?;
 
         // 2. 시그널 생성
-        let signals = self.generate_signals(
-            strategy,
-            ctx.kline,
-            ctx.context,
-            ctx.ticker,
-            ctx.exchange_name,
-        ).await?;
+        let signals = self
+            .generate_signals(
+                strategy,
+                ctx.kline,
+                ctx.context,
+                ctx.ticker,
+                ctx.exchange_name,
+            )
+            .await?;
 
         Ok(signals)
     }
@@ -410,7 +419,9 @@ impl CandleProcessor {
         // StrategyContext에서 등록된 심볼 목록 가져오기 (주 심볼 제외)
         let symbols: Vec<String> = {
             let ctx_read = context.read().await;
-            ctx_read.klines_by_timeframe.keys()
+            ctx_read
+                .klines_by_timeframe
+                .keys()
                 .filter(|s| *s != ticker)
                 .cloned()
                 .collect()
@@ -420,11 +431,13 @@ impl CandleProcessor {
             // 해당 심볼의 현재 시점까지 klines 필터링
             let symbol_klines: Vec<Kline> = {
                 let ctx_read = context.read().await;
-                ctx_read.klines_by_timeframe
+                ctx_read
+                    .klines_by_timeframe
                     .get(&symbol)
                     .and_then(|tf_map| tf_map.get(&Timeframe::D1))
                     .map(|klines| {
-                        klines.iter()
+                        klines
+                            .iter()
                             .filter(|k| k.close_time <= self.current_time)
                             .cloned()
                             .collect()
@@ -434,7 +447,8 @@ impl CandleProcessor {
 
             // 현재 가격 업데이트
             if let Some(current_kline) = symbol_klines.last() {
-                self.current_prices.insert(symbol.clone(), current_kline.close);
+                self.current_prices
+                    .insert(symbol.clone(), current_kline.close);
             }
 
             // 충분한 데이터가 있을 때만 지표 계산 및 klines 업데이트
@@ -445,7 +459,9 @@ impl CandleProcessor {
                 ctx_write.update_klines(&symbol, Timeframe::D1, symbol_klines.clone());
 
                 // RouteState - 백테스트에서는 Armed로 설정
-                ctx_write.route_states.insert(symbol.clone(), RouteState::Armed);
+                ctx_write
+                    .route_states
+                    .insert(symbol.clone(), RouteState::Armed);
 
                 // GlobalScore 계산 (실제 캔들 데이터 기반)
                 let scorer = GlobalScorer::new();
@@ -481,7 +497,11 @@ impl CandleProcessor {
 
         // 디버그: 첫 계산 시 로그 출력
         if idx == MIN_CANDLES_FOR_INDICATORS {
-            match StructuralFeaturesCalculator::from_candles(ticker, historical_klines, &self.indicator_engine) {
+            match StructuralFeaturesCalculator::from_candles(
+                ticker,
+                historical_klines,
+                &self.indicator_engine,
+            ) {
                 Ok(f) => debug!(
                     ticker = %ticker,
                     bb_lower = %f.bb_lower,
@@ -517,12 +537,16 @@ impl CandleProcessor {
 
             // StructuralFeatures 업데이트
             if let Some(features) = features_opt {
-                ctx_write.structural_features.insert(ticker.to_string(), features);
+                ctx_write
+                    .structural_features
+                    .insert(ticker.to_string(), features);
             }
 
             // RouteState - 백테스트에서는 Armed로 강제 설정
             // 전략 로직 자체를 검증하기 위해 RouteState 필터 우회
-            ctx_write.route_states.insert(ticker.to_string(), RouteState::Armed);
+            ctx_write
+                .route_states
+                .insert(ticker.to_string(), RouteState::Armed);
 
             // GlobalScore - 백테스트에서는 높은 점수로 강제 설정
             // 전략 로직 자체를 검증하기 위해 GlobalScore 필터 우회
@@ -547,18 +571,18 @@ impl CandleProcessor {
         // 스크리닝 업데이트 조건 체크
         let last_screening_update = {
             let ctx_read = context.read().await;
-            if ctx_read.screening_results.contains_key(&screening_calc.config().preset_name) {
+            if ctx_read
+                .screening_results
+                .contains_key(&screening_calc.config().preset_name)
+            {
                 Some(ctx_read.last_analytics_sync)
             } else {
                 None
             }
         };
 
-        let should_update = screening_calc.should_update(
-            idx,
-            kline.close_time,
-            last_screening_update,
-        );
+        let should_update =
+            screening_calc.should_update(idx, kline.close_time, last_screening_update);
 
         if should_update {
             // 모든 심볼의 현재 시점까지 klines 수집
@@ -589,10 +613,8 @@ impl CandleProcessor {
             );
 
             // 스크리닝 결과 계산
-            let screening_results = screening_calc.calculate_from_klines(
-                &all_klines,
-                self.current_time,
-            );
+            let screening_results =
+                screening_calc.calculate_from_klines(&all_klines, self.current_time);
 
             let results_count = screening_results.len();
 

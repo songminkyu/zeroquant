@@ -1,12 +1,12 @@
 ---
 name: add-exchange
-description: 새 거래소 커넥터 추가 체크리스트. connector + provider + traits 구현.
+description: Scaffolds a new exchange connector with connector, provider, and trait implementations. Use when integrating a new exchange.
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "<거래소명_snake_case> [시장유형: kr|us|crypto|global]"
 allowed-tools: Read, Grep, Edit, Write, Bash(cargo *)
 context: fork
-  agent: rust-impl
+agent: rust-impl
 ---
 
 # 거래소 커넥터 추가 워크플로우
@@ -130,3 +130,8 @@ cargo check -p trader-exchange
 cargo clippy -p trader-exchange -- -D warnings
 cargo test -p trader-exchange -- $ARGUMENTS[0]
 ```
+
+### 검증 실패 시
+1. 에러 메시지에서 파일/라인 확인
+2. 해당 파일 수정
+3. 검증 명령 재실행 — 통과할 때까지 반복

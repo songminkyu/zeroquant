@@ -82,8 +82,7 @@ impl Default for FactorWeights {
 }
 
 /// GlobalScorer 입력 파라미터.
-#[derive(Debug, Clone)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub struct GlobalScorerParams {
     /// 심볼
     pub symbol: Option<String>,
@@ -113,7 +112,6 @@ pub struct GlobalScorerParams {
     /// None이면 ERS는 0점으로 처리됩니다.
     pub structural_features: Option<StructuralFeatures>,
 }
-
 
 /// Global Score 계산기.
 ///

@@ -58,11 +58,7 @@ impl<'a> MigrationValidator<'a> {
             let mut issue = ValidationIssue::new(
                 Severity::Warning,
                 "DUP001",
-                &format!(
-                    "'{}' 객체가 {} 곳에서 정의됨",
-                    object,
-                    locations.len()
-                ),
+                &format!("'{}' 객체가 {} 곳에서 정의됨", object, locations.len()),
             )
             .with_object(&object);
 
@@ -96,14 +92,12 @@ impl<'a> MigrationValidator<'a> {
                     let issue = ValidationIssue::new(
                         severity,
                         "CASC001",
-                        "CASCADE 사용 - 의존 객체가 자동 삭제될 수 있음"                        ,
+                        "CASCADE 사용 - 의존 객체가 자동 삭제될 수 있음",
                     )
                     .with_file(&file.name)
                     .with_line(stmt.line_number)
                     .with_object(&stmt.object_name)
-                    .with_suggestion(
-                        "명시적 삭제 순서 권장. CASCADE 제거 후 수동 정리.",
-                    );
+                    .with_suggestion("명시적 삭제 순서 권장. CASCADE 제거 후 수동 정리.");
 
                     report.add_issue(issue);
                 }
@@ -306,7 +300,8 @@ impl<'a> MigrationValidator<'a> {
                 for (file_name, line) in &locations {
                     // 해당 문장 찾기
                     if let Some(file) = self.files.iter().find(|f| &f.name == file_name) {
-                        if let Some(stmt) = file.statements.iter().find(|s| s.line_number == *line) {
+                        if let Some(stmt) = file.statements.iter().find(|s| s.line_number == *line)
+                        {
                             if !stmt.if_not_exists {
                                 let issue = ValidationIssue::new(
                                     Severity::Warning,
@@ -319,9 +314,7 @@ impl<'a> MigrationValidator<'a> {
                                 .with_file(file_name)
                                 .with_line(*line)
                                 .with_object(&table)
-                                .with_suggestion(
-                                    "중복 정의 제거 또는 IF NOT EXISTS 추가 필요.",
-                                );
+                                .with_suggestion("중복 정의 제거 또는 IF NOT EXISTS 추가 필요.");
 
                                 report.add_issue(issue);
                             }
@@ -346,10 +339,7 @@ impl<'a> MigrationValidator<'a> {
                     let issue = ValidationIssue::new(
                         Severity::Warning,
                         "DATA001",
-                        &format!(
-                            "테이블 '{}' 삭제 - 데이터 손실 가능",
-                            stmt.object_name
-                        ),
+                        &format!("테이블 '{}' 삭제 - 데이터 손실 가능", stmt.object_name),
                     )
                     .with_file(&file.name)
                     .with_line(stmt.line_number)
@@ -388,7 +378,9 @@ impl<'a> MigrationValidator<'a> {
                         .with_file(&file.name)
                         .with_line(stmt.line_number)
                         .with_object(&stmt.object_name)
-                        .with_suggestion("타입 변환 시 데이터 손실 가능. USING 절로 변환 로직 명시 권장.");
+                        .with_suggestion(
+                            "타입 변환 시 데이터 손실 가능. USING 절로 변환 로직 명시 권장.",
+                        );
 
                         report.add_issue(issue);
                     }
@@ -400,11 +392,18 @@ impl<'a> MigrationValidator<'a> {
     /// 시스템 객체 여부 확인
     fn is_system_object(&self, name: &str) -> bool {
         let system_names = [
-            "pg_", "information_schema", "now", "current_timestamp",
-            "time_bucket", "create_hypertable", "gen_random_uuid",
+            "pg_",
+            "information_schema",
+            "now",
+            "current_timestamp",
+            "time_bucket",
+            "create_hypertable",
+            "gen_random_uuid",
         ];
 
-        system_names.iter().any(|s| name.starts_with(s) || name == *s)
+        system_names
+            .iter()
+            .any(|s| name.starts_with(s) || name == *s)
     }
 
     /// 파일 순서 번호 조회
@@ -432,17 +431,10 @@ pub fn generate_safety_checklist(report: &ValidationReport) -> String {
     checklist.push('\n');
 
     // CASCADE 사용 시 추가 체크
-    let cascade_count = report
-        .issues
-        .iter()
-        .filter(|i| i.code == "CASC001")
-        .count();
+    let cascade_count = report.issues.iter().filter(|i| i.code == "CASC001").count();
 
     if cascade_count > 0 {
-        checklist.push_str(&format!(
-            "□ 2. CASCADE 사용 확인 ({} 건)\n",
-            cascade_count
-        ));
+        checklist.push_str(&format!("□ 2. CASCADE 사용 확인 ({} 건)\n", cascade_count));
         checklist.push_str("   □ CASCADE로 삭제될 의존 객체 목록 확인\n");
         checklist.push_str("   □ 해당 데이터 백업 또는 마이그레이션\n");
         checklist.push('\n');
@@ -456,10 +448,7 @@ pub fn generate_safety_checklist(report: &ValidationReport) -> String {
         .collect();
 
     if !data_issues.is_empty() {
-        checklist.push_str(&format!(
-            "□ 3. 데이터 안전성 ({} 건)\n",
-            data_issues.len()
-        ));
+        checklist.push_str(&format!("□ 3. 데이터 안전성 ({} 건)\n", data_issues.len()));
         for issue in data_issues {
             if let Some(ref obj) = issue.object {
                 checklist.push_str(&format!("   □ '{}' 데이터 백업\n", obj));
@@ -581,8 +570,7 @@ mod tests {
             "CASCADE 사용",
         ));
         report.add_issue(
-            ValidationIssue::new(Severity::Warning, "DATA001", "데이터 손실")
-                .with_object("users"),
+            ValidationIssue::new(Severity::Warning, "DATA001", "데이터 손실").with_object("users"),
         );
 
         let checklist = generate_safety_checklist(&report);

@@ -76,7 +76,10 @@ impl KisClient {
     }
 
     /// 재시도 설정을 포함한 통합 클라이언트 생성.
-    pub fn with_retry(oauth: Arc<KisOAuth>, retry_config: RetryConfig) -> Result<Self, ExchangeError> {
+    pub fn with_retry(
+        oauth: Arc<KisOAuth>,
+        retry_config: RetryConfig,
+    ) -> Result<Self, ExchangeError> {
         let kr_client = KisKrClient::with_shared_oauth_and_retry(Arc::clone(&oauth), retry_config)?;
         let us_client = KisUsClient::with_shared_oauth(oauth)?;
 
@@ -154,10 +157,7 @@ impl KisClient {
     }
 
     /// 국내 호가 조회.
-    pub async fn get_kr_orderbook(
-        &self,
-        symbol: &str,
-    ) -> Result<SimpleOrderBook, ExchangeError> {
+    pub async fn get_kr_orderbook(&self, symbol: &str) -> Result<SimpleOrderBook, ExchangeError> {
         let ob = self.kr_client.get_orderbook(symbol).await?;
         Ok(SimpleOrderBook {
             ask_price: ob.ask_price_1,
@@ -321,7 +321,10 @@ impl KisClient {
         symbol: &str,
         quantity: u32,
     ) -> Result<OrderResponse, ExchangeError> {
-        let resp = self.kr_client.cancel_order(order_no, symbol, quantity).await?;
+        let resp = self
+            .kr_client
+            .cancel_order(order_no, symbol, quantity)
+            .await?;
         Ok(kr_order_to_response(resp))
     }
 

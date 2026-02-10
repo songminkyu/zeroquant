@@ -35,14 +35,14 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
-use utoipa::ToSchema;
+use trader_analytics::backtest::CandleProcessor;
 use trader_core::{
     unrealized_pnl, Kline, Side, Signal, SignalMarker, SignalType, StrategyContext, Timeframe,
 };
 use trader_data::cache::CachedHistoricalDataProvider;
 use trader_execution::{ProcessorConfig, SignalProcessor, SimulatedExecutor};
 use trader_strategy::{Strategy, StrategyRegistry};
-use trader_analytics::backtest::CandleProcessor;
+use utoipa::ToSchema;
 
 use crate::state::AppState;
 
@@ -404,8 +404,12 @@ impl SimulationEngine {
         };
 
         // 2. 전략 메타 조회
-        let meta = StrategyRegistry::find(&strategy_type)
-            .ok_or_else(|| format!("Unknown strategy type: {} (from id: {})", strategy_type, strategy_id))?;
+        let meta = StrategyRegistry::find(&strategy_type).ok_or_else(|| {
+            format!(
+                "Unknown strategy type: {} (from id: {})",
+                strategy_type, strategy_id
+            )
+        })?;
 
         // 2. 심볼 결정 (전략 초기화 전에 parameters에서 직접 추출)
         // 우선순위: 1) symbols 파라미터 → 2) parameters.ticker → 3) default_tickers
@@ -527,7 +531,13 @@ impl SimulationEngine {
         // 우선순위: 전략 기본 → 1m → 5m → 15m → 1h → 1d
         let timeframe_priority = [
             meta.default_timeframe,
-            "1m", "5m", "15m", "30m", "1h", "4h", "1d",
+            "1m",
+            "5m",
+            "15m",
+            "30m",
+            "1h",
+            "4h",
+            "1d",
         ];
 
         let mut klines = Vec::new();
@@ -535,13 +545,17 @@ impl SimulationEngine {
 
         for tf_str in &timeframe_priority {
             if let Ok(tf) = tf_str.parse::<Timeframe>() {
-                if let Ok(data) = data_provider.get_klines_range(&symbol, tf, start, end).await {
+                if let Ok(data) = data_provider
+                    .get_klines_range(&symbol, tf, start, end)
+                    .await
+                {
                     if !data.is_empty() {
                         klines = data;
                         selected_timeframe = tf;
                         tracing::info!(
                             "시뮬레이션 타임프레임: {} (전략 기본: {})",
-                            tf, meta.default_timeframe
+                            tf,
+                            meta.default_timeframe
                         );
                         break;
                     }
@@ -621,19 +635,27 @@ impl SimulationEngine {
         let exchange_name = "simulation";
 
         // CandleProcessor, StrategyContext, Strategy 존재 확인
-        let context = self.context.as_ref()
+        let context = self
+            .context
+            .as_ref()
             .ok_or_else(|| "StrategyContext가 초기화되지 않았습니다".to_string())?
             .clone();
-        let ticker = self.ticker.as_ref()
+        let ticker = self
+            .ticker
+            .as_ref()
             .ok_or_else(|| "티커가 설정되지 않았습니다".to_string())?
             .clone();
 
         // 1. StrategyContext 업데이트 + 시그널 생성 (공통 로직)
-        let candle_processor = self.candle_processor.as_mut()
+        let candle_processor = self
+            .candle_processor
+            .as_mut()
             .ok_or_else(|| "CandleProcessor가 초기화되지 않았습니다".to_string())?;
 
         let historical_klines = &self.klines[..=idx];
-        let strategy = self.strategy.as_mut()
+        let strategy = self
+            .strategy
+            .as_mut()
             .ok_or_else(|| "전략이 초기화되지 않았습니다".to_string())?;
 
         let ctx = trader_analytics::ProcessCandleContext {
@@ -660,12 +682,22 @@ impl SimulationEngine {
         }
 
         // 3. 포지션 동기화 (공통 로직)
-        let candle_processor = self.candle_processor.as_ref()
+        let candle_processor = self
+            .candle_processor
+            .as_ref()
             .ok_or_else(|| "CandleProcessor가 초기화되지 않았습니다".to_string())?;
-        let strategy = self.strategy.as_mut()
+        let strategy = self
+            .strategy
+            .as_mut()
             .ok_or_else(|| "전략이 초기화되지 않았습니다".to_string())?;
         candle_processor
-            .sync_positions(strategy.as_mut(), self.executor.positions(), &kline, exchange_name, &ticker)
+            .sync_positions(
+                strategy.as_mut(),
+                self.executor.positions(),
+                &kline,
+                exchange_name,
+                &ticker,
+            )
             .await
             .map_err(|e| format!("포지션 동기화 오류: {}", e))?;
 
@@ -796,11 +828,16 @@ impl SimulationEngine {
 
         // 현재 시뮬레이션 시간 (없으면 마지막 캔들 시간)
         let timestamp = self.current_simulation_time.unwrap_or_else(|| {
-            self.klines.last().map(|k| k.close_time).unwrap_or_else(Utc::now)
+            self.klines
+                .last()
+                .map(|k| k.close_time)
+                .unwrap_or_else(Utc::now)
         });
 
         // 모든 포지션 청산
-        let results = self.executor.close_all_positions(&current_prices, timestamp);
+        let results = self
+            .executor
+            .close_all_positions(&current_prices, timestamp);
         let closed_count = results.len();
 
         // 청산 거래 로깅
@@ -1162,7 +1199,10 @@ pub async fn start_simulation(
         } else {
             // 전략 엔진에서 설정 조회 시도
             let strategy_engine = state.strategy_engine.read().await;
-            match strategy_engine.get_strategy_config(&request.strategy_id).await {
+            match strategy_engine
+                .get_strategy_config(&request.strategy_id)
+                .await
+            {
                 Ok(config) => {
                     tracing::info!(
                         strategy_id = %request.strategy_id,

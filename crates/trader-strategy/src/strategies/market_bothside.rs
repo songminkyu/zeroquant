@@ -46,77 +46,165 @@ use crate::strategies::common::ExitConfig;
 pub struct MarketBothSideConfig {
     /// 레버리지 ETF 티커 (기본값: 122630)
     #[serde(default = "default_leverage_ticker")]
-    #[schema(label = "레버리지 ETF 티커", field_type = "symbol", default = "122630", section = "asset")]
+    #[schema(
+        label = "레버리지 ETF 티커",
+        field_type = "symbol",
+        default = "122630",
+        section = "asset"
+    )]
     pub leverage_ticker: String,
 
     /// 인버스 ETF 티커 (기본값: 252670)
     #[serde(default = "default_inverse_ticker")]
-    #[schema(label = "인버스 ETF 티커", field_type = "symbol", default = "252670", section = "asset")]
+    #[schema(
+        label = "인버스 ETF 티커",
+        field_type = "symbol",
+        default = "252670",
+        section = "asset"
+    )]
     pub inverse_ticker: String,
 
     /// 레버리지 목표 비율 (기본값: 0.7)
     #[serde(default = "default_leverage_ratio")]
-    #[schema(label = "레버리지 비율", min = 0.1, max = 1, default = 0.7, section = "sizing")]
+    #[schema(
+        label = "레버리지 비율",
+        min = 0.1,
+        max = 1,
+        default = 0.7,
+        section = "sizing"
+    )]
     pub leverage_ratio: f64,
 
     /// 인버스 목표 비율 (기본값: 0.3)
     #[serde(default = "default_inverse_ratio")]
-    #[schema(label = "인버스 비율", min = 0, max = 0.9, default = 0.3, section = "sizing")]
+    #[schema(
+        label = "인버스 비율",
+        min = 0,
+        max = 0.9,
+        default = 0.3,
+        section = "sizing"
+    )]
     pub inverse_ratio: f64,
 
     /// MA3 기간 (기본값: 3)
     #[serde(default = "default_ma3")]
-    #[schema(label = "MA3 기간", min = 2, max = 10, default = 3, section = "indicator")]
+    #[schema(
+        label = "MA3 기간",
+        min = 2,
+        max = 10,
+        default = 3,
+        section = "indicator"
+    )]
     pub ma3_period: usize,
 
     /// MA6 기간 (기본값: 6)
     #[serde(default = "default_ma6")]
-    #[schema(label = "MA6 기간", min = 3, max = 15, default = 6, section = "indicator")]
+    #[schema(
+        label = "MA6 기간",
+        min = 3,
+        max = 15,
+        default = 6,
+        section = "indicator"
+    )]
     pub ma6_period: usize,
 
     /// MA19 기간 (기본값: 19)
     #[serde(default = "default_ma19")]
-    #[schema(label = "MA19 기간", min = 10, max = 30, default = 19, section = "indicator")]
+    #[schema(
+        label = "MA19 기간",
+        min = 10,
+        max = 30,
+        default = 19,
+        section = "indicator"
+    )]
     pub ma19_period: usize,
 
     /// MA60 기간 (기본값: 60)
     #[serde(default = "default_ma60")]
-    #[schema(label = "MA60 기간", min = 30, max = 120, default = 60, section = "indicator")]
+    #[schema(
+        label = "MA60 기간",
+        min = 30,
+        max = 120,
+        default = 60,
+        section = "indicator"
+    )]
     pub ma60_period: usize,
 
     /// 이격도 상한 (기본값: 106%)
     #[serde(default = "default_disparity_upper")]
-    #[schema(label = "이격도 상한 (%)", min = 100, max = 130, default = 106, section = "indicator")]
+    #[schema(
+        label = "이격도 상한 (%)",
+        min = 100,
+        max = 130,
+        default = 106,
+        section = "indicator"
+    )]
     pub disparity_upper: f64,
 
     /// 이격도 하한 (기본값: 94%)
     #[serde(default = "default_disparity_lower")]
-    #[schema(label = "이격도 하한 (%)", min = 70, max = 100, default = 94, section = "indicator")]
+    #[schema(
+        label = "이격도 하한 (%)",
+        min = 70,
+        max = 100,
+        default = 94,
+        section = "indicator"
+    )]
     pub disparity_lower: f64,
 
     /// RSI 기간 (기본값: 14)
     #[serde(default = "default_rsi_period")]
-    #[schema(label = "RSI 기간", min = 7, max = 30, default = 14, section = "indicator")]
+    #[schema(
+        label = "RSI 기간",
+        min = 7,
+        max = 30,
+        default = 14,
+        section = "indicator"
+    )]
     pub rsi_period: usize,
 
     /// RSI 과매도 (기본값: 30)
     #[serde(default = "default_rsi_oversold")]
-    #[schema(label = "RSI 과매도", min = 10, max = 40, default = 30, section = "indicator")]
+    #[schema(
+        label = "RSI 과매도",
+        min = 10,
+        max = 40,
+        default = 30,
+        section = "indicator"
+    )]
     pub rsi_oversold: f64,
 
     /// RSI 과매수 (기본값: 70)
     #[serde(default = "default_rsi_overbought")]
-    #[schema(label = "RSI 과매수", min = 60, max = 90, default = 70, section = "indicator")]
+    #[schema(
+        label = "RSI 과매수",
+        min = 60,
+        max = 90,
+        default = 70,
+        section = "indicator"
+    )]
     pub rsi_overbought: f64,
 
     /// 손절 비율 (기본값: 5%)
     #[serde(default = "default_stop_loss")]
-    #[schema(label = "손절 비율 (%)", min = 1, max = 15, default = 5, section = "sizing")]
+    #[schema(
+        label = "손절 비율 (%)",
+        min = 1,
+        max = 15,
+        default = 5,
+        section = "sizing"
+    )]
     pub stop_loss_pct: f64,
 
     /// 최소 글로벌 스코어 (기본값: 60)
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", min = 0, max = 100, default = 60, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        min = 0,
+        max = 100,
+        default = 60,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -284,7 +372,12 @@ impl MarketBothSideStrategy {
             return None;
         }
 
-        let closes: Vec<_> = klines.iter().rev().take(period + 1).map(|k| k.close).collect();
+        let closes: Vec<_> = klines
+            .iter()
+            .rev()
+            .take(period + 1)
+            .map(|k| k.close)
+            .collect();
         let mut gains = Vec::new();
         let mut losses = Vec::new();
 
@@ -396,7 +489,10 @@ impl MarketBothSideStrategy {
         };
 
         let current = klines.last().map(|k| k.close).unwrap_or(Decimal::ZERO);
-        let prev_close = klines.get(klines.len().saturating_sub(2)).map(|k| k.close).unwrap_or(Decimal::ZERO);
+        let prev_close = klines
+            .get(klines.len().saturating_sub(2))
+            .map(|k| k.close)
+            .unwrap_or(Decimal::ZERO);
 
         // MA60 상향 돌파 (이전 MA60 < 이전 종가, 현재 MA60 <= 현재가)
         let ma60_breakout = ma60_prev > prev_close && ma60 <= current;
@@ -942,7 +1038,6 @@ mod tests {
         assert!(strategy.leverage_ticker.is_some());
         assert!(strategy.inverse_ticker.is_some());
     }
-
 }
 
 // 전략 레지스트리에 자동 등록

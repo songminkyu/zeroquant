@@ -317,7 +317,8 @@ impl ScreeningRepository {
         let results = query.fetch_all(pool).await?;
 
         // 구조적 피처 필터링 적용 (Redis 피처 캐시 활용)
-        let mut filtered = Self::apply_structural_filter(data_provider, results, filter, cache).await?;
+        let mut filtered =
+            Self::apply_structural_filter(data_provider, results, filter, cache).await?;
 
         // 결과수 제한 (구조적 필터 이후 적용 — DB LIMIT과 별개)
         if let Some(limit) = filter.limit {
@@ -616,8 +617,7 @@ impl ScreeningRepository {
 
                     if let Ok(macd_results) = indicator_engine.macd(&closes, macd_params) {
                         if let Some(latest) = macd_results.last() {
-                            cached_features.macd =
-                                latest.macd.map(|d| d.to_f64().unwrap_or(0.0));
+                            cached_features.macd = latest.macd.map(|d| d.to_f64().unwrap_or(0.0));
                             cached_features.macd_signal =
                                 latest.signal.map(|d| d.to_f64().unwrap_or(0.0));
                             cached_features.macd_histogram =
@@ -634,11 +634,9 @@ impl ScreeningRepository {
                                 ) = (latest.macd, latest.signal, prev.macd, prev.signal)
                                 {
                                     if prev_macd < prev_sig && curr_macd > curr_sig {
-                                        cached_features.macd_cross =
-                                            Some("golden".to_string());
+                                        cached_features.macd_cross = Some("golden".to_string());
                                     } else if prev_macd > prev_sig && curr_macd < curr_sig {
-                                        cached_features.macd_cross =
-                                            Some("dead".to_string());
+                                        cached_features.macd_cross = Some("dead".to_string());
                                     }
                                 }
                             }
@@ -1255,11 +1253,7 @@ impl ScreeningRepository {
         };
 
         // 캐시 키 생성: screening:preset:{preset}:{market}
-        let cache_key = format!(
-            "screening:preset:{}:{}",
-            preset,
-            market.unwrap_or("ALL")
-        );
+        let cache_key = format!("screening:preset:{}:{}", preset, market.unwrap_or("ALL"));
 
         // 캐시에서 조회 시도
         if let Ok(Some(cached)) = cache.get::<Vec<ScreeningResult>>(&cache_key).await {
@@ -1315,8 +1309,7 @@ impl ScreeningRepository {
 
         // DB 조회
         let results =
-            Self::screen_momentum(pool, market, days, min_change_pct, min_volume_ratio)
-                .await?;
+            Self::screen_momentum(pool, market, days, min_change_pct, min_volume_ratio).await?;
 
         // 결과 캐시에 저장
         if !results.is_empty() {

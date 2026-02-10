@@ -129,9 +129,7 @@ impl<T: Clone + Send + Sync> TtlCache<T> {
 
 impl<T> fmt::Debug for TtlCache<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("TtlCache")
-            .field("ttl", &self.ttl)
-            .finish()
+        f.debug_struct("TtlCache").field("ttl", &self.ttl).finish()
     }
 }
 

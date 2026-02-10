@@ -29,10 +29,10 @@ use tracing::{debug, info, warn};
 
 use crate::commands::chart_gen::RegressionChartGenerator;
 
-use trader_analytics::backtest::{BacktestConfig, BacktestEngine, BacktestReport};
-use trader_core::{Kline, StrategyContext, Timeframe};
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use trader_analytics::backtest::{BacktestConfig, BacktestEngine, BacktestReport};
+use trader_core::{Kline, StrategyContext, Timeframe};
 use trader_data::{Database, DatabaseConfig, OhlcvCache};
 use trader_strategy::strategies::{
     AssetAllocationStrategy, CompoundMomentumStrategy, DayTradingStrategy, DcaStrategy,
@@ -84,8 +84,8 @@ impl Default for BacktestCliConfig {
             slippage_rate: Decimal::from_str("0.0005").unwrap(), // 0.05%
             db_url: None,
             output_path: None,
-            generate_chart: true,      // 기본: 차트 생성
-            verbose_signals: true,     // 기본: 상세 신호 분석 출력
+            generate_chart: true,  // 기본: 차트 생성
+            verbose_signals: true, // 기본: 상세 신호 분석 출력
         }
     }
 }
@@ -182,13 +182,12 @@ pub async fn run_backtest(config: BacktestCliConfig) -> Result<BacktestReport> {
     let db = Database::connect(&db_config).await?;
 
     // 3. 전략 타입 파싱 (타임프레임 정보 필요하므로 klines 로드 전 수행)
-    let strategy_type =
-        StrategyType::parse(&strategy_config.strategy_type).ok_or_else(|| {
-            anyhow!(
-                "Unknown strategy type: {}. Use --list-strategies to see available strategies.",
-                strategy_config.strategy_type
-            )
-        })?;
+    let strategy_type = StrategyType::parse(&strategy_config.strategy_type).ok_or_else(|| {
+        anyhow!(
+            "Unknown strategy type: {}. Use --list-strategies to see available strategies.",
+            strategy_config.strategy_type
+        )
+    })?;
 
     // 전략 레지스트리에서 타임프레임 메타 정보 조회
     let registry_meta = StrategyRegistry::find(strategy_type.to_registry_id());
@@ -208,9 +207,9 @@ pub async fn run_backtest(config: BacktestCliConfig) -> Result<BacktestReport> {
     // DB에는 "005930" 또는 "005930.KS" 형식으로 저장될 수 있음
     let symbol_candidates = match config.market {
         Market::KR => vec![
-            config.symbol.clone(),                      // 먼저 원본 (005930)
-            format!("{}.KS", config.symbol),           // 코스피 형식
-            format!("{}.KQ", config.symbol),           // 코스닥 형식
+            config.symbol.clone(),           // 먼저 원본 (005930)
+            format!("{}.KS", config.symbol), // 코스피 형식
+            format!("{}.KQ", config.symbol), // 코스닥 형식
         ],
         Market::US => vec![config.symbol.clone()],
     };
@@ -221,9 +220,14 @@ pub async fn run_backtest(config: BacktestCliConfig) -> Result<BacktestReport> {
     for symbol in &symbol_candidates {
         info!("Trying symbol: {}", symbol);
         let loaded = load_klines_from_db(
-            &ohlcv_cache, symbol, config.start_date, config.end_date,
-            default_tf, secondary_tfs,
-        ).await?;
+            &ohlcv_cache,
+            symbol,
+            config.start_date,
+            config.end_date,
+            default_tf,
+            secondary_tfs,
+        )
+        .await?;
         if !loaded.is_empty() {
             klines = loaded;
             used_symbol = symbol.clone();
@@ -239,7 +243,12 @@ pub async fn run_backtest(config: BacktestCliConfig) -> Result<BacktestReport> {
         ));
     }
 
-    info!("Loaded {} klines for {} (symbol: {})", klines.len(), config.symbol, used_symbol);
+    info!(
+        "Loaded {} klines for {} (symbol: {})",
+        klines.len(),
+        config.symbol,
+        used_symbol
+    );
 
     // 5. 멀티 자산 전략: 추가 심볼 데이터 로드
     let mut multi_asset_klines: HashMap<String, Vec<Kline>> = HashMap::new();
@@ -255,9 +264,14 @@ pub async fn run_backtest(config: BacktestCliConfig) -> Result<BacktestReport> {
             }
 
             let loaded = load_klines_from_db(
-                &ohlcv_cache, symbol, config.start_date, config.end_date,
-                default_tf, secondary_tfs,
-            ).await?;
+                &ohlcv_cache,
+                symbol,
+                config.start_date,
+                config.end_date,
+                default_tf,
+                secondary_tfs,
+            )
+            .await?;
             if !loaded.is_empty() {
                 info!("  {} 심볼: {} 캔들 로드", symbol, loaded.len());
                 multi_asset_klines.insert(symbol.clone(), loaded);
@@ -266,7 +280,11 @@ pub async fn run_backtest(config: BacktestCliConfig) -> Result<BacktestReport> {
             }
         }
 
-        info!("멀티 자산 데이터 로드 완료: {}/{} 심볼", multi_asset_klines.len(), universe.len());
+        info!(
+            "멀티 자산 데이터 로드 완료: {}/{} 심볼",
+            multi_asset_klines.len(),
+            universe.len()
+        );
     }
 
     // 7. 백테스트 엔진 설정
@@ -299,7 +317,8 @@ pub async fn run_backtest(config: BacktestCliConfig) -> Result<BacktestReport> {
         .unwrap_or(Decimal::new(10, 2)); // 기본 10%
 
     // max_position_size_pct 추출 (기본 20%)
-    let max_position_size_pct = strategy_config.parameters
+    let max_position_size_pct = strategy_config
+        .parameters
         .get("max_position_size_pct")
         .and_then(|v| v.as_f64())
         .map(|v| Decimal::from_f64_retain(v / 100.0).unwrap_or(Decimal::new(2, 1)))
@@ -351,15 +370,25 @@ pub async fn run_backtest(config: BacktestCliConfig) -> Result<BacktestReport> {
             std::fs::create_dir_all(charts_dir).ok();
         }
 
-        let chart_filename = config.output_path
+        let chart_filename = config
+            .output_path
             .as_ref()
             .map(|p| {
-                let filename = Path::new(p).file_name()
+                let filename = Path::new(p)
+                    .file_name()
                     .and_then(|f| f.to_str())
                     .unwrap_or("backtest");
-                filename.replace(".json", "_chart.png").replace(".txt", "_chart.png")
+                filename
+                    .replace(".json", "_chart.png")
+                    .replace(".txt", "_chart.png")
             })
-            .unwrap_or_else(|| format!("backtest_{}_{}_chart.png", config.symbol, chrono::Utc::now().format("%Y%m%d_%H%M%S")));
+            .unwrap_or_else(|| {
+                format!(
+                    "backtest_{}_{}_chart.png",
+                    config.symbol,
+                    chrono::Utc::now().format("%Y%m%d_%H%M%S")
+                )
+            });
 
         let chart_path = charts_dir.join(&chart_filename);
 
@@ -389,7 +418,8 @@ fn extract_max_positions(strategy_type: &StrategyType, params: &serde_json::Valu
     match strategy_type {
         // Grid 전략: levels 또는 max_positions
         StrategyType::Grid => {
-            params.get("levels")
+            params
+                .get("levels")
                 .or(params.get("max_positions"))
                 .and_then(|v| v.as_u64())
                 .map(|v| v as usize)
@@ -397,18 +427,21 @@ fn extract_max_positions(strategy_type: &StrategyType, params: &serde_json::Valu
         }
         // InfinityBot: max_rounds
         StrategyType::InfinityBot => {
-            params.get("max_rounds")
+            params
+                .get("max_rounds")
                 .and_then(|v| v.as_u64())
                 .map(|v| v as usize)
                 .unwrap_or(50) // InfinityBot 기본값
         }
         // MagicSplit: levels 배열 길이 또는 max_positions
         StrategyType::MagicSplit => {
-            params.get("levels")
+            params
+                .get("levels")
                 .and_then(|v| v.as_array())
                 .map(|arr| arr.len())
                 .or_else(|| {
-                    params.get("max_positions")
+                    params
+                        .get("max_positions")
                         .and_then(|v| v.as_u64())
                         .map(|v| v as usize)
                 })
@@ -419,12 +452,11 @@ fn extract_max_positions(strategy_type: &StrategyType, params: &serde_json::Valu
             15 // 자산배분 전략은 여러 자산 동시 보유
         }
         // 로테이션 전략: 동시 보유 개수
-        StrategyType::StockRotation => {
-            params.get("top_n")
-                .and_then(|v| v.as_u64())
-                .map(|v| v as usize)
-                .unwrap_or(10)
-        }
+        StrategyType::StockRotation => params
+            .get("top_n")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as usize)
+            .unwrap_or(10),
         // 기타: 기본값
         _ => 10,
     }
@@ -434,7 +466,10 @@ fn extract_max_positions(strategy_type: &StrategyType, params: &serde_json::Valu
 fn is_multi_asset_strategy(strategy_type: &StrategyType) -> bool {
     matches!(
         strategy_type,
-        StrategyType::CompoundMomentum | StrategyType::Haa | StrategyType::Xaa | StrategyType::StockRotation
+        StrategyType::CompoundMomentum
+            | StrategyType::Haa
+            | StrategyType::Xaa
+            | StrategyType::StockRotation
     )
 }
 
@@ -443,16 +478,20 @@ fn extract_universe(strategy_type: &StrategyType, params: &serde_json::Value) ->
     match strategy_type {
         // CompoundMomentum: 4개 고정 자산
         StrategyType::CompoundMomentum => {
-            let aggressive = params.get("aggressive_asset")
+            let aggressive = params
+                .get("aggressive_asset")
                 .and_then(|v| v.as_str())
                 .unwrap_or("TQQQ");
-            let dividend = params.get("dividend_asset")
+            let dividend = params
+                .get("dividend_asset")
                 .and_then(|v| v.as_str())
                 .unwrap_or("SCHD");
-            let rate_hedge = params.get("rate_hedge_asset")
+            let rate_hedge = params
+                .get("rate_hedge_asset")
                 .and_then(|v| v.as_str())
                 .unwrap_or("PFIX");
-            let bond_leverage = params.get("bond_leverage_asset")
+            let bond_leverage = params
+                .get("bond_leverage_asset")
                 .and_then(|v| v.as_str())
                 .unwrap_or("TMF");
             vec![
@@ -467,13 +506,20 @@ fn extract_universe(strategy_type: &StrategyType, params: &serde_json::Value) ->
             // 기본 HAA/XAA 유니버스
             vec![
                 // 공격 자산
-                "QQQ".to_string(), "SPY".to_string(), "EFA".to_string(), "EEM".to_string(),
+                "QQQ".to_string(),
+                "SPY".to_string(),
+                "EFA".to_string(),
+                "EEM".to_string(),
                 // 방어 자산
-                "TLT".to_string(), "IEF".to_string(), "LQD".to_string(),
+                "TLT".to_string(),
+                "IEF".to_string(),
+                "LQD".to_string(),
                 // 카나리아 자산
-                "VWO".to_string(), "BND".to_string(),
+                "VWO".to_string(),
+                "BND".to_string(),
                 // 현금
-                params.get("cash_ticker")
+                params
+                    .get("cash_ticker")
                     .and_then(|v| v.as_str())
                     .unwrap_or("BIL")
                     .to_string(),
@@ -482,16 +528,23 @@ fn extract_universe(strategy_type: &StrategyType, params: &serde_json::Value) ->
         // StockRotation: universe 필드 또는 기본 유니버스
         StrategyType::StockRotation => {
             if let Some(universe) = params.get("universe").and_then(|v| v.as_array()) {
-                universe.iter()
+                universe
+                    .iter()
                     .filter_map(|v| v.as_str())
                     .map(|s| s.to_string())
                     .collect()
             } else {
                 // 기본 미국 대형주 유니버스
                 vec![
-                    "AAPL".to_string(), "MSFT".to_string(), "GOOGL".to_string(),
-                    "AMZN".to_string(), "META".to_string(), "NVDA".to_string(),
-                    "TSLA".to_string(), "BRK-B".to_string(), "JPM".to_string(),
+                    "AAPL".to_string(),
+                    "MSFT".to_string(),
+                    "GOOGL".to_string(),
+                    "AMZN".to_string(),
+                    "META".to_string(),
+                    "NVDA".to_string(),
+                    "TSLA".to_string(),
+                    "BRK-B".to_string(),
+                    "JPM".to_string(),
                     "V".to_string(),
                 ]
             }
@@ -520,9 +573,15 @@ async fn run_strategy_backtest(
     params: &serde_json::Value,
 ) -> Result<BacktestReport> {
     // StrategyContext 기반 전략은 run() 사용
-    let ticker = params.get("ticker")
+    let ticker = params
+        .get("ticker")
         .and_then(|v| v.as_str())
-        .unwrap_or_else(|| klines.first().map(|k| k.ticker.as_str()).unwrap_or("UNKNOWN"));
+        .unwrap_or_else(|| {
+            klines
+                .first()
+                .map(|k| k.ticker.as_str())
+                .unwrap_or("UNKNOWN")
+        });
 
     let context = Arc::new(RwLock::new(StrategyContext::default()));
 
@@ -640,7 +699,10 @@ async fn run_multi_asset_backtest(
     let mut enriched_params = params.clone();
     if let Some(obj) = enriched_params.as_object_mut() {
         if !obj.contains_key("initial_capital") {
-            obj.insert("initial_capital".to_string(), serde_json::json!(initial_capital.to_string()));
+            obj.insert(
+                "initial_capital".to_string(),
+                serde_json::json!(initial_capital.to_string()),
+            );
             debug!("params에 initial_capital 주입: {}", initial_capital);
         }
     }
@@ -663,7 +725,11 @@ async fn run_multi_asset_backtest(
         let mut ctx = context.write().await;
         for (symbol, klines) in multi_asset_klines {
             ctx.update_klines(symbol, Timeframe::D1, klines.clone());
-            debug!("StrategyContext에 {} 심볼 등록: {} 캔들", symbol, klines.len());
+            debug!(
+                "StrategyContext에 {} 심볼 등록: {} 캔들",
+                symbol,
+                klines.len()
+            );
         }
     }
 
@@ -812,15 +878,25 @@ async fn load_klines_from_db(
             Err(_) => continue,
         };
 
-        match ohlcv_cache.get_cached_klines_range(symbol, tf, start, end).await {
+        match ohlcv_cache
+            .get_cached_klines_range(symbol, tf, start, end)
+            .await
+        {
             Ok(klines) if !klines.is_empty() => {
                 if *tf_str != default_timeframe {
                     info!(
                         "{} 타임프레임 폴백: {} → {} ({} 캔들)",
-                        symbol, default_timeframe, tf_str, klines.len()
+                        symbol,
+                        default_timeframe,
+                        tf_str,
+                        klines.len()
                     );
                 } else {
-                    debug!("Loaded {} klines ({}) from ohlcv table", klines.len(), tf_str);
+                    debug!(
+                        "Loaded {} klines ({}) from ohlcv table",
+                        klines.len(),
+                        tf_str
+                    );
                 }
                 return Ok(klines);
             }
@@ -886,23 +962,55 @@ fn generate_signal_analysis(report: &BacktestReport) -> String {
 
     // 1. 기본 통계
     let total_signals = markers.len();
-    let entry_count = markers.iter().filter(|m| m.signal_type == SignalType::Entry).count();
-    let exit_count = markers.iter().filter(|m| m.signal_type == SignalType::Exit).count();
-    let add_count = markers.iter().filter(|m| m.signal_type == SignalType::AddToPosition).count();
-    let reduce_count = markers.iter().filter(|m| m.signal_type == SignalType::ReducePosition).count();
+    let entry_count = markers
+        .iter()
+        .filter(|m| m.signal_type == SignalType::Entry)
+        .count();
+    let exit_count = markers
+        .iter()
+        .filter(|m| m.signal_type == SignalType::Exit)
+        .count();
+    let add_count = markers
+        .iter()
+        .filter(|m| m.signal_type == SignalType::AddToPosition)
+        .count();
+    let reduce_count = markers
+        .iter()
+        .filter(|m| m.signal_type == SignalType::ReducePosition)
+        .count();
     let executed_count = markers.iter().filter(|m| m.executed).count();
 
     output.push_str("┌─────────────────────────────────────────────────────────────────┐\n");
     output.push_str("│ 1. 기본 통계                                                     │\n");
     output.push_str("├─────────────────────────────────────────────────────────────────┤\n");
-    output.push_str(&format!("│ 총 신호 수: {:>6}                                              │\n", total_signals));
-    output.push_str(&format!("│ Entry:      {:>6}                                              │\n", entry_count));
-    output.push_str(&format!("│ Exit:       {:>6}                                              │\n", exit_count));
-    output.push_str(&format!("│ Add:        {:>6}                                              │\n", add_count));
-    output.push_str(&format!("│ Reduce:     {:>6}                                              │\n", reduce_count));
-    output.push_str(&format!("│ 실행됨:     {:>6} ({:.1}%)                                     │\n",
+    output.push_str(&format!(
+        "│ 총 신호 수: {:>6}                                              │\n",
+        total_signals
+    ));
+    output.push_str(&format!(
+        "│ Entry:      {:>6}                                              │\n",
+        entry_count
+    ));
+    output.push_str(&format!(
+        "│ Exit:       {:>6}                                              │\n",
+        exit_count
+    ));
+    output.push_str(&format!(
+        "│ Add:        {:>6}                                              │\n",
+        add_count
+    ));
+    output.push_str(&format!(
+        "│ Reduce:     {:>6}                                              │\n",
+        reduce_count
+    ));
+    output.push_str(&format!(
+        "│ 실행됨:     {:>6} ({:.1}%)                                     │\n",
         executed_count,
-        if total_signals > 0 { executed_count as f64 / total_signals as f64 * 100.0 } else { 0.0 }
+        if total_signals > 0 {
+            executed_count as f64 / total_signals as f64 * 100.0
+        } else {
+            0.0
+        }
     ));
     output.push_str("└─────────────────────────────────────────────────────────────────┘\n\n");
 
@@ -920,8 +1028,14 @@ fn generate_signal_analysis(report: &BacktestReport) -> String {
         "❌ 심각한 불균형 (전략 로직 검토 필요)"
     };
 
-    output.push_str(&format!("│ Entry - Exit = {:+}                                              │\n", entry_exit_diff));
-    output.push_str(&format!("│ 상태: {}                                        │\n", balance_status));
+    output.push_str(&format!(
+        "│ Entry - Exit = {:+}                                              │\n",
+        entry_exit_diff
+    ));
+    output.push_str(&format!(
+        "│ 상태: {}                                        │\n",
+        balance_status
+    ));
     output.push_str("└─────────────────────────────────────────────────────────────────┘\n\n");
 
     // 3. 레벨별 분석 (Grid/Split 전략용)
@@ -929,7 +1043,9 @@ fn generate_signal_analysis(report: &BacktestReport) -> String {
     for marker in markers {
         if let Some(level_str) = marker.reason.split("L").last() {
             if let Ok(level) = level_str.parse::<usize>() {
-                let entry = level_stats.entry(format!("Level_{}", level)).or_insert((0, 0));
+                let entry = level_stats
+                    .entry(format!("Level_{}", level))
+                    .or_insert((0, 0));
                 match marker.signal_type {
                     SignalType::Entry | SignalType::AddToPosition => entry.0 += 1,
                     SignalType::Exit | SignalType::ReducePosition => entry.1 += 1,
@@ -951,8 +1067,15 @@ fn generate_signal_analysis(report: &BacktestReport) -> String {
 
         for (level, (entries, exits)) in levels {
             let diff = (*entries as i32) - (*exits as i32);
-            let status = if diff == 0 { "✅" } else if diff.abs() == 1 { "⚠️" } else { "❌" };
-            output.push_str(&format!("│ {:12} │ {:>6} │ {:>6} │ {:>+7} │ {}                    │\n",
+            let status = if diff == 0 {
+                "✅"
+            } else if diff.abs() == 1 {
+                "⚠️"
+            } else {
+                "❌"
+            };
+            output.push_str(&format!(
+                "│ {:12} │ {:>6} │ {:>6} │ {:>+7} │ {}                    │\n",
                 level, entries, exits, diff, status
             ));
         }
@@ -976,9 +1099,13 @@ fn generate_signal_analysis(report: &BacktestReport) -> String {
                 SignalType::Alert => "ALERT",
                 SignalType::Scale => "SCALE",
             };
-            let side_str = marker.side.map(|s| format!("{:?}", s)).unwrap_or_else(|| "-".to_string());
+            let side_str = marker
+                .side
+                .map(|s| format!("{:?}", s))
+                .unwrap_or_else(|| "-".to_string());
             let exec_str = if marker.executed { "✓" } else { "○" };
-            output.push_str(&format!("│ {} {} {:>5} @ {:>12} {} {}                   │\n",
+            output.push_str(&format!(
+                "│ {} {} {:>5} @ {:>12} {} {}                   │\n",
                 marker.timestamp.format("%Y-%m-%d"),
                 type_str,
                 side_str,
@@ -989,8 +1116,10 @@ fn generate_signal_analysis(report: &BacktestReport) -> String {
         }
 
         if markers.len() > show_count * 2 {
-            output.push_str("│ ...                                                             │\n");
-            output.push_str("│ [마지막 신호들]                                                 │\n");
+            output
+                .push_str("│ ...                                                             │\n");
+            output
+                .push_str("│ [마지막 신호들]                                                 │\n");
             for marker in markers.iter().skip(markers.len() - show_count) {
                 let type_str = match marker.signal_type {
                     SignalType::Entry => "ENTRY",
@@ -1000,9 +1129,13 @@ fn generate_signal_analysis(report: &BacktestReport) -> String {
                     SignalType::Alert => "ALERT",
                     SignalType::Scale => "SCALE",
                 };
-                let side_str = marker.side.map(|s| format!("{:?}", s)).unwrap_or_else(|| "-".to_string());
+                let side_str = marker
+                    .side
+                    .map(|s| format!("{:?}", s))
+                    .unwrap_or_else(|| "-".to_string());
                 let exec_str = if marker.executed { "✓" } else { "○" };
-                output.push_str(&format!("│ {} {} {:>5} @ {:>12} {} {}                   │\n",
+                output.push_str(&format!(
+                    "│ {} {} {:>5} @ {:>12} {} {}                   │\n",
                     marker.timestamp.format("%Y-%m-%d"),
                     type_str,
                     side_str,
@@ -1021,16 +1154,36 @@ fn generate_signal_analysis(report: &BacktestReport) -> String {
     output.push_str("┌─────────────────────────────────────────────────────────────────┐\n");
     output.push_str("│ 5. 거래 결과 요약                                               │\n");
     output.push_str("├─────────────────────────────────────────────────────────────────┤\n");
-    output.push_str(&format!("│ 완료된 라운드트립: {:>6}                                       │\n", report.trades.len()));
-    output.push_str(&format!("│ 총 거래 수:        {:>6}                                       │\n", report.all_trades.len()));
+    output.push_str(&format!(
+        "│ 완료된 라운드트립: {:>6}                                       │\n",
+        report.trades.len()
+    ));
+    output.push_str(&format!(
+        "│ 총 거래 수:        {:>6}                                       │\n",
+        report.all_trades.len()
+    ));
 
     if !report.trades.is_empty() {
-        let winning = report.trades.iter().filter(|t| t.pnl > Decimal::ZERO).count();
-        let losing = report.trades.iter().filter(|t| t.pnl < Decimal::ZERO).count();
+        let winning = report
+            .trades
+            .iter()
+            .filter(|t| t.pnl > Decimal::ZERO)
+            .count();
+        let losing = report
+            .trades
+            .iter()
+            .filter(|t| t.pnl < Decimal::ZERO)
+            .count();
         let win_rate = winning as f64 / report.trades.len() as f64 * 100.0;
 
-        output.push_str(&format!("│ 승리:              {:>6} ({:.1}%)                              │\n", winning, win_rate));
-        output.push_str(&format!("│ 패배:              {:>6}                                       │\n", losing));
+        output.push_str(&format!(
+            "│ 승리:              {:>6} ({:.1}%)                              │\n",
+            winning, win_rate
+        ));
+        output.push_str(&format!(
+            "│ 패배:              {:>6}                                       │\n",
+            losing
+        ));
     }
     output.push_str("└─────────────────────────────────────────────────────────────────┘\n");
 
@@ -1044,12 +1197,18 @@ fn generate_signal_analysis(report: &BacktestReport) -> String {
         (total_signals > 0, "신호 생성됨"),
         (executed_count > 0, "실행된 신호 존재"),
         (!report.trades.is_empty(), "거래 완료됨"),
-        (report.metrics.max_drawdown_pct < Decimal::from(50), "MDD < 50%"),
+        (
+            report.metrics.max_drawdown_pct < Decimal::from(50),
+            "MDD < 50%",
+        ),
     ];
 
     for (passed, desc) in checks {
         let status = if passed { "✅" } else { "❌" };
-        output.push_str(&format!("│ {} {}                                                      │\n", status, desc));
+        output.push_str(&format!(
+            "│ {} {}                                                      │\n",
+            status, desc
+        ));
     }
     output.push_str("└─────────────────────────────────────────────────────────────────┘\n");
 

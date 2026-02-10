@@ -44,7 +44,7 @@ impl Default for DataManagerConfig {
 pub struct DataManager {
     db: Database,
     cache: Option<RedisCache>,
-    #[allow(dead_code)]  // 향후 설정 조회용으로 보관
+    #[allow(dead_code)] // 향후 설정 조회용으로 보관
     config: DataManagerConfig,
 
     // 리포지토리

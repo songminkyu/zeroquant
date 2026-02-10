@@ -4,15 +4,15 @@ use std::time::{Duration, Instant};
 use async_trait::async_trait;
 use chrono::Utc;
 use reqwest::Client;
-use serde_json::{json, Value};
-use serde::Deserialize;
-use tokio::sync::Mutex;
 use rust_decimal::Decimal;
+use serde::Deserialize;
+use serde_json::{json, Value};
 use std::str::FromStr;
+use tokio::sync::Mutex;
 
 use trader_core::domain::{
-    ExchangeProvider, MarketDataProvider, StrategyAccountInfo, PendingOrder,
-    StrategyPositionInfo, OrderStatusType, Side, OrderResponse,
+    ExchangeProvider, MarketDataProvider, OrderResponse, OrderStatusType, PendingOrder, Side,
+    StrategyAccountInfo, StrategyPositionInfo,
 };
 use trader_core::ProviderError;
 use trader_core::QuoteData;
@@ -25,7 +25,7 @@ use trader_core::QuoteData;
 pub struct LsSecConfig {
     pub app_key: String,
     pub app_secret: String,
-    pub base_url: String, 
+    pub base_url: String,
 }
 
 impl std::fmt::Debug for LsSecConfig {
@@ -198,9 +198,14 @@ struct QuoteOutBlock {
 
 #[derive(Deserialize, Debug)]
 struct LsOrderResponse {
-    #[serde(rename = "CSPAT00601OutBlock2", alias = "CSPAT00701OutBlock2",
-            alias = "CSPAT00602OutBlock2", alias = "CSPAT00702OutBlock2",
-            alias = "CSPAT00603OutBlock2", alias = "CSPAT00703OutBlock2")]
+    #[serde(
+        rename = "CSPAT00601OutBlock2",
+        alias = "CSPAT00701OutBlock2",
+        alias = "CSPAT00602OutBlock2",
+        alias = "CSPAT00702OutBlock2",
+        alias = "CSPAT00603OutBlock2",
+        alias = "CSPAT00703OutBlock2"
+    )]
     out_block2: LsOrderResult,
 }
 
@@ -253,21 +258,28 @@ impl LsSecClient {
 
         if !response.status().is_success() {
             let status = response.status();
-            let text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+            let text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
             return Err(ProviderError::Authentication(format!(
                 "Failed to get token: {} - {}",
                 status, text
             )));
         }
 
-        let body_text = response.text().await.map_err(|e| ProviderError::Parse(e.to_string()))?;
-        let body: Value = serde_json::from_str(&body_text).map_err(|e| ProviderError::Parse(e.to_string()))?;
-        
+        let body_text = response
+            .text()
+            .await
+            .map_err(|e| ProviderError::Parse(e.to_string()))?;
+        let body: Value =
+            serde_json::from_str(&body_text).map_err(|e| ProviderError::Parse(e.to_string()))?;
+
         if let Some(token) = body["access_token"].as_str() {
             let expires_in = body["expires_in"].as_u64().unwrap_or(3600);
             tm.expires_at = Instant::now() + Duration::from_secs(expires_in.saturating_sub(60));
             tm.access_token = Some(token.to_string());
-            
+
             Ok(token.to_string())
         } else {
             Err(ProviderError::Authentication(
@@ -312,9 +324,15 @@ impl LsSecClient {
             )));
         }
 
-        let text = response.text().await.map_err(|e| ProviderError::Network(e.to_string()))?;
+        let text = response
+            .text()
+            .await
+            .map_err(|e| ProviderError::Network(e.to_string()))?;
         serde_json::from_str::<T>(&text).map_err(|e| {
-            ProviderError::Parse(format!("Failed to parse LS response: {}. Body: {}", e, text))
+            ProviderError::Parse(format!(
+                "Failed to parse LS response: {}. Body: {}",
+                e, text
+            ))
         })
     }
 
@@ -330,12 +348,16 @@ impl LsSecClient {
                 "BalCreTp": "0"
             }
         });
-        let res: KrPositionsResponse = self.request("stock/accno", "CSPAQ12300", Some(body)).await?;
-        
+        let res: KrPositionsResponse = self
+            .request("stock/accno", "CSPAQ12300", Some(body))
+            .await?;
+
         let mut positions = Vec::new();
         for stock in res.out_block2 {
             let qty = Decimal::from_str(&stock.bal_qty).unwrap_or_default();
-            if qty.is_zero() { continue; }
+            if qty.is_zero() {
+                continue;
+            }
 
             positions.push(StrategyPositionInfo::new(
                 stock.isu_no,
@@ -354,12 +376,16 @@ impl LsSecClient {
                 "D2_KRW_Base_Tp": "0"
             }
         });
-        let res: UsPositionsResponse = self.request("overseas-stock/accno", "COSOQ00201", Some(body)).await?;
+        let res: UsPositionsResponse = self
+            .request("overseas-stock/accno", "COSOQ00201", Some(body))
+            .await?;
 
         let mut positions = Vec::new();
         for stock in res.out_block2 {
             let qty = Decimal::from_str(&stock.exec_qty).unwrap_or_default();
-            if qty.is_zero() { continue; }
+            if qty.is_zero() {
+                continue;
+            }
 
             positions.push(StrategyPositionInfo::new(
                 stock.sym_code,
@@ -378,7 +404,7 @@ impl LsSecClient {
         side: Side,
         quantity: u32,
         price: Decimal,
-        order_class: &str,  // "00"=지정가, "01"=시장가
+        order_class: &str, // "00"=지정가, "01"=시장가
     ) -> Result<OrderResponse, ProviderError> {
         let (tr_cd, in_block) = match side {
             Side::Buy => ("CSPAT00601", "CSPAT00601InBlock1"),
@@ -411,7 +437,10 @@ impl LsSecClient {
             res.out_block2.ord_time.to_string()
         };
 
-        Ok(OrderResponse { order_no, order_time })
+        Ok(OrderResponse {
+            order_no,
+            order_time,
+        })
     }
 
     /// 국내 주식 주문 취소 (CSPAT00603: 매수취소, CSPAT00703: 매도취소)
@@ -448,7 +477,10 @@ impl LsSecClient {
             res.out_block2.ord_time.to_string()
         };
 
-        Ok(OrderResponse { order_no: ord_no, order_time: ord_time })
+        Ok(OrderResponse {
+            order_no: ord_no,
+            order_time: ord_time,
+        })
     }
 
     /// 국내 주식 주문 정정 (CSPAT00602: 매수정정, CSPAT00702: 매도정정)
@@ -488,7 +520,10 @@ impl LsSecClient {
             res.out_block2.ord_time.to_string()
         };
 
-        Ok(OrderResponse { order_no: ord_no, order_time: ord_time })
+        Ok(OrderResponse {
+            order_no: ord_no,
+            order_time: ord_time,
+        })
     }
 
     /// 체결 내역 조회 (t0425)
@@ -518,7 +553,8 @@ impl LsSecClient {
             }
         });
 
-        let res: ExecutionHistoryResponse = self.request("stock/accno", "t0425", Some(body)).await?;
+        let res: ExecutionHistoryResponse =
+            self.request("stock/accno", "t0425", Some(body)).await?;
 
         fn parse_value(v: &Value) -> Decimal {
             if let Some(s) = v.as_str() {
@@ -578,7 +614,7 @@ impl LsSecClient {
 
             // Trade 구조체 생성
             let trade = Trade::new(
-                Uuid::new_v4(),  // order_id는 실제로는 거래소 주문 ID를 UUID로 변환해야 하지만 임시로 새 UUID 사용
+                Uuid::new_v4(), // order_id는 실제로는 거래소 주문 ID를 UUID로 변환해야 하지만 임시로 새 UUID 사용
                 "ls_securities",
                 order_id_str.clone(),
                 ticker,
@@ -624,7 +660,10 @@ impl ExchangeProvider for LsSecClient {
 
         // KR Balance (CSPAQ12200)
         let kr_body = json!({ "CSPAQ12200InBlock1": { "BalCreTp": "0" } });
-        if let Ok(res) = self.request::<BalanceResponse>("stock/accno", "CSPAQ12200", Some(kr_body)).await {
+        if let Ok(res) = self
+            .request::<BalanceResponse>("stock/accno", "CSPAQ12200", Some(kr_body))
+            .await
+        {
             total_balance += parse_value(&res.out_block.dpsast_totamt);
             available_balance += parse_value(&res.out_block.mny_ord_able_amt);
         }
@@ -646,7 +685,7 @@ impl ExchangeProvider for LsSecClient {
 
     async fn fetch_positions(&self) -> Result<Vec<StrategyPositionInfo>, ProviderError> {
         let mut all_positions = Vec::new();
-        
+
         match self.fetch_kr_positions().await {
             Ok(pos) => all_positions.extend(pos),
             Err(e) => eprintln!("Failed to fetch LS KR positions: {:?}", e),
@@ -673,9 +712,9 @@ impl ExchangeProvider for LsSecClient {
         });
 
         let res: PendingOrderResponse = self.request("stock/accno", "t0425", Some(body)).await?;
-        
+
         let mut pending = Vec::new();
-            for order in res.out_block1 {
+        for order in res.out_block1 {
             let mut ticker = order.expcode;
             if ticker.len() == 7 && ticker.starts_with('A') {
                 ticker = ticker[1..].to_string();
@@ -688,13 +727,22 @@ impl ExchangeProvider for LsSecClient {
             };
 
             fn parse_num(v: &Value) -> Decimal {
-                if let Some(s) = v.as_str() { Decimal::from_str(s).unwrap_or_default() }
-                else if let Some(n) = v.as_f64() { Decimal::from_f64_retain(n).unwrap_or_default() }
-                else if let Some(n) = v.as_i64() { Decimal::from(n) }
-                else { Decimal::ZERO }
+                if let Some(s) = v.as_str() {
+                    Decimal::from_str(s).unwrap_or_default()
+                } else if let Some(n) = v.as_f64() {
+                    Decimal::from_f64_retain(n).unwrap_or_default()
+                } else if let Some(n) = v.as_i64() {
+                    Decimal::from(n)
+                } else {
+                    Decimal::ZERO
+                }
             }
 
-            let order_id = if let Some(s) = order.ordno.as_str() { s.to_string() } else { order.ordno.to_string() };
+            let order_id = if let Some(s) = order.ordno.as_str() {
+                s.to_string()
+            } else {
+                order.ordno.to_string()
+            };
 
             pending.push(PendingOrder {
                 order_id,
@@ -709,7 +757,7 @@ impl ExchangeProvider for LsSecClient {
         }
 
         // TODO: US Pending Orders (COSAT00301 or similar)
-        
+
         Ok(pending)
     }
 }
@@ -722,13 +770,20 @@ impl MarketDataProvider for LsSecClient {
                 "shcode": symbol
             }
         });
-        let res: QuoteResponse = self.request("stock/market-data", "t1101", Some(body)).await?;
-        
+        let res: QuoteResponse = self
+            .request("stock/market-data", "t1101", Some(body))
+            .await?;
+
         fn parse_num(v: &Value) -> Decimal {
-            if let Some(s) = v.as_str() { Decimal::from_str(s).unwrap_or_default() }
-            else if let Some(n) = v.as_f64() { Decimal::from_f64_retain(n).unwrap_or_default() }
-            else if let Some(n) = v.as_i64() { Decimal::from(n) }
-            else { Decimal::ZERO }
+            if let Some(s) = v.as_str() {
+                Decimal::from_str(s).unwrap_or_default()
+            } else if let Some(n) = v.as_f64() {
+                Decimal::from_f64_retain(n).unwrap_or_default()
+            } else if let Some(n) = v.as_i64() {
+                Decimal::from(n)
+            } else {
+                Decimal::ZERO
+            }
         }
 
         Ok(QuoteData {
@@ -755,7 +810,7 @@ impl MarketDataProvider for LsSecClient {
         }
         quotes
     }
-    
+
     fn provider_name(&self) -> &str {
         "ls_securities"
     }

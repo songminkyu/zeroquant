@@ -34,13 +34,11 @@ use serde::{Deserialize, Serialize};
 use super::{IndicatorError, IndicatorResult};
 
 /// OBV 파라미터.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
 pub struct ObvParams {
     /// 초기값 (기본: 0).
     pub initial_value: i64,
 }
-
 
 /// OBV 결과.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]

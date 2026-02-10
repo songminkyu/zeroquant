@@ -10,8 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// KIS API 환경 유형.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum KisEnvironment {
     /// 실전투자
     Real,
@@ -21,8 +20,7 @@ pub enum KisEnvironment {
 }
 
 /// KIS 계좌 유형.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum KisAccountType {
     /// 모의투자
     #[default]
@@ -62,7 +60,6 @@ impl KisAccountType {
     }
 }
 
-
 impl KisEnvironment {
     /// 이 환경의 REST API 기본 URL 반환.
     pub fn rest_base_url(&self) -> &str {
@@ -80,7 +77,6 @@ impl KisEnvironment {
         }
     }
 }
-
 
 /// KIS API 설정.
 ///
@@ -328,10 +324,7 @@ mod tests {
 
     #[test]
     fn test_account_type_parsing() {
-        assert_eq!(
-            KisAccountType::parse("paper"),
-            Some(KisAccountType::Paper)
-        );
+        assert_eq!(KisAccountType::parse("paper"), Some(KisAccountType::Paper));
         assert_eq!(
             KisAccountType::parse("real_general"),
             Some(KisAccountType::RealGeneral)
@@ -340,10 +333,7 @@ mod tests {
             KisAccountType::parse("real_isa"),
             Some(KisAccountType::RealIsa)
         );
-        assert_eq!(
-            KisAccountType::parse("isa"),
-            Some(KisAccountType::RealIsa)
-        );
+        assert_eq!(KisAccountType::parse("isa"), Some(KisAccountType::RealIsa));
         assert_eq!(KisAccountType::parse("invalid"), None);
     }
 

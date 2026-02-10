@@ -581,7 +581,10 @@ pub async fn get_candles(
         let provider = state.data_provider.as_ref().ok_or_else(|| {
             (
                 StatusCode::SERVICE_UNAVAILABLE,
-                Json(ApiError::new("DB_NOT_AVAILABLE", "데이터베이스 연결이 없습니다")),
+                Json(ApiError::new(
+                    "DB_NOT_AVAILABLE",
+                    "데이터베이스 연결이 없습니다",
+                )),
             )
         })?;
         let total_limit = (query.page + 1) * query.limit;
@@ -1446,7 +1449,10 @@ pub async fn delete_symbol(
                 ticker: ticker.clone(),
                 market: query.market.clone(),
                 deleted_tables: results,
-                message: format!("심볼 '{}' ({}) 삭제 완료 (총 {}건)", ticker, query.market, total),
+                message: format!(
+                    "심볼 '{}' ({}) 삭제 완료 (총 {}건)",
+                    ticker, query.market, total
+                ),
             }))
         }
         Err(e) => {
@@ -1454,9 +1460,13 @@ pub async fn delete_symbol(
             if err_msg.contains("symbol_info not found") {
                 Err((
                     StatusCode::NOT_FOUND,
-                    Json(ApiError::new("SYMBOL_NOT_FOUND", format!(
-                        "심볼을 찾을 수 없습니다: ticker={}, market={}", ticker, query.market
-                    ))),
+                    Json(ApiError::new(
+                        "SYMBOL_NOT_FOUND",
+                        format!(
+                            "심볼을 찾을 수 없습니다: ticker={}, market={}",
+                            ticker, query.market
+                        ),
+                    )),
                 ))
             } else {
                 error!(error = %e, ticker = %ticker, "심볼 삭제 실패");

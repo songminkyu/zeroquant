@@ -33,8 +33,8 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::time::interval;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
-use trader_core::{OrderBook, OrderBookLevel, QuoteData};
 use tracing::{debug, error, info, warn};
+use trader_core::{OrderBook, OrderBookLevel, QuoteData};
 
 /// 연결 중 동적 구독/해제를 위한 명령.
 #[derive(Debug)]
@@ -140,10 +140,7 @@ impl DbInvestmentWebSocket {
                     reconnect_attempts += 1;
 
                     if reconnect_attempts > MAX_RECONNECT_ATTEMPTS {
-                        error!(
-                            "최대 재연결 시도 횟수 초과 ({}회)",
-                            MAX_RECONNECT_ATTEMPTS
-                        );
+                        error!("최대 재연결 시도 횟수 초과 ({}회)", MAX_RECONNECT_ATTEMPTS);
                         let _ = self
                             .tx
                             .send(DbWsMessage::Error(format!(
@@ -399,10 +396,7 @@ impl DbInvestmentWebSocket {
             .map_err(|e| ExchangeError::ParseError(format!("가격 파싱 실패: {}", e)))?;
 
         // 거래량 (VolumeQty 필드)
-        let volume = value
-            .get("VolumeQty")
-            .and_then(|v| v.as_i64())
-            .unwrap_or(0);
+        let volume = value.get("VolumeQty").and_then(|v| v.as_i64()).unwrap_or(0);
 
         let volume_decimal = Decimal::from(volume);
 
@@ -467,9 +461,7 @@ impl DbInvestmentWebSocket {
                     .as_str()
                     .map(String::from)
                     .or_else(|| price_val.as_f64().map(|f| f.to_string()))
-                    .ok_or_else(|| {
-                        ExchangeError::ParseError(format!("AskPrice{} 파싱 실패", i))
-                    })?;
+                    .ok_or_else(|| ExchangeError::ParseError(format!("AskPrice{} 파싱 실패", i)))?;
 
                 let price = Decimal::from_str(&price_str)
                     .map_err(|e| ExchangeError::ParseError(format!("가격 파싱 실패: {}", e)))?;
@@ -489,9 +481,7 @@ impl DbInvestmentWebSocket {
                     .as_str()
                     .map(String::from)
                     .or_else(|| price_val.as_f64().map(|f| f.to_string()))
-                    .ok_or_else(|| {
-                        ExchangeError::ParseError(format!("BidPrice{} 파싱 실패", i))
-                    })?;
+                    .ok_or_else(|| ExchangeError::ParseError(format!("BidPrice{} 파싱 실패", i)))?;
 
                 let price = Decimal::from_str(&price_str)
                     .map_err(|e| ExchangeError::ParseError(format!("가격 파싱 실패: {}", e)))?;

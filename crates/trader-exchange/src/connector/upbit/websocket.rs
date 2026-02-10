@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
-use std::time::Duration;
 use futures::{SinkExt, StreamExt};
+use std::time::Duration;
 use tokio::sync::{mpsc, RwLock};
 use tokio::time::interval;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 
-use serde_json::json;
-use trader_core::{OrderBook, OrderBookLevel, ProviderError, QuoteData, Side, TradeTick};
-use rust_decimal::Decimal;
 use chrono::Utc;
-use tracing::{info, error};
+use rust_decimal::Decimal;
+use serde_json::json;
+use tracing::{error, info};
+use trader_core::{OrderBook, OrderBookLevel, ProviderError, QuoteData, Side, TradeTick};
 
 const UPBIT_WS_URL: &str = "wss://api.upbit.com/websocket/v1";
 const MAX_RECONNECT_ATTEMPTS: u32 = 5;
@@ -85,7 +85,12 @@ impl UpbitWebSocket {
                     attempts += 1;
                     error!("Upbit WebSocket error (attempt {}): {:?}", attempts, e);
                     if attempts >= MAX_RECONNECT_ATTEMPTS {
-                        let _ = self.tx.send(UpbitWsMessage::Error("Max reconnect attempts reached".into())).await;
+                        let _ = self
+                            .tx
+                            .send(UpbitWsMessage::Error(
+                                "Max reconnect attempts reached".into(),
+                            ))
+                            .await;
                         break;
                     }
                     tokio::time::sleep(RECONNECT_DELAY).await;
@@ -94,10 +99,14 @@ impl UpbitWebSocket {
         }
     }
 
-    async fn run_session(&self, cmd_rx: &mut mpsc::Receiver<UpbitWsCommand>) -> Result<(), ProviderError> {
-        let (ws_stream, _) = connect_async(UPBIT_WS_URL).await
+    async fn run_session(
+        &self,
+        cmd_rx: &mut mpsc::Receiver<UpbitWsCommand>,
+    ) -> Result<(), ProviderError> {
+        let (ws_stream, _) = connect_async(UPBIT_WS_URL)
+            .await
             .map_err(|e| ProviderError::Network(e.to_string()))?;
-        
+
         let (mut ws_tx, mut ws_rx) = ws_stream.split::<Message>();
         info!("Connected to Upbit WebSocket");
 
@@ -188,7 +197,8 @@ impl UpbitWebSocket {
     }
 
     async fn send_subscription<S>(&self, ws_tx: &mut S) -> Result<(), ProviderError>
-    where S: futures::Sink<Message, Error = tokio_tungstenite::tungstenite::Error> + Unpin
+    where
+        S: futures::Sink<Message, Error = tokio_tungstenite::tungstenite::Error> + Unpin,
     {
         let ticker_codes = self.subscribed_tickers.read().await;
         let ob_codes = self.subscribed_orderbooks.read().await;
@@ -198,9 +208,7 @@ impl UpbitWebSocket {
             return Ok(());
         }
 
-        let mut msg_array = vec![
-            json!({"ticket": "upbit-ws-orderbook"}),
-        ];
+        let mut msg_array = vec![json!({"ticket": "upbit-ws-orderbook"})];
 
         if !ticker_codes.is_empty() {
             msg_array.push(json!({
@@ -226,10 +234,12 @@ impl UpbitWebSocket {
             }));
         }
 
-        let msg_str = serde_json::to_string(&msg_array)
-            .map_err(|e| ProviderError::Parse(e.to_string()))?;
+        let msg_str =
+            serde_json::to_string(&msg_array).map_err(|e| ProviderError::Parse(e.to_string()))?;
 
-        ws_tx.send(Message::Text(msg_str)).await
+        ws_tx
+            .send(Message::Text(msg_str))
+            .await
             .map_err(|e| ProviderError::Network(e.to_string()))?;
 
         Ok(())
@@ -237,19 +247,30 @@ impl UpbitWebSocket {
 
     fn parse_ticker(&self, val: &serde_json::Value) -> Option<QuoteData> {
         let symbol = val["code"].as_str()?.to_string();
-        let current_price = Decimal::from_f64_retain(val["trade_price"].as_f64()?).unwrap_or_default();
+        let current_price =
+            Decimal::from_f64_retain(val["trade_price"].as_f64()?).unwrap_or_default();
 
         Some(QuoteData {
             symbol,
             current_price,
-            price_change: Decimal::from_f64_retain(val["change_price"].as_f64().unwrap_or(0.0)).unwrap_or_default(),
-            change_percent: Decimal::from_f64_retain(val["change_rate"].as_f64().unwrap_or(0.0)).unwrap_or_default(),
-            high: Decimal::from_f64_retain(val["high_price"].as_f64().unwrap_or(0.0)).unwrap_or_default(),
-            low: Decimal::from_f64_retain(val["low_price"].as_f64().unwrap_or(0.0)).unwrap_or_default(),
-            open: Decimal::from_f64_retain(val["opening_price"].as_f64().unwrap_or(0.0)).unwrap_or_default(),
-            prev_close: Decimal::from_f64_retain(val["prev_closing_price"].as_f64().unwrap_or(0.0)).unwrap_or_default(),
-            volume: Decimal::from_f64_retain(val["acc_trade_volume_24h"].as_f64().unwrap_or(0.0)).unwrap_or_default(),
-            trading_value: Decimal::from_f64_retain(val["acc_trade_price_24h"].as_f64().unwrap_or(0.0)).unwrap_or_default(),
+            price_change: Decimal::from_f64_retain(val["change_price"].as_f64().unwrap_or(0.0))
+                .unwrap_or_default(),
+            change_percent: Decimal::from_f64_retain(val["change_rate"].as_f64().unwrap_or(0.0))
+                .unwrap_or_default(),
+            high: Decimal::from_f64_retain(val["high_price"].as_f64().unwrap_or(0.0))
+                .unwrap_or_default(),
+            low: Decimal::from_f64_retain(val["low_price"].as_f64().unwrap_or(0.0))
+                .unwrap_or_default(),
+            open: Decimal::from_f64_retain(val["opening_price"].as_f64().unwrap_or(0.0))
+                .unwrap_or_default(),
+            prev_close: Decimal::from_f64_retain(val["prev_closing_price"].as_f64().unwrap_or(0.0))
+                .unwrap_or_default(),
+            volume: Decimal::from_f64_retain(val["acc_trade_volume_24h"].as_f64().unwrap_or(0.0))
+                .unwrap_or_default(),
+            trading_value: Decimal::from_f64_retain(
+                val["acc_trade_price_24h"].as_f64().unwrap_or(0.0),
+            )
+            .unwrap_or_default(),
             timestamp: Utc::now(),
         })
     }
@@ -298,11 +319,13 @@ impl UpbitWebSocket {
         let symbol = val["code"].as_str()?.to_string();
 
         // 가격 파싱
-        let price = val["trade_price"].as_f64()
+        let price = val["trade_price"]
+            .as_f64()
             .and_then(Decimal::from_f64_retain)?;
 
         // 수량 파싱
-        let quantity = val["trade_volume"].as_f64()
+        let quantity = val["trade_volume"]
+            .as_f64()
             .and_then(Decimal::from_f64_retain)?;
 
         // 체결 방향 파싱 (ASK = 매도, BID = 매수)

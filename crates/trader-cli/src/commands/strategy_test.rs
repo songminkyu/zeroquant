@@ -28,8 +28,8 @@
 
 use anyhow::{anyhow, Result};
 use chrono::{NaiveDate, Utc};
-use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -89,7 +89,7 @@ impl Default for StrategyTestConfig {
 
 /// 테스트 결과 상세
 #[derive(Debug, Clone)]
-#[allow(dead_code)]  // 회귀 테스트 기능에서 사용 예정
+#[allow(dead_code)] // 회귀 테스트 기능에서 사용 예정
 pub struct TestResult {
     pub success: bool,
     pub strategy_id: String,
@@ -169,16 +169,20 @@ fn create_backtest_config_for_strategy(
     // 전략별 숏 허용 여부
     let allow_short = matches!(
         strategy_id,
-        "volatility_breakout" | "candle_pattern" | "sma_crossover" | "momentum_surge" |
-        "market_bothside" | "us_3x_leverage"
+        "volatility_breakout"
+            | "candle_pattern"
+            | "sma_crossover"
+            | "momentum_surge"
+            | "market_bothside"
+            | "us_3x_leverage"
     );
 
     // 전략별 최대 포지션 수 설정
     let max_positions = match strategy_id {
         // 섹터 기반 전략은 섹터 수에 맞게 설정
-        "sector_momentum" => 11,  // US 11개 섹터
-        "sector_momentum_kr" => 9,  // KR 9개 섹터
-        "sector_vb" => num_symbols.max(10),  // 유니버스 크기에 맞게
+        "sector_momentum" => 11,            // US 11개 섹터
+        "sector_momentum_kr" => 9,          // KR 9개 섹터
+        "sector_vb" => num_symbols.max(10), // 유니버스 크기에 맞게
         // 로테이션/배분 전략은 유니버스 크기에 맞게
         "stock_rotation" | "stock_rotation_kr" | "market_cap_top" => num_symbols.max(20),
         // 자산 배분 전략
@@ -198,7 +202,11 @@ fn create_backtest_config_for_strategy(
 /// 전략 테스트 실행
 pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult> {
     let symbols_display = if config.symbols.len() > 3 {
-        format!("{}, ... ({} 종목)", config.symbols[..3].join(", "), config.symbols.len())
+        format!(
+            "{}, ... ({} 종목)",
+            config.symbols[..3].join(", "),
+            config.symbols.len()
+        )
     } else {
         config.symbols.join(", ")
     };
@@ -206,10 +214,14 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
     println!("\n🧪 전략 통합 테스트 시작");
     println!("═══════════════════════════════════════════════════════════════");
     println!("  전략 ID: {}", config.strategy_id);
-    println!("  종목: {} ({})", symbols_display, match config.market {
-        Market::KR => "한국",
-        Market::US => "미국",
-    });
+    println!(
+        "  종목: {} ({})",
+        symbols_display,
+        match config.market {
+            Market::KR => "한국",
+            Market::US => "미국",
+        }
+    );
     println!("  초기 자본: {}원", config.initial_capital);
     println!("═══════════════════════════════════════════════════════════════\n");
 
@@ -219,7 +231,10 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
     println!("📋 [1/6] 전략 검증...");
     let available_strategies = StrategyRegistry::list_ids();
     if !available_strategies.contains(&config.strategy_id.as_str()) {
-        diagnostics.push(format!("❌ 전략 '{}' 를 찾을 수 없습니다.", config.strategy_id));
+        diagnostics.push(format!(
+            "❌ 전략 '{}' 를 찾을 수 없습니다.",
+            config.strategy_id
+        ));
         diagnostics.push(format!("사용 가능한 전략: {:?}", available_strategies));
         return Ok(TestResult {
             success: false,
@@ -239,8 +254,9 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
     // 2. 데이터베이스 연결
     println!("\n📋 [2/6] 데이터베이스 연결...");
     let db_url = config.db_url.clone().unwrap_or_else(|| {
-        std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgresql://trader:trader_secret@localhost:5432/trader".to_string())
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgresql://trader:trader_secret@localhost:5432/trader".to_string()
+        })
     });
 
     let db_config = DatabaseConfig {
@@ -257,22 +273,21 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
     let ohlcv_cache = OhlcvCache::new(pool.clone());
 
     let now = Utc::now();
-    let requested_start = config.start_date
+    let requested_start = config
+        .start_date
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc())
         .unwrap_or_else(|| now - chrono::Duration::days(365));
-    let requested_end = config.end_date
+    let requested_end = config
+        .end_date
         .map(|d| d.and_hms_opt(23, 59, 59).unwrap().and_utc())
         .unwrap_or(now);
 
     // 전략 설정 미리 준비하여 필요한 모든 심볼 추출
     // (자산 배분 전략의 경우 내부 기본 자산 + JSON config의 추가 심볼)
-    let mut config = config;  // make mutable
+    let mut config = config; // make mutable
     let preliminary_config = prepare_strategy_config(&config)?;
-    let all_required_symbols = extract_required_symbols(
-        &preliminary_config,
-        &config.symbols[0],
-        &config.strategy_id,
-    );
+    let all_required_symbols =
+        extract_required_symbols(&preliminary_config, &config.symbols[0], &config.strategy_id);
 
     // config.symbols 업데이트 (추출된 모든 심볼 포함, 원래 주 심볼 순서 유지)
     if all_required_symbols.len() > config.symbols.len() {
@@ -284,26 +299,37 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
                 updated_symbols.push(symbol.clone());
             }
         }
-        println!("  ℹ️ 전략 설정에서 추가 심볼 추출: {} → {} 개 (주 심볼: {})",
-            config.symbols.len(), updated_symbols.len(), primary);
+        println!(
+            "  ℹ️ 전략 설정에서 추가 심볼 추출: {} → {} 개 (주 심볼: {})",
+            config.symbols.len(),
+            updated_symbols.len(),
+            primary
+        );
         config.symbols = updated_symbols;
     }
 
     // 모든 심볼의 klines 로드 및 공통 시간 범위 계산
-    let mut all_klines: std::collections::HashMap<String, Vec<Kline>> = std::collections::HashMap::new();
+    let mut all_klines: std::collections::HashMap<String, Vec<Kline>> =
+        std::collections::HashMap::new();
     let mut common_start: Option<chrono::DateTime<Utc>> = None;
     let mut common_end: Option<chrono::DateTime<Utc>> = None;
 
     println!("  📥 {} 심볼 로드 중...", config.symbols.len());
     for symbol in &config.symbols {
-        match ohlcv_cache.get_cached_klines_range(symbol, Timeframe::D1, requested_start, requested_end).await {
+        match ohlcv_cache
+            .get_cached_klines_range(symbol, Timeframe::D1, requested_start, requested_end)
+            .await
+        {
             Ok(symbol_klines) if !symbol_klines.is_empty() => {
                 let sym_start = symbol_klines.first().unwrap().open_time;
                 let sym_end = symbol_klines.last().unwrap().close_time;
-                println!("    ✅ {} 캔들 로드: {} 개 ({} ~ {})",
-                    symbol, symbol_klines.len(),
+                println!(
+                    "    ✅ {} 캔들 로드: {} 개 ({} ~ {})",
+                    symbol,
+                    symbol_klines.len(),
                     sym_start.format("%Y-%m-%d"),
-                    sym_end.format("%Y-%m-%d"));
+                    sym_end.format("%Y-%m-%d")
+                );
 
                 // 공통 시간 범위 계산 (교집합)
                 common_start = Some(common_start.map_or(sym_start, |cs| cs.max(sym_start)));
@@ -323,8 +349,11 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
     // 공통 시간 범위로 klines 필터링
     let (start, end) = match (common_start, common_end) {
         (Some(cs), Some(ce)) if cs < ce => {
-            println!("  📅 공통 시간 범위: {} ~ {}",
-                cs.format("%Y-%m-%d"), ce.format("%Y-%m-%d"));
+            println!(
+                "  📅 공통 시간 범위: {} ~ {}",
+                cs.format("%Y-%m-%d"),
+                ce.format("%Y-%m-%d")
+            );
             (cs, ce)
         }
         _ => {
@@ -346,7 +375,9 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
         diagnostics.push("❌ 캔들 데이터가 없습니다.".to_string());
         diagnostics.push(format!("  종목: {}", primary_symbol));
         diagnostics.push(format!("  기간: {} ~ {}", start, end));
-        diagnostics.push("  해결: `trader download` 또는 `trader import-db`로 데이터 다운로드".to_string());
+        diagnostics.push(
+            "  해결: `trader download` 또는 `trader import-db`로 데이터 다운로드".to_string(),
+        );
         return Ok(TestResult {
             success: false,
             strategy_id: config.strategy_id,
@@ -362,9 +393,16 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
     }
 
     println!("  ✅ {} 캔들 로드 완료 ({})", klines.len(), primary_symbol);
-    println!("    보정된 기간: {} ~ {}",
-        klines.first().map(|k| k.open_time.format("%Y-%m-%d").to_string()).unwrap_or_default(),
-        klines.last().map(|k| k.open_time.format("%Y-%m-%d").to_string()).unwrap_or_default()
+    println!(
+        "    보정된 기간: {} ~ {}",
+        klines
+            .first()
+            .map(|k| k.open_time.format("%Y-%m-%d").to_string())
+            .unwrap_or_default(),
+        klines
+            .last()
+            .map(|k| k.open_time.format("%Y-%m-%d").to_string())
+            .unwrap_or_default()
     );
     println!("  📊 로드된 심볼: {} 개", all_klines.len());
 
@@ -376,7 +414,10 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
         println!("  ✅ StrategyContext 생성 완료");
         println!("    - global_scores: {} 개", ctx_read.global_scores.len());
         println!("    - route_states: {} 개", ctx_read.route_states.len());
-        println!("    - screening_results: {} 개", ctx_read.screening_results.len());
+        println!(
+            "    - screening_results: {} 개",
+            ctx_read.screening_results.len()
+        );
     }
 
     // 백테스트용: route_states를 Armed로 설정 (진입 가능 상태)
@@ -384,7 +425,9 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
     {
         let mut ctx_write = context.write().await;
         for symbol in &config.symbols {
-            ctx_write.route_states.insert(symbol.clone(), trader_core::RouteState::Armed);
+            ctx_write
+                .route_states
+                .insert(symbol.clone(), trader_core::RouteState::Armed);
         }
         debug!("백테스트용 RouteState 초기화: Armed");
 
@@ -393,7 +436,10 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
         for (symbol, symbol_klines) in &all_klines {
             ctx_write.update_klines(symbol, Timeframe::D1, symbol_klines.clone());
         }
-        println!("  ✅ {} 심볼의 klines를 StrategyContext에 저장", all_klines.len());
+        println!(
+            "  ✅ {} 심볼의 klines를 StrategyContext에 저장",
+            all_klines.len()
+        );
     }
 
     // 5. 전략 초기화 및 백테스트
@@ -401,7 +447,10 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
 
     // JSON config 준비
     let strategy_config = prepare_strategy_config(&config)?;
-    println!("  설정: {}", serde_json::to_string_pretty(&strategy_config)?);
+    println!(
+        "  설정: {}",
+        serde_json::to_string_pretty(&strategy_config)?
+    );
 
     // 전략 생성
     let mut strategy = StrategyRegistry::create_instance(&config.strategy_id)
@@ -425,25 +474,27 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
     if let Some(mtf_config) = strategy.multi_timeframe_config() {
         let required_timeframes: Vec<Timeframe> = mtf_config.timeframes.keys().cloned().collect();
         println!("  📊 멀티 타임프레임 전략 감지: {:?}", required_timeframes);
-        
+
         for tf in &required_timeframes {
             // D1은 이미 로드됨
             if *tf == Timeframe::D1 {
                 continue;
             }
-            
+
             // 주 심볼의 추가 타임프레임 데이터 로드
             let primary = &config.symbols[0];
-            if let Ok(tf_klines) = ohlcv_cache.get_cached_klines_range(
-                primary, 
-                *tf, 
-                requested_start, 
-                requested_end
-            ).await {
+            if let Ok(tf_klines) = ohlcv_cache
+                .get_cached_klines_range(primary, *tf, requested_start, requested_end)
+                .await
+            {
                 if !tf_klines.is_empty() {
                     let mut ctx_write = context.write().await;
                     ctx_write.update_klines(primary, *tf, tf_klines.clone());
-                    println!("  ✅ {} 타임프레임 데이터 로드: {} 캔들", tf, tf_klines.len());
+                    println!(
+                        "  ✅ {} 타임프레임 데이터 로드: {} 캔들",
+                        tf,
+                        tf_klines.len()
+                    );
                 } else {
                     println!("  ⚠️ {} 타임프레임 데이터 없음", tf);
                 }
@@ -471,7 +522,15 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
     }
 
     let report = engine
-        .run(&mut *strategy, &klines, context.clone(), &ticker, screening_provider.as_ref().map(|p| p as &dyn trader_core::ScreeningCalculator))
+        .run(
+            &mut *strategy,
+            &klines,
+            context.clone(),
+            &ticker,
+            screening_provider
+                .as_ref()
+                .map(|p| p as &dyn trader_core::ScreeningCalculator),
+        )
         .await
         .map_err(|e| {
             diagnostics.push(format!("❌ 백테스트 실행 실패: {}", e));
@@ -499,7 +558,10 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
 
     println!("\n📈 성과 지표:");
     println!("  총 수익률: {:.2}%", report.metrics.total_return_pct);
-    println!("  연환산 수익률: {:.2}%", report.metrics.annualized_return_pct);
+    println!(
+        "  연환산 수익률: {:.2}%",
+        report.metrics.annualized_return_pct
+    );
     println!("  순이익: {:+.0}원", report.metrics.net_profit);
     println!("  총 거래 수: {}", report.metrics.total_trades);
     println!("  승률: {:.1}%", report.metrics.win_rate_pct);
@@ -512,7 +574,8 @@ pub async fn run_strategy_test(config: StrategyTestConfig) -> Result<TestResult>
         println!("\n📝 거래 내역:");
         println!("  ─────────────────────────────────────────────────────────────");
         for (i, trade) in report.trades.iter().enumerate() {
-            println!("  [{}] {} {} @ {:.0} → {:.0} | PnL: {:+.0} ({:+.2}%)",
+            println!(
+                "  [{}] {} {} @ {:.0} → {:.0} | PnL: {:+.0} ({:+.2}%)",
                 i + 1,
                 trade.side,
                 trade.symbol,
@@ -568,7 +631,10 @@ fn prepare_strategy_config(config: &StrategyTestConfig) -> Result<serde_json::Va
         }
 
         if !obj.contains_key("amount") {
-            obj.insert("amount".to_string(), serde_json::json!(config.initial_capital.to_string()));
+            obj.insert(
+                "amount".to_string(),
+                serde_json::json!(config.initial_capital.to_string()),
+            );
         }
 
         // 자산배분 전략용 기본 설정 주입
@@ -597,19 +663,25 @@ fn extract_required_symbols(
     match strategy_id {
         "haa" => {
             // HAA 기본 자산 (AssetAllocationConfig::haa_default)
-            for ticker in ["VWO", "BND", "SPY", "VEA", "AGG", "SHY", "IEF", "LQD", "BIL"] {
+            for ticker in [
+                "VWO", "BND", "SPY", "VEA", "AGG", "SHY", "IEF", "LQD", "BIL",
+            ] {
                 symbols.insert(ticker.to_string());
             }
         }
         "xaa" => {
             // XAA 기본 자산
-            for ticker in ["VWO", "BND", "SPY", "VEA", "LQD", "HYG", "EMB", "SHY", "IEF", "TLT", "BIL"] {
+            for ticker in [
+                "VWO", "BND", "SPY", "VEA", "LQD", "HYG", "EMB", "SHY", "IEF", "TLT", "BIL",
+            ] {
                 symbols.insert(ticker.to_string());
             }
         }
         "baa" => {
             // BAA 기본 자산
-            for ticker in ["SPY", "VEA", "VWO", "AGG", "SHY", "IEF", "TLT", "LQD", "BIL"] {
+            for ticker in [
+                "SPY", "VEA", "VWO", "AGG", "SHY", "IEF", "TLT", "LQD", "BIL",
+            ] {
                 symbols.insert(ticker.to_string());
             }
         }
@@ -633,28 +705,34 @@ fn extract_required_symbols(
         }
         "momentum_surge" => {
             // Momentum Surge 기본 ETF
-            for ticker in ["122630", "229200", "114800", "132030", "251340", "233740", "305720"] {
+            for ticker in [
+                "122630", "229200", "114800", "132030", "251340", "233740", "305720",
+            ] {
                 symbols.insert(ticker.to_string());
             }
         }
         "sector_momentum" => {
             // US 섹터 ETF 기본값
-            for ticker in ["XLK", "XLF", "XLV", "XLY", "XLP", "XLE", "XLI", "XLB", "XLU", "XLRE", "XLC"] {
+            for ticker in [
+                "XLK", "XLF", "XLV", "XLY", "XLP", "XLE", "XLI", "XLB", "XLU", "XLRE", "XLC",
+            ] {
                 symbols.insert(ticker.to_string());
             }
         }
         "sector_momentum_kr" => {
             // KR 섹터 ETF 기본값
-            for ticker in ["091160", "091170", "091180", "266360", "266390", "266410", "266430"] {
+            for ticker in [
+                "091160", "091170", "091180", "266360", "266390", "266410", "266430",
+            ] {
                 symbols.insert(ticker.to_string());
             }
         }
         "pension_bot" => {
             // 연금 자동화 기본 포트폴리오 (한국 ETF 20개)
             for ticker in [
-                "448290", "379780", "294400", "200250", "283580", "195970", "161510",
-                "445910", "305080", "148070", "385560", "304660", "114470", "329750",
-                "319640", "276000", "261220", "139310", "137610", "130730"
+                "448290", "379780", "294400", "200250", "283580", "195970", "161510", "445910",
+                "305080", "148070", "385560", "304660", "114470", "329750", "319640", "276000",
+                "261220", "139310", "137610", "130730",
             ] {
                 symbols.insert(ticker.to_string());
             }
@@ -673,7 +751,10 @@ fn extract_required_symbols(
         }
         "sector_vb" => {
             // 섹터 변동성 돌파 기본 섹터 ETF
-            for ticker in ["091160", "091230", "305720", "305540", "091170", "091220", "102970", "117460", "091180"] {
+            for ticker in [
+                "091160", "091230", "305720", "305540", "091170", "091220", "102970", "117460",
+                "091180",
+            ] {
                 symbols.insert(ticker.to_string());
             }
         }
@@ -761,9 +842,18 @@ fn inject_asset_allocation_defaults(
 ) {
     // 자산배분 전략 목록
     let asset_allocation_strategies = [
-        "haa", "xaa", "baa", "all_weather", "dual_momentum",
-        "sector_momentum", "stock_rotation", "sector_momentum_kr", "stock_rotation_kr",
-        "market_cap_top", "compound_momentum", "momentum_power"
+        "haa",
+        "xaa",
+        "baa",
+        "all_weather",
+        "dual_momentum",
+        "sector_momentum",
+        "stock_rotation",
+        "sector_momentum_kr",
+        "stock_rotation_kr",
+        "market_cap_top",
+        "compound_momentum",
+        "momentum_power",
     ];
 
     if !asset_allocation_strategies.contains(&strategy_id) {
@@ -773,8 +863,8 @@ fn inject_asset_allocation_defaults(
     // cash_ticker 기본값
     if !obj.contains_key("cash_ticker") {
         let default_cash = match market {
-            Market::US => "BIL",  // 미국 단기 국채 ETF
-            Market::KR => "SHY",  // 한국은 적당한 현금 대용이 없어 미국 단기채 사용
+            Market::US => "BIL", // 미국 단기 국채 ETF
+            Market::KR => "SHY", // 한국은 적당한 현금 대용이 없어 미국 단기채 사용
         };
         obj.insert("cash_ticker".to_string(), serde_json::json!(default_cash));
     }
@@ -783,7 +873,7 @@ fn inject_asset_allocation_defaults(
     if !obj.contains_key("offensive_top_n") {
         let top_n = match strategy_id {
             "baa" | "all_weather" | "dual_momentum" => 1,
-            _ => 4,  // HAA, XAA 기본값
+            _ => 4, // HAA, XAA 기본값
         };
         obj.insert("offensive_top_n".to_string(), serde_json::json!(top_n));
     }
@@ -806,7 +896,7 @@ fn inject_asset_allocation_defaults(
     // min_global_score 기본값
     if !obj.contains_key("min_global_score") {
         let score = match strategy_id {
-            "all_weather" => 0,  // All Weather는 스코어 필터 없음
+            "all_weather" => 0, // All Weather는 스코어 필터 없음
             _ => 55,
         };
         obj.insert("min_global_score".to_string(), serde_json::json!(score));
@@ -815,10 +905,10 @@ fn inject_asset_allocation_defaults(
     // canary_threshold 기본값
     if !obj.contains_key("canary_threshold") {
         let threshold = match strategy_id {
-            "baa" => "0.75",            // BAA는 75%
-            "dual_momentum" => "1.0",   // DualMomentum은 100%
-            "all_weather" => "0.0",     // AllWeather는 카나리아 없음
-            _ => "0.5",                 // HAA, XAA 기본값 50%
+            "baa" => "0.75",          // BAA는 75%
+            "dual_momentum" => "1.0", // DualMomentum은 100%
+            "all_weather" => "0.0",   // AllWeather는 카나리아 없음
+            _ => "0.5",               // HAA, XAA 기본값 50%
         };
         obj.insert("canary_threshold".to_string(), serde_json::json!(threshold));
     }
@@ -830,12 +920,16 @@ fn inject_asset_allocation_defaults(
 
     // canary_tickers 기본값 (HAA 계열)
     if strategy_id == "haa" && !obj.contains_key("canary_tickers") {
-        obj.insert("canary_tickers".to_string(), serde_json::json!(["SPY", "EFA"]));
+        obj.insert(
+            "canary_tickers".to_string(),
+            serde_json::json!(["SPY", "EFA"]),
+        );
     }
 
     // 로테이션 전략용 기본 설정
     if (strategy_id.contains("rotation") || strategy_id.contains("momentum"))
-        && !obj.contains_key("lookback_period") {
+        && !obj.contains_key("lookback_period")
+    {
         obj.insert("lookback_period".to_string(), serde_json::json!(12));
     }
 
@@ -942,7 +1036,10 @@ fn analyze_no_trades(klines: &[Kline], config: &serde_json::Value, diagnostics: 
 
     // 1. 데이터 부족 확인
     if klines.len() < 50 {
-        diagnostics.push(format!("  - 데이터 부족: {}개 캔들 (최소 50개 권장)", klines.len()));
+        diagnostics.push(format!(
+            "  - 데이터 부족: {}개 캔들 (최소 50개 권장)",
+            klines.len()
+        ));
     }
 
     // 2. 설정 값 확인
@@ -962,13 +1059,23 @@ fn analyze_no_trades(klines: &[Kline], config: &serde_json::Value, diagnostics: 
         // min_score 확인
         if let Some(min_score) = obj.get("min_score").and_then(|v| v.as_f64()) {
             if min_score > 80.0 {
-                diagnostics.push(format!("  - GlobalScore 필터가 너무 엄격: min_score={}", min_score));
+                diagnostics.push(format!(
+                    "  - GlobalScore 필터가 너무 엄격: min_score={}",
+                    min_score
+                ));
             }
         }
 
         // enable_route_filter 확인
-        if obj.get("enable_route_filter").and_then(|v| v.as_bool()).unwrap_or(false) {
-            diagnostics.push("  - RouteState 필터 활성화됨 (백테스트에서는 RouteState가 없을 수 있음)".to_string());
+        if obj
+            .get("enable_route_filter")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+        {
+            diagnostics.push(
+                "  - RouteState 필터 활성화됨 (백테스트에서는 RouteState가 없을 수 있음)"
+                    .to_string(),
+            );
         }
     }
 
@@ -979,7 +1086,9 @@ fn analyze_no_trades(klines: &[Kline], config: &serde_json::Value, diagnostics: 
 
         if first_close > Decimal::ZERO {
             let change_pct = ((last_close - first_close) / first_close * Decimal::from(100))
-                .to_string().parse::<f64>().unwrap_or(0.0);
+                .to_string()
+                .parse::<f64>()
+                .unwrap_or(0.0);
 
             if change_pct.abs() < 5.0 {
                 diagnostics.push(format!("  - 기간 내 가격 변동이 적음: {:.1}%", change_pct));
@@ -1076,7 +1185,7 @@ fn default_tolerance() -> f64 {
 
 /// 회귀 테스트 결과
 #[derive(Debug, Clone)]
-#[allow(dead_code)]  // 회귀 테스트 CLI 명령에서 사용 예정
+#[allow(dead_code)] // 회귀 테스트 CLI 명령에서 사용 예정
 pub struct RegressionTestResult {
     pub fixture_path: String,
     pub total_tests: usize,
@@ -1111,7 +1220,10 @@ pub fn discover_fixtures(fixtures_dir: &Path) -> Result<Vec<std::path::PathBuf>>
     let mut fixtures = Vec::new();
 
     if !fixtures_dir.exists() {
-        return Err(anyhow!("Fixture 디렉토리가 존재하지 않습니다: {}", fixtures_dir.display()));
+        return Err(anyhow!(
+            "Fixture 디렉토리가 존재하지 않습니다: {}",
+            fixtures_dir.display()
+        ));
     }
 
     for entry in std::fs::read_dir(fixtures_dir)? {
@@ -1136,8 +1248,11 @@ pub struct RegressionTestOptions {
 }
 
 /// 회귀 테스트 실행
-#[allow(dead_code)]  // 회귀 테스트 CLI 명령 추가 시 활성화
-pub async fn run_regression_tests(fixtures_dir: &Path, db_url: Option<String>) -> Result<Vec<RegressionTestResult>> {
+#[allow(dead_code)] // 회귀 테스트 CLI 명령 추가 시 활성화
+pub async fn run_regression_tests(
+    fixtures_dir: &Path,
+    db_url: Option<String>,
+) -> Result<Vec<RegressionTestResult>> {
     run_regression_tests_with_options(
         fixtures_dir,
         RegressionTestOptions {
@@ -1156,7 +1271,10 @@ pub async fn run_regression_tests_with_options(
     let fixture_paths = discover_fixtures(fixtures_dir)?;
 
     if fixture_paths.is_empty() {
-        return Err(anyhow!("Fixture 파일이 없습니다: {}", fixtures_dir.display()));
+        return Err(anyhow!(
+            "Fixture 파일이 없습니다: {}",
+            fixtures_dir.display()
+        ));
     }
 
     println!("\n🧪 회귀 테스트 시작");
@@ -1187,14 +1305,18 @@ pub async fn run_regression_tests_with_options(
 }
 
 /// 테스트 결과에서 차트 생성
-pub fn generate_charts_from_results(results: &[RegressionTestResult], output_dir: &Path) -> Result<()> {
+pub fn generate_charts_from_results(
+    results: &[RegressionTestResult],
+    output_dir: &Path,
+) -> Result<()> {
     use crate::commands::chart_gen::RegressionChartGenerator;
 
     println!("\n📊 차트 이미지 생성 중...");
     println!("───────────────────────────────────────────────────────────────");
 
     // 테스트 결과에서 BacktestReport 추출
-    let mut chart_data: Vec<(String, String, trader_analytics::backtest::BacktestReport)> = Vec::new();
+    let mut chart_data: Vec<(String, String, trader_analytics::backtest::BacktestReport)> =
+        Vec::new();
 
     for result in results {
         for test in &result.results {
@@ -1254,7 +1376,10 @@ pub fn generate_charts_from_results(results: &[RegressionTestResult], output_dir
                 println!("  ❌ {} - 차트 생성 실패: {}", strategy_id, e);
             }
             Err(_) => {
-                println!("  ❌ {} - 차트 생성 중 내부 오류 (데이터 범위 문제)", strategy_id);
+                println!(
+                    "  ❌ {} - 차트 생성 중 내부 오류 (데이터 범위 문제)",
+                    strategy_id
+                );
             }
         }
     }
@@ -1267,10 +1392,17 @@ pub fn generate_charts_from_results(results: &[RegressionTestResult], output_dir
 }
 
 /// 단일 Fixture 파일의 테스트 실행
-pub async fn run_fixture_tests(fixture_path: &Path, db_url: Option<String>) -> Result<RegressionTestResult> {
+pub async fn run_fixture_tests(
+    fixture_path: &Path,
+    db_url: Option<String>,
+) -> Result<RegressionTestResult> {
     let fixture = load_fixture(fixture_path)?;
 
-    println!("\n📁 Fixture: {} ({})", fixture_path.file_name().unwrap().to_string_lossy(), fixture.description);
+    println!(
+        "\n📁 Fixture: {} ({})",
+        fixture_path.file_name().unwrap().to_string_lossy(),
+        fixture.description
+    );
     println!("───────────────────────────────────────────────────────────────");
 
     let mut results = Vec::new();
@@ -1282,7 +1414,8 @@ pub async fn run_fixture_tests(fixture_path: &Path, db_url: Option<String>) -> R
 
         match &result {
             Ok(test_result) => {
-                let (test_passed, validation_errors) = validate_test_result_detailed(test_result, &strategy_fixture.expected);
+                let (test_passed, validation_errors) =
+                    validate_test_result_detailed(test_result, &strategy_fixture.expected);
 
                 // 실제 결과 출력
                 let return_pct: f64 = test_result.total_return_pct.try_into().unwrap_or(0.0);
@@ -1290,7 +1423,8 @@ pub async fn run_fixture_tests(fixture_path: &Path, db_url: Option<String>) -> R
 
                 if test_passed {
                     passed += 1;
-                    println!("  ✅ {} ({}) | 거래: {} | 수익률: {:.2}% | 승률: {:.1}%",
+                    println!(
+                        "  ✅ {} ({}) | 거래: {} | 수익률: {:.2}% | 승률: {:.1}%",
                         strategy_fixture.name,
                         strategy_fixture.strategy_id,
                         test_result.trades_executed,
@@ -1299,7 +1433,8 @@ pub async fn run_fixture_tests(fixture_path: &Path, db_url: Option<String>) -> R
                     );
                 } else {
                     failed += 1;
-                    println!("  ❌ {} ({}) | 거래: {} | 수익률: {:.2}% | 승률: {:.1}%",
+                    println!(
+                        "  ❌ {} ({}) | 거래: {} | 수익률: {:.2}% | 승률: {:.1}%",
                         strategy_fixture.name,
                         strategy_fixture.strategy_id,
                         test_result.trades_executed,
@@ -1316,7 +1451,11 @@ pub async fn run_fixture_tests(fixture_path: &Path, db_url: Option<String>) -> R
                     strategy_id: strategy_fixture.strategy_id.clone(),
                     strategy_name: strategy_fixture.name.clone(),
                     passed: test_passed,
-                    error_message: if test_passed { None } else { Some(validation_errors.join("; ")) },
+                    error_message: if test_passed {
+                        None
+                    } else {
+                        Some(validation_errors.join("; "))
+                    },
                     test_result: Some(test_result.clone()),
                 });
             }
@@ -1327,7 +1466,10 @@ pub async fn run_fixture_tests(fixture_path: &Path, db_url: Option<String>) -> R
                 if expected_failure {
                     passed += 1;
                     failed -= 1;
-                    println!("  ✅ {} ({}) - 예상된 실패", strategy_fixture.name, strategy_fixture.strategy_id);
+                    println!(
+                        "  ✅ {} ({}) - 예상된 실패",
+                        strategy_fixture.name, strategy_fixture.strategy_id
+                    );
                     results.push(SingleTestResult {
                         strategy_id: strategy_fixture.strategy_id.clone(),
                         strategy_name: strategy_fixture.name.clone(),
@@ -1336,7 +1478,10 @@ pub async fn run_fixture_tests(fixture_path: &Path, db_url: Option<String>) -> R
                         test_result: None,
                     });
                 } else {
-                    println!("  ❌ {} ({}) - {}", strategy_fixture.name, strategy_fixture.strategy_id, e);
+                    println!(
+                        "  ❌ {} ({}) - {}",
+                        strategy_fixture.name, strategy_fixture.strategy_id, e
+                    );
                     results.push(SingleTestResult {
                         strategy_id: strategy_fixture.strategy_id.clone(),
                         strategy_name: strategy_fixture.name.clone(),
@@ -1359,7 +1504,10 @@ pub async fn run_fixture_tests(fixture_path: &Path, db_url: Option<String>) -> R
 }
 
 /// 개별 Fixture 테스트 실행
-async fn run_single_fixture_test(fixture: &StrategyFixture, db_url: Option<String>) -> Result<TestResult> {
+async fn run_single_fixture_test(
+    fixture: &StrategyFixture,
+    db_url: Option<String>,
+) -> Result<TestResult> {
     let market = match fixture.market.to_uppercase().as_str() {
         "KR" => Market::KR,
         "US" => Market::US,
@@ -1392,8 +1540,9 @@ async fn run_strategy_test_quiet(config: StrategyTestConfig) -> Result<TestResul
 
     // 데이터베이스 연결
     let db_url = config.db_url.clone().unwrap_or_else(|| {
-        std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgresql://trader:trader_secret@localhost:5432/trader".to_string())
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgresql://trader:trader_secret@localhost:5432/trader".to_string()
+        })
     });
 
     let db_config = DatabaseConfig {
@@ -1413,13 +1562,10 @@ async fn run_strategy_test_quiet(config: StrategyTestConfig) -> Result<TestResul
 
     // 전략 설정 미리 준비하여 필요한 모든 심볼 추출
     // (자산 배분 전략의 경우 내부 기본 자산 + JSON config의 추가 심볼)
-    let mut config = config;  // make mutable
+    let mut config = config; // make mutable
     let preliminary_config = prepare_strategy_config(&config)?;
-    let all_required_symbols = extract_required_symbols(
-        &preliminary_config,
-        &config.symbols[0],
-        &config.strategy_id,
-    );
+    let all_required_symbols =
+        extract_required_symbols(&preliminary_config, &config.symbols[0], &config.strategy_id);
 
     // config.symbols 업데이트 (추출된 모든 심볼 포함)
     if all_required_symbols.len() > config.symbols.len() {
@@ -1434,12 +1580,16 @@ async fn run_strategy_test_quiet(config: StrategyTestConfig) -> Result<TestResul
     }
 
     // 모든 심볼의 klines 로드 및 공통 시간 범위 계산
-    let mut all_klines: std::collections::HashMap<String, Vec<Kline>> = std::collections::HashMap::new();
+    let mut all_klines: std::collections::HashMap<String, Vec<Kline>> =
+        std::collections::HashMap::new();
     let mut common_start: Option<chrono::DateTime<Utc>> = None;
     let mut common_end: Option<chrono::DateTime<Utc>> = None;
 
     for symbol in &config.symbols {
-        match ohlcv_cache.get_cached_klines_range(symbol, Timeframe::D1, requested_start, requested_end).await {
+        match ohlcv_cache
+            .get_cached_klines_range(symbol, Timeframe::D1, requested_start, requested_end)
+            .await
+        {
             Ok(symbol_klines) if !symbol_klines.is_empty() => {
                 let sym_start = symbol_klines.first().unwrap().open_time;
                 let sym_end = symbol_klines.last().unwrap().close_time;
@@ -1503,21 +1653,19 @@ async fn run_strategy_test_quiet(config: StrategyTestConfig) -> Result<TestResul
     // 멀티 타임프레임 전략: 추가 타임프레임 데이터 로드
     if let Some(mtf_config) = strategy.multi_timeframe_config() {
         let required_timeframes: Vec<Timeframe> = mtf_config.timeframes.keys().cloned().collect();
-        
+
         for tf in &required_timeframes {
             // D1은 이미 로드됨
             if *tf == Timeframe::D1 {
                 continue;
             }
-            
+
             // 주 심볼의 추가 타임프레임 데이터 로드
             let primary = &config.symbols[0];
-            if let Ok(tf_klines) = ohlcv_cache.get_cached_klines_range(
-                primary, 
-                *tf, 
-                requested_start, 
-                requested_end
-            ).await {
+            if let Ok(tf_klines) = ohlcv_cache
+                .get_cached_klines_range(primary, *tf, requested_start, requested_end)
+                .await
+            {
                 if !tf_klines.is_empty() {
                     let mut ctx_write = context.write().await;
                     ctx_write.update_klines(primary, *tf, tf_klines);
@@ -1540,7 +1688,15 @@ async fn run_strategy_test_quiet(config: StrategyTestConfig) -> Result<TestResul
     let screening_provider = create_screening_provider_for_strategy(&config.strategy_id);
 
     let report = engine
-        .run(&mut *strategy, &klines, context.clone(), &ticker, screening_provider.as_ref().map(|p| p as &dyn trader_core::ScreeningCalculator))
+        .run(
+            &mut *strategy,
+            &klines,
+            context.clone(),
+            &ticker,
+            screening_provider
+                .as_ref()
+                .map(|p| p as &dyn trader_core::ScreeningCalculator),
+        )
         .await
         .map_err(|e| anyhow!("백테스트 실행 실패: {}", e))?;
 
@@ -1548,7 +1704,7 @@ async fn run_strategy_test_quiet(config: StrategyTestConfig) -> Result<TestResul
     let trades_executed = report.metrics.total_trades;
 
     Ok(TestResult {
-        success: true,  // 초기화 성공
+        success: true, // 초기화 성공
         strategy_id: config.strategy_id,
         symbols: config.symbols,
         data_points: klines.len(),
@@ -1565,7 +1721,10 @@ async fn run_strategy_test_quiet(config: StrategyTestConfig) -> Result<TestResul
 ///
 /// 결과값을 완전히 검증하고, 차이가 있는 항목을 반환합니다.
 /// P/F가 목적이 아니라, 결과값 자체의 검증이 목적입니다.
-fn validate_test_result_detailed(result: &TestResult, expected: &ExpectedResult) -> (bool, Vec<String>) {
+fn validate_test_result_detailed(
+    result: &TestResult,
+    expected: &ExpectedResult,
+) -> (bool, Vec<String>) {
     let mut errors = Vec::new();
     let tolerance = expected.tolerance;
 
@@ -1700,14 +1859,18 @@ fn print_regression_summary(results: &[RegressionTestResult]) {
     println!("  총 테스트: {} 개", total_tests);
     println!("  ✅ 통과: {} 개", total_passed);
     println!("  ❌ 실패: {} 개", total_failed);
-    println!("  통과율: {:.1}%", (total_passed as f64 / total_tests as f64) * 100.0);
+    println!(
+        "  통과율: {:.1}%",
+        (total_passed as f64 / total_tests as f64) * 100.0
+    );
 
     if total_failed > 0 {
         println!("\n⚠️  실패한 테스트:");
         for result in results {
             for test in &result.results {
                 if !test.passed {
-                    println!("  - {} ({}): {}",
+                    println!(
+                        "  - {} ({}): {}",
                         test.strategy_name,
                         test.strategy_id,
                         test.error_message.as_deref().unwrap_or("알 수 없는 오류")
@@ -1724,11 +1887,16 @@ fn print_regression_summary(results: &[RegressionTestResult]) {
 ///
 /// 전략 초기화만 테스트하여 빠르게 회귀 여부를 확인합니다.
 /// 백테스트는 실행하지 않으므로 데이터베이스 연결이 필요 없습니다.
-pub async fn run_init_only_regression_tests(fixtures_dir: &Path) -> Result<Vec<RegressionTestResult>> {
+pub async fn run_init_only_regression_tests(
+    fixtures_dir: &Path,
+) -> Result<Vec<RegressionTestResult>> {
     let fixture_paths = discover_fixtures(fixtures_dir)?;
 
     if fixture_paths.is_empty() {
-        return Err(anyhow!("Fixture 파일이 없습니다: {}", fixtures_dir.display()));
+        return Err(anyhow!(
+            "Fixture 파일이 없습니다: {}",
+            fixtures_dir.display()
+        ));
     }
 
     println!("\n🧪 초기화 전용 회귀 테스트 (빠른 검증)");
@@ -1742,7 +1910,11 @@ pub async fn run_init_only_regression_tests(fixtures_dir: &Path) -> Result<Vec<R
     for fixture_path in fixture_paths {
         let fixture = load_fixture(&fixture_path)?;
 
-        println!("\n📁 Fixture: {} ({})", fixture_path.file_name().unwrap().to_string_lossy(), fixture.description);
+        println!(
+            "\n📁 Fixture: {} ({})",
+            fixture_path.file_name().unwrap().to_string_lossy(),
+            fixture.description
+        );
         println!("───────────────────────────────────────────────────────────────");
 
         let mut results = Vec::new();
@@ -1754,17 +1926,27 @@ pub async fn run_init_only_regression_tests(fixtures_dir: &Path) -> Result<Vec<R
 
             if test_passed {
                 passed += 1;
-                println!("  ✅ {} ({})", strategy_fixture.name, strategy_fixture.strategy_id);
+                println!(
+                    "  ✅ {} ({})",
+                    strategy_fixture.name, strategy_fixture.strategy_id
+                );
             } else {
                 failed += 1;
-                println!("  ❌ {} ({})", strategy_fixture.name, strategy_fixture.strategy_id);
+                println!(
+                    "  ❌ {} ({})",
+                    strategy_fixture.name, strategy_fixture.strategy_id
+                );
             }
 
             results.push(SingleTestResult {
                 strategy_id: strategy_fixture.strategy_id.clone(),
                 strategy_name: strategy_fixture.name.clone(),
                 passed: test_passed,
-                error_message: if test_passed { None } else { Some("초기화 실패".to_string()) },
+                error_message: if test_passed {
+                    None
+                } else {
+                    Some("초기화 실패".to_string())
+                },
                 test_result: None,
             });
         }

@@ -116,10 +116,7 @@ impl SmsSender {
                 price,
                 ..
             } => {
-                format!(
-                    "주문체결: {} {} {}@{}",
-                    symbol, side, quantity, price
-                )
+                format!("주문체결: {} {} {}@{}", symbol, side, quantity, price)
             }
 
             NotificationEvent::PositionClosed {
@@ -155,11 +152,20 @@ impl SmsSender {
                 let side_text = side.as_ref().map(|s| format!(" {}", s)).unwrap_or_default();
                 format!(
                     "{} 신호: {} {}{} @{} ({:.0}%) - {}",
-                    signal_type, symbol, strategy_name, side_text, price, strength * 100.0, strategy_name
+                    signal_type,
+                    symbol,
+                    strategy_name,
+                    side_text,
+                    price,
+                    strength * 100.0,
+                    strategy_name
                 )
             }
 
-            NotificationEvent::SystemError { error_code, message } => {
+            NotificationEvent::SystemError {
+                error_code,
+                message,
+            } => {
                 // 메시지를 80자로 제한
                 let short_msg = if message.len() > 80 {
                     format!("{}...", &message[..77])
@@ -215,12 +221,10 @@ impl SmsSender {
             }
 
             // 나머지 이벤트들은 간단하게 처리
-            _ => {
-                format!("{:?}", notification.event)
-                    .chars()
-                    .take(140)
-                    .collect()
-            }
+            _ => format!("{:?}", notification.event)
+                .chars()
+                .take(140)
+                .collect(),
         };
 
         // 최종 메시지 160자 제한
@@ -269,7 +273,10 @@ impl SmsSender {
                     return Err(NotificationError::RateLimited(60));
                 }
 
-                error!("Twilio SMS 전송 실패 ({}): {} - {}", to_number, status, body);
+                error!(
+                    "Twilio SMS 전송 실패 ({}): {} - {}",
+                    to_number, status, body
+                );
                 return Err(NotificationError::SendFailed(format!(
                     "HTTP {}: {}",
                     status, body
@@ -277,7 +284,10 @@ impl SmsSender {
             }
         }
 
-        info!("SMS 알림 전송 완료: {} 수신자", self.config.to_numbers.len());
+        info!(
+            "SMS 알림 전송 완료: {} 수신자",
+            self.config.to_numbers.len()
+        );
         Ok(())
     }
 

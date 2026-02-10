@@ -171,7 +171,10 @@ pub fn derive_strategy_config(input: TokenStream) -> TokenStream {
             // default 값 (schema 속성에서 가져옴)
             // field_type_str을 사용하여 문자열 타입 여부 확인
             let field_type_str = schema_attrs.values.get("field_type").map(|s| s.as_str());
-            let is_string_type = matches!(field_type_str, Some("symbol") | Some("string") | Some("symbols"));
+            let is_string_type = matches!(
+                field_type_str,
+                Some("symbol") | Some("string") | Some("symbols")
+            );
 
             let default_expr = if let Some(default_val) = schema_attrs.values.get("default") {
                 // symbol, string, symbols 타입은 항상 문자열로 처리
@@ -338,10 +341,15 @@ fn parse_schema_attributes(attrs: &[syn::Attribute]) -> SchemaAttributes {
                 let clean_str = if let Some(opt_idx) = tokens_str.find("options") {
                     // options 부분과 그 뒤의 배열을 제거
                     let before = &tokens_str[..opt_idx];
-                    let after_bracket = tokens_str[opt_idx..].find(']')
+                    let after_bracket = tokens_str[opt_idx..]
+                        .find(']')
                         .map(|i| &tokens_str[opt_idx + i + 1..])
                         .unwrap_or("");
-                    format!("{}{}", before.trim_end_matches(',').trim_end(), after_bracket)
+                    format!(
+                        "{}{}",
+                        before.trim_end_matches(',').trim_end(),
+                        after_bracket
+                    )
                 } else {
                     tokens_str.clone()
                 };

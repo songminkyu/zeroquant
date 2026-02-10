@@ -172,7 +172,9 @@ impl CollectorConfig {
                 target_markets: env_var_list("OHLCV_TARGET_MARKETS"),
                 max_retention_years: env_var_parse("OHLCV_MAX_RETENTION_YEARS", 3),
                 timeframes: env_var_list_or_default("OHLCV_TIMEFRAMES", vec!["1d".to_string()]),
-                concurrent_limit: std::env::var("OHLCV_CONCURRENT_LIMIT").ok().and_then(|v| v.parse().ok()),
+                concurrent_limit: std::env::var("OHLCV_CONCURRENT_LIMIT")
+                    .ok()
+                    .and_then(|v| v.parse().ok()),
                 max_gap_days_non_priority: env_var_parse("OHLCV_MAX_GAP_DAYS_NON_PRIORITY", 90),
             },
             fundamental_collect: FundamentalCollectConfig {

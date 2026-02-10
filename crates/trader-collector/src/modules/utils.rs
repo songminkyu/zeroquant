@@ -3,7 +3,7 @@
 //! 여러 모듈에서 사용되는 공통 함수를 통합합니다.
 
 use rust_decimal::Decimal;
-use trader_analytics::{IndicatorEngine, indicators::TtmSqueezeParams};
+use trader_analytics::{indicators::TtmSqueezeParams, IndicatorEngine};
 use trader_core::types::MarketType;
 use trader_core::Kline;
 
@@ -12,10 +12,19 @@ use trader_core::Kline;
 /// # 예시
 /// - "UpTrend" → "UP_TREND"
 /// - "StrongUptrend" → "STRONG_UPTREND"
+/// - "REST" → "REST" (이미 대문자인 경우 그대로)
 pub fn to_screaming_snake_case(s: &str) -> String {
+    // 이미 전부 대문자인 경우 그대로 반환
+    if s.chars().all(|c| c.is_uppercase() || !c.is_alphabetic()) {
+        return s.to_string();
+    }
+
     let mut result = String::with_capacity(s.len() + 4);
-    for (i, c) in s.chars().enumerate() {
-        if c.is_uppercase() && i > 0 {
+    let chars: Vec<char> = s.chars().collect();
+
+    for (i, &c) in chars.iter().enumerate() {
+        // 현재 문자가 대문자이고, i > 0이고, 이전 문자가 소문자인 경우에만 _ 추가
+        if c.is_uppercase() && i > 0 && chars[i - 1].is_lowercase() {
             result.push('_');
         }
         result.push(c.to_ascii_uppercase());

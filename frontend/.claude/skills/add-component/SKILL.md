@@ -1,12 +1,12 @@
 ---
 name: add-component
-description: SolidJS 컴포넌트/페이지 생성. ts-rs 바인딩, 에러 처리, 반응형 패턴 포함.
+description: Generates SolidJS components or pages with ts-rs bindings, error handling, and reactive patterns. Use when creating new frontend UI.
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "<컴포넌트명> [page|component|feature]"
 allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(npx *)
 context: fork
-  agent: ts-impl
+agent: ts-impl
 ---
 
 # SolidJS 컴포넌트 추가 워크플로우
@@ -123,6 +123,11 @@ npx tsc --noEmit
 npx eslint src --max-warnings 0
 npm run build
 ```
+
+### 검증 실패 시
+1. 에러 메시지에서 파일/라인 확인
+2. 해당 파일 수정
+3. 검증 명령 재실행 — 통과할 때까지 반복
 
 ### 체크포인트
 - [ ] `@/types/generated/` import (수동 타입 정의 금지)

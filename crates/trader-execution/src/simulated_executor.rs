@@ -11,10 +11,9 @@ use std::collections::HashMap;
 use trader_core::{Side, Signal, SignalType};
 
 use crate::signal_processor::{
-    apply_slippage, build_add_trade, build_entry_trade, build_exit_trade,
-    calculate_position_size, calculate_realized_pnl, determine_close_quantity,
-    update_position_average, validate_funds, ProcessorConfig, ProcessorPosition,
-    SignalProcessor, SignalProcessorError, TradeResult,
+    apply_slippage, build_add_trade, build_entry_trade, build_exit_trade, calculate_position_size,
+    calculate_realized_pnl, determine_close_quantity, update_position_average, validate_funds,
+    ProcessorConfig, ProcessorPosition, SignalProcessor, SignalProcessorError, TradeResult,
 };
 
 /// 브라켓 주문 시뮬레이션 정보.
@@ -230,11 +229,8 @@ impl SimulatedExecutor {
         );
 
         // 자금 검증 (공통 유틸리티)
-        let commission = validate_funds(
-            position_amount,
-            self.config.commission_rate,
-            self.balance,
-        )?;
+        let commission =
+            validate_funds(position_amount, self.config.commission_rate, self.balance)?;
 
         // 잔고 차감
         let required = position_amount + commission;
@@ -261,7 +257,12 @@ impl SimulatedExecutor {
 
         // 거래 기록 생성 (공통 유틸리티)
         let trade = build_entry_trade(
-            signal, quantity, execution_price, commission, slippage_amount, timestamp,
+            signal,
+            quantity,
+            execution_price,
+            commission,
+            slippage_amount,
+            timestamp,
         );
         self.trades.push(trade.clone());
 
@@ -318,11 +319,8 @@ impl SimulatedExecutor {
         );
 
         // 자금 검증 (공통 유틸리티)
-        let commission = validate_funds(
-            position_amount,
-            self.config.commission_rate,
-            self.balance,
-        )?;
+        let commission =
+            validate_funds(position_amount, self.config.commission_rate, self.balance)?;
 
         // 평균 단가 재계산 (공통 유틸리티)
         if let Some(existing) = self.positions.get_mut(&key) {
@@ -441,7 +439,7 @@ impl SimulatedExecutor {
             // SL 트리거 확인
             if let Some(sl_price) = bracket.stop_loss_price {
                 let triggered_sl = match bracket.side {
-                    Side::Buy => current_price <= sl_price,  // 롱: 가격 하락 시 SL
+                    Side::Buy => current_price <= sl_price, // 롱: 가격 하락 시 SL
                     Side::Sell => current_price >= sl_price, // 숏: 가격 상승 시 SL
                 };
                 if triggered_sl {
@@ -453,7 +451,7 @@ impl SimulatedExecutor {
             // TP 트리거 확인
             if let Some(tp_price) = bracket.take_profit_price {
                 let triggered_tp = match bracket.side {
-                    Side::Buy => current_price >= tp_price,  // 롱: 가격 상승 시 TP
+                    Side::Buy => current_price >= tp_price, // 롱: 가격 상승 시 TP
                     Side::Sell => current_price <= tp_price, // 숏: 가격 하락 시 TP
                 };
                 if triggered_tp {
@@ -568,16 +566,15 @@ mod tests {
         let mut executor = SimulatedExecutor::new(config, dec!(10_000_000));
 
         // 첫 매수
-        let signal1 = create_test_signal("005930", Side::Buy, SignalType::Entry)
-            .with_strength(0.5);
+        let signal1 = create_test_signal("005930", Side::Buy, SignalType::Entry).with_strength(0.5);
         executor
             .process_signal(&signal1, dec!(50000), Utc::now())
             .await
             .unwrap();
 
         // 분할 매수 (AddToPosition 사용)
-        let signal2 = create_test_signal("005930", Side::Buy, SignalType::AddToPosition)
-            .with_strength(0.5);
+        let signal2 =
+            create_test_signal("005930", Side::Buy, SignalType::AddToPosition).with_strength(0.5);
         let result = executor
             .process_signal(&signal2, dec!(49000), Utc::now())
             .await;
@@ -596,16 +593,14 @@ mod tests {
         let mut executor = SimulatedExecutor::new(config, dec!(10_000_000));
 
         // 첫 매수
-        let signal1 = create_test_signal("005930", Side::Buy, SignalType::Entry)
-            .with_strength(0.5);
+        let signal1 = create_test_signal("005930", Side::Buy, SignalType::Entry).with_strength(0.5);
         executor
             .process_signal(&signal1, dec!(50000), Utc::now())
             .await
             .unwrap();
 
         // 같은 ticker로 Entry 시도 → 무시됨
-        let signal2 = create_test_signal("005930", Side::Buy, SignalType::Entry)
-            .with_strength(0.5);
+        let signal2 = create_test_signal("005930", Side::Buy, SignalType::Entry).with_strength(0.5);
         let result = executor
             .process_signal(&signal2, dec!(49000), Utc::now())
             .await;
@@ -661,8 +656,7 @@ mod tests {
         let config = ProcessorConfig::default();
         let mut executor = SimulatedExecutor::new(config, dec!(10_000_000));
 
-        let signal =
-            create_test_signal("005930", Side::Buy, SignalType::Entry).with_strength(0.5);
+        let signal = create_test_signal("005930", Side::Buy, SignalType::Entry).with_strength(0.5);
         executor
             .process_signal(&signal, dec!(50000), Utc::now())
             .await

@@ -138,7 +138,6 @@ impl fmt::Display for RouteState {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

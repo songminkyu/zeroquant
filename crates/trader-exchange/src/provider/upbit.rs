@@ -4,15 +4,15 @@
 
 use crate::connector::upbit::UpbitClient;
 use async_trait::async_trait;
+use rust_decimal::Decimal;
 use std::sync::Arc;
 use tracing::debug;
-use trader_core::cache::ExchangeCache;
-use rust_decimal::Decimal;
 use tracing::info;
+use trader_core::cache::ExchangeCache;
 use trader_core::domain::{
     ExchangeProvider, ExecutionHistoryRequest, ExecutionHistoryResponse, MarketDataProvider,
-    OrderExecutionProvider, OrderRequest, OrderResponse, OrderType,
-    PendingOrder, ProviderError, QuoteData, Side, StrategyAccountInfo, StrategyPositionInfo,
+    OrderExecutionProvider, OrderRequest, OrderResponse, OrderType, PendingOrder, ProviderError,
+    QuoteData, Side, StrategyAccountInfo, StrategyPositionInfo,
 };
 
 /// Upbit ExchangeProvider 구현.
@@ -84,36 +84,42 @@ impl ExchangeProvider for UpbitExchangeProvider {
     ) -> Result<ExecutionHistoryResponse, ProviderError> {
         use chrono::DateTime;
         use std::str::FromStr;
-        use uuid::Uuid;
         use trader_core::domain::Trade;
+        use uuid::Uuid;
 
         // 기본 조회 개수: 100 (최대 1000)
         let limit = 100;
 
-        let order_details = self.client.fetch_execution_history(
-            &request.start_date,
-            &request.end_date,
-            limit,
-        ).await?;
+        let order_details = self
+            .client
+            .fetch_execution_history(&request.start_date, &request.end_date, limit)
+            .await?;
 
         let mut trades = Vec::new();
 
         for detail in order_details {
             // Side 변환
-            let side = if detail.side == "bid" { Side::Buy } else { Side::Sell };
+            let side = if detail.side == "bid" {
+                Side::Buy
+            } else {
+                Side::Sell
+            };
 
             // 체결 수량
-            let quantity = detail.executed_volume
+            let quantity = detail
+                .executed_volume
                 .and_then(|v| Decimal::from_str(&v).ok())
                 .unwrap_or_default();
 
             // 체결 평균가 (주문 가격 사용, 실제로는 executed_funds / executed_volume)
-            let price = detail.price
+            let price = detail
+                .price
                 .and_then(|p| Decimal::from_str(&p).ok())
                 .unwrap_or_default();
 
             // 수수료
-            let fee = detail.paid_fee
+            let fee = detail
+                .paid_fee
                 .and_then(|f| Decimal::from_str(&f).ok())
                 .unwrap_or_default();
 
@@ -176,10 +182,7 @@ impl MarketDataProvider for UpbitExchangeProvider {
 
 #[async_trait]
 impl OrderExecutionProvider for UpbitExchangeProvider {
-    async fn place_order(
-        &self,
-        request: &OrderRequest,
-    ) -> Result<OrderResponse, ProviderError> {
+    async fn place_order(&self, request: &OrderRequest) -> Result<OrderResponse, ProviderError> {
         // Side 변환: Buy → bid, Sell → ask
         let side = match request.side {
             Side::Buy => "bid",
@@ -197,8 +200,10 @@ impl OrderExecutionProvider for UpbitExchangeProvider {
                     Side::Sell => ("market", true, false),
                 }
             }
-            OrderType::StopLoss | OrderType::StopLossLimit
-            | OrderType::TakeProfit | OrderType::TakeProfitLimit => {
+            OrderType::StopLoss
+            | OrderType::StopLossLimit
+            | OrderType::TakeProfit
+            | OrderType::TakeProfitLimit => {
                 // Upbit 미지원 → 지정가로 대체
                 ("limit", true, true)
             }
@@ -231,13 +236,16 @@ impl OrderExecutionProvider for UpbitExchangeProvider {
             "Upbit 주문 생성"
         );
 
-        let result = self.client.place_order(
-            &request.ticker,
-            side,
-            ord_type,
-            volume_str.as_deref(),
-            price_str.as_deref(),
-        ).await?;
+        let result = self
+            .client
+            .place_order(
+                &request.ticker,
+                side,
+                ord_type,
+                volume_str.as_deref(),
+                price_str.as_deref(),
+            )
+            .await?;
 
         // 캐시 무효화
         self.cache.invalidate_all().await;
@@ -283,17 +291,18 @@ impl OrderExecutionProvider for UpbitExchangeProvider {
         let volume = quantity
             .map(|q| q.to_string())
             .or(original.remaining_volume.clone());
-        let new_price = price
-            .map(|p| p.to_string())
-            .or(original.price.clone());
+        let new_price = price.map(|p| p.to_string()).or(original.price.clone());
 
-        let result = self.client.place_order(
-            &original.market,
-            &original.side,
-            &original.ord_type,
-            volume.as_deref(),
-            new_price.as_deref(),
-        ).await?;
+        let result = self
+            .client
+            .place_order(
+                &original.market,
+                &original.side,
+                &original.ord_type,
+                volume.as_deref(),
+                new_price.as_deref(),
+            )
+            .await?;
 
         // 캐시 무효화
         self.cache.invalidate_all().await;

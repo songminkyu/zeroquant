@@ -390,11 +390,11 @@ impl StrategyRepository {
         use trader_strategy::strategies::{
             // 그룹 전략 (통합)
             AssetAllocationStrategy,
-            DcaStrategy,
             // 독립 전략
             CandlePatternStrategy,
             CompoundMomentumStrategy,
             DayTradingStrategy,
+            DcaStrategy,
             MarketBothSideStrategy,
             MeanReversionStrategy,
             MomentumPowerStrategy,
@@ -442,9 +442,7 @@ impl StrategyRepository {
                 // AssetAllocation 그룹 (HAA, XAA, BAA, All Weather, Dual Momentum)
                 "haa" => Some(Box::new(AssetAllocationStrategy::haa())),
                 "xaa" => Some(Box::new(AssetAllocationStrategy::xaa())),
-                "all_weather" => {
-                    Some(Box::new(AssetAllocationStrategy::all_weather()))
-                }
+                "all_weather" => Some(Box::new(AssetAllocationStrategy::all_weather())),
                 "baa" => Some(Box::new(AssetAllocationStrategy::baa())),
                 "dual_momentum" => Some(Box::new(AssetAllocationStrategy::dual_momentum())),
 
@@ -454,21 +452,13 @@ impl StrategyRepository {
                 "market_cap_top" => Some(Box::new(RotationStrategy::market_cap_top())),
 
                 // 독립 전략들
-                "compound_momentum" => {
-                    Some(Box::new(CompoundMomentumStrategy::new()))
-                }
-                "momentum_power" => {
-                    Some(Box::new(MomentumPowerStrategy::new()))
-                }
+                "compound_momentum" => Some(Box::new(CompoundMomentumStrategy::new())),
+                "momentum_power" => Some(Box::new(MomentumPowerStrategy::new())),
                 "pension_bot" => Some(Box::new(PensionBotStrategy::new())),
                 "candle_pattern" => Some(Box::new(CandlePatternStrategy::new())),
                 "sector_vb" => Some(Box::new(SectorVbStrategy::new())),
-                "market_both_side" => {
-                    Some(Box::new(MarketBothSideStrategy::new()))
-                }
-                "momentum_surge" => {
-                    Some(Box::new(MomentumSurgeStrategy::new()))
-                }
+                "market_both_side" => Some(Box::new(MarketBothSideStrategy::new())),
+                "momentum_surge" => Some(Box::new(MomentumSurgeStrategy::new())),
                 "us_3x_leverage" => Some(Box::new(Us3xLeverageStrategy::new())),
                 "range_trading" => Some(Box::new(RangeTradingStrategy::new())),
                 "small_cap_quant" => Some(Box::new(SmallCapQuantStrategy::new())),

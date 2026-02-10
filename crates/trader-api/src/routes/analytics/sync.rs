@@ -72,41 +72,40 @@ pub async fn sync_equity_curve(
     };
 
     // 2. exchange_id 조회
-    let exchange_id: String = match sqlx::query_scalar(
-        "SELECT exchange_id FROM exchange_credentials WHERE id = $1",
-    )
-    .bind(credential_id)
-    .fetch_optional(pool)
-    .await
-    {
-        Ok(Some(id)) => id,
-        Ok(None) => {
-            return (
-                axum::http::StatusCode::NOT_FOUND,
-                Json(SyncEquityCurveResponse {
-                    success: false,
-                    synced_count: 0,
-                    execution_count: 0,
-                    start_date: request.start_date.clone(),
-                    end_date: request.end_date.clone(),
-                    message: "Credential을 찾을 수 없습니다".to_string(),
-                }),
-            );
-        }
-        Err(e) => {
-            return (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(SyncEquityCurveResponse {
-                    success: false,
-                    synced_count: 0,
-                    execution_count: 0,
-                    start_date: request.start_date.clone(),
-                    end_date: request.end_date.clone(),
-                    message: format!("exchange_id 조회 실패: {}", e),
-                }),
-            );
-        }
-    };
+    let exchange_id: String =
+        match sqlx::query_scalar("SELECT exchange_id FROM exchange_credentials WHERE id = $1")
+            .bind(credential_id)
+            .fetch_optional(pool)
+            .await
+        {
+            Ok(Some(id)) => id,
+            Ok(None) => {
+                return (
+                    axum::http::StatusCode::NOT_FOUND,
+                    Json(SyncEquityCurveResponse {
+                        success: false,
+                        synced_count: 0,
+                        execution_count: 0,
+                        start_date: request.start_date.clone(),
+                        end_date: request.end_date.clone(),
+                        message: "Credential을 찾을 수 없습니다".to_string(),
+                    }),
+                );
+            }
+            Err(e) => {
+                return (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(SyncEquityCurveResponse {
+                        success: false,
+                        synced_count: 0,
+                        execution_count: 0,
+                        start_date: request.start_date.clone(),
+                        end_date: request.end_date.clone(),
+                        message: format!("exchange_id 조회 실패: {}", e),
+                    }),
+                );
+            }
+        };
 
     debug!("Syncing equity curve for exchange: {}", exchange_id);
 
@@ -134,23 +133,22 @@ pub async fn sync_equity_curve(
     };
 
     // 5. KIS Provider 생성 (통합 Provider 사용)
-    let kis_provider =
-        match create_kis_provider_for_sync(pool, encryptor, credential_id).await {
-            Ok(provider) => provider,
-            Err(e) => {
-                return (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(SyncEquityCurveResponse {
-                        success: false,
-                        synced_count: 0,
-                        execution_count: 0,
-                        start_date: request.start_date.clone(),
-                        end_date: request.end_date.clone(),
-                        message: format!("KIS Provider 생성 실패: {}", e),
-                    }),
-                );
-            }
-        };
+    let kis_provider = match create_kis_provider_for_sync(pool, encryptor, credential_id).await {
+        Ok(provider) => provider,
+        Err(e) => {
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(SyncEquityCurveResponse {
+                    success: false,
+                    synced_count: 0,
+                    execution_count: 0,
+                    start_date: request.start_date.clone(),
+                    end_date: request.end_date.clone(),
+                    message: format!("KIS Provider 생성 실패: {}", e),
+                }),
+            );
+        }
+    };
 
     // 4. Credential 정보 조회 (Repository 사용)
     let cred_info = match get_credential_info(pool, credential_id).await {
@@ -259,7 +257,11 @@ pub async fn sync_equity_curve(
 
         // KisProvider를 통한 체결 내역 조회 (ISA/일반 계좌 처리, 날짜 분할, 페이지네이션 모두 내부 처리)
         let executions = match kis_provider
-            .fetch_execution_history_for_sync(&start_date_yyyymmdd, &end_date_yyyymmdd, cred_info.is_testnet)
+            .fetch_execution_history_for_sync(
+                &start_date_yyyymmdd,
+                &end_date_yyyymmdd,
+                cred_info.is_testnet,
+            )
             .await
         {
             Ok(execs) => execs,
@@ -290,10 +292,9 @@ pub async fn sync_equity_curve(
         for exec in executions {
             // 체결 시간 파싱 (order_date: YYYYMMDD, order_time: HHMMSS)
             let exec_date = format!("{}{}", exec.order_date, exec.order_time);
-            let execution_time =
-                chrono::NaiveDateTime::parse_from_str(&exec_date, "%Y%m%d%H%M%S")
-                    .map(|dt| DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
-                    .unwrap_or_else(|_| Utc::now());
+            let execution_time = chrono::NaiveDateTime::parse_from_str(&exec_date, "%Y%m%d%H%M%S")
+                .map(|dt| DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
+                .unwrap_or_else(|_| Utc::now());
 
             let amount = exec.filled_amount; // 총 체결 금액
             let is_buy = exec.side == "buy";

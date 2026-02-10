@@ -31,16 +31,11 @@ use thiserror::Error;
 pub enum SignalConflictError {
     /// 동일 심볼에 미체결 주문이 존재
     #[error("미체결 주문 존재: {ticker} (주문 {count}건)")]
-    PendingOrderExists {
-        ticker: String,
-        count: usize,
-    },
+    PendingOrderExists { ticker: String, count: usize },
 
     /// 동일 심볼에 이미 포지션이 존재 (position_id 없는 Entry 시)
     #[error("중복 포지션: {ticker}에 이미 포지션 존재")]
-    DuplicatePosition {
-        ticker: String,
-    },
+    DuplicatePosition { ticker: String },
 
     /// 잔고 부족 (available_balance 기준)
     #[error("잔고 부족: 필요 {required}, 가용 {available}")]
@@ -51,9 +46,7 @@ pub enum SignalConflictError {
 
     /// 청산 대상 포지션 없음
     #[error("청산 대상 포지션 없음: {ticker}")]
-    NoPositionToExit {
-        ticker: String,
-    },
+    NoPositionToExit { ticker: String },
 }
 
 // =============================================================================
@@ -469,9 +462,9 @@ impl StrategyContext {
     /// - 기타: 10 (기본값)
     fn minimum_entry_balance(&self) -> Decimal {
         match self.account.currency.as_str() {
-            "KRW" => Decimal::new(10000, 0),     // 10,000원
+            "KRW" => Decimal::new(10000, 0),       // 10,000원
             "USD" | "USDT" => Decimal::new(10, 0), // 10 USD
-            _ => Decimal::new(10, 0),             // 기본값
+            _ => Decimal::new(10, 0),              // 기본값
         }
     }
 
@@ -562,7 +555,9 @@ impl StrategyContext {
         }
 
         // 3. 청산 대상 확인 (Exit인 경우)
-        if signal.signal_type == SignalType::Exit || signal.signal_type == SignalType::ReducePosition {
+        if signal.signal_type == SignalType::Exit
+            || signal.signal_type == SignalType::ReducePosition
+        {
             // position_id가 있으면 해당 포지션 확인은 Executor가 처리
             // 여기서는 기본 포지션 존재 여부만 확인
             if signal.position_id.is_none() && !self.has_position(ticker) {
@@ -978,7 +973,10 @@ mod tests {
         // 잔고 부족 → 거부
         let signal = Signal::entry("test_strategy", "AAPL".to_string(), Side::Buy);
         let result = ctx.can_execute_signal(&signal);
-        assert!(matches!(result, Err(SignalConflictError::InsufficientBalance { .. })));
+        assert!(matches!(
+            result,
+            Err(SignalConflictError::InsufficientBalance { .. })
+        ));
     }
 
     #[test]
@@ -988,7 +986,10 @@ mod tests {
         // 잔고 부족 → 거부
         let signal = Signal::entry("test_strategy", "AAPL".to_string(), Side::Buy);
         let result = ctx.can_execute_signal(&signal);
-        assert!(matches!(result, Err(SignalConflictError::InsufficientBalance { .. })));
+        assert!(matches!(
+            result,
+            Err(SignalConflictError::InsufficientBalance { .. })
+        ));
     }
 
     #[test]
@@ -1002,7 +1003,10 @@ mod tests {
         // 동일 심볼에 position_id 없는 Entry → 거부 (DuplicatePosition이 먼저 체크됨)
         let signal = Signal::entry("test_strategy", "AAPL".to_string(), Side::Buy);
         let result = ctx.can_execute_signal(&signal);
-        assert!(matches!(result, Err(SignalConflictError::DuplicatePosition { .. })));
+        assert!(matches!(
+            result,
+            Err(SignalConflictError::DuplicatePosition { .. })
+        ));
     }
 
     #[test]
@@ -1038,7 +1042,10 @@ mod tests {
         // 미체결 주문이 있으면 Entry 거부
         let signal = Signal::entry("test_strategy", "AAPL".to_string(), Side::Buy);
         let result = ctx.can_execute_signal(&signal);
-        assert!(matches!(result, Err(SignalConflictError::PendingOrderExists { count: 1, .. })));
+        assert!(matches!(
+            result,
+            Err(SignalConflictError::PendingOrderExists { count: 1, .. })
+        ));
     }
 
     #[test]
@@ -1048,7 +1055,10 @@ mod tests {
         // 포지션이 없는데 Exit → 거부
         let signal = Signal::exit("test_strategy", "AAPL".to_string(), Side::Sell);
         let result = ctx.can_execute_signal(&signal);
-        assert!(matches!(result, Err(SignalConflictError::NoPositionToExit { .. })));
+        assert!(matches!(
+            result,
+            Err(SignalConflictError::NoPositionToExit { .. })
+        ));
     }
 
     #[test]
@@ -1073,15 +1083,15 @@ mod tests {
         ctx.positions.insert("AAPL".to_string(), pos);
 
         let signals = vec![
-            Signal::entry("test_strategy", "MSFT".to_string(), Side::Buy),  // OK - 새 심볼 + 잔고 충분
-            Signal::entry("test_strategy", "AAPL".to_string(), Side::Buy),  // FAIL - 중복 포지션
-            Signal::exit("test_strategy", "AAPL".to_string(), Side::Sell),   // OK - 포지션 존재
-            Signal::exit("test_strategy", "GOOG".to_string(), Side::Sell),   // FAIL - 포지션 없음
+            Signal::entry("test_strategy", "MSFT".to_string(), Side::Buy), // OK - 새 심볼 + 잔고 충분
+            Signal::entry("test_strategy", "AAPL".to_string(), Side::Buy), // FAIL - 중복 포지션
+            Signal::exit("test_strategy", "AAPL".to_string(), Side::Sell), // OK - 포지션 존재
+            Signal::exit("test_strategy", "GOOG".to_string(), Side::Sell), // FAIL - 포지션 없음
         ];
 
         let (valid, conflicts) = ctx.filter_valid_signals(&signals);
 
-        assert_eq!(valid.len(), 2);  // MSFT Entry, AAPL Exit
-        assert_eq!(conflicts.len(), 2);  // AAPL Entry, GOOG Exit
+        assert_eq!(valid.len(), 2); // MSFT Entry, AAPL Exit
+        assert_eq!(conflicts.len(), 2); // AAPL Entry, GOOG Exit
     }
 }

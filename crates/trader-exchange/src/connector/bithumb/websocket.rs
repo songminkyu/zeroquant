@@ -1,17 +1,17 @@
-use std::sync::Arc;
-use std::str::FromStr;
-use std::time::Duration;
 use futures::{SinkExt, StreamExt};
+use serde_json::json;
+use std::str::FromStr;
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::{mpsc, RwLock};
 use tokio::time::interval;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
-use serde_json::json;
 
+use chrono::Utc;
+use rust_decimal::Decimal;
+use tracing::{error, info};
 use trader_core::ProviderError;
 use trader_core::QuoteData;
-use rust_decimal::Decimal;
-use chrono::Utc;
-use tracing::{info, error};
 
 const BITHUMB_WS_URL: &str = "wss://api.bithumb.com/pub/ws";
 const MAX_RECONNECT_ATTEMPTS: u32 = 5;
@@ -78,7 +78,12 @@ impl BithumbWebSocket {
                     attempts += 1;
                     error!("Bithumb WebSocket error (attempt {}): {:?}", attempts, e);
                     if attempts >= MAX_RECONNECT_ATTEMPTS {
-                        let _ = self.tx.send(BithumbWsMessage::Error("Max reconnect attempts reached".into())).await;
+                        let _ = self
+                            .tx
+                            .send(BithumbWsMessage::Error(
+                                "Max reconnect attempts reached".into(),
+                            ))
+                            .await;
                         break;
                     }
                     tokio::time::sleep(RECONNECT_DELAY).await;
@@ -87,10 +92,14 @@ impl BithumbWebSocket {
         }
     }
 
-    async fn run_session(&self, cmd_rx: &mut mpsc::Receiver<BithumbWsCommand>) -> Result<(), ProviderError> {
-        let (ws_stream, _) = connect_async(BITHUMB_WS_URL).await
+    async fn run_session(
+        &self,
+        cmd_rx: &mut mpsc::Receiver<BithumbWsCommand>,
+    ) -> Result<(), ProviderError> {
+        let (ws_stream, _) = connect_async(BITHUMB_WS_URL)
+            .await
             .map_err(|e| ProviderError::Network(e.to_string()))?;
-        
+
         let (mut ws_tx, mut ws_rx) = ws_stream.split();
         info!("Connected to Bithumb WebSocket");
 
@@ -150,11 +159,14 @@ impl BithumbWebSocket {
         Ok(())
     }
 
-    async fn send_subscription<S>(&self, ws_tx: &mut S) -> Result<(), ProviderError> 
-    where S: futures::Sink<Message, Error = tokio_tungstenite::tungstenite::Error> + Unpin
+    async fn send_subscription<S>(&self, ws_tx: &mut S) -> Result<(), ProviderError>
+    where
+        S: futures::Sink<Message, Error = tokio_tungstenite::tungstenite::Error> + Unpin,
     {
         let codes = self.subscribed_tickers.read().await;
-        if codes.is_empty() { return Ok(()); }
+        if codes.is_empty() {
+            return Ok(());
+        }
 
         let msg = json!({
             "type": "ticker",
@@ -162,27 +174,36 @@ impl BithumbWebSocket {
             "tickTypes": ["24H"]
         });
 
-        ws_tx.send(Message::Text(msg.to_string())).await
+        ws_tx
+            .send(Message::Text(msg.to_string()))
+            .await
             .map_err(|e| ProviderError::Network(e.to_string()))?;
-        
+
         Ok(())
     }
 
     fn parse_ticker(&self, content: &serde_json::Value) -> Option<QuoteData> {
         let symbol = content["symbol"].as_str()?.to_string();
         let current_price = Decimal::from_str(content["closePrice"].as_str()?).unwrap_or_default();
-        
+
         Some(QuoteData {
             symbol,
             current_price,
-            price_change: Decimal::from_str(content["chgAmt"].as_str().unwrap_or("0")).unwrap_or_default(),
-            change_percent: Decimal::from_str(content["chgRate"].as_str().unwrap_or("0")).unwrap_or_default(),
-            high: Decimal::from_str(content["highPrice"].as_str().unwrap_or("0")).unwrap_or_default(),
+            price_change: Decimal::from_str(content["chgAmt"].as_str().unwrap_or("0"))
+                .unwrap_or_default(),
+            change_percent: Decimal::from_str(content["chgRate"].as_str().unwrap_or("0"))
+                .unwrap_or_default(),
+            high: Decimal::from_str(content["highPrice"].as_str().unwrap_or("0"))
+                .unwrap_or_default(),
             low: Decimal::from_str(content["lowPrice"].as_str().unwrap_or("0")).unwrap_or_default(),
-            open: Decimal::from_str(content["openPrice"].as_str().unwrap_or("0")).unwrap_or_default(),
-            prev_close: Decimal::from_str(content["prevClosePrice"].as_str().unwrap_or("0")).unwrap_or_default(),
-            volume: Decimal::from_str(content["volume"].as_str().unwrap_or("0")).unwrap_or_default(),
-            trading_value: Decimal::from_str(content["value"].as_str().unwrap_or("0")).unwrap_or_default(),
+            open: Decimal::from_str(content["openPrice"].as_str().unwrap_or("0"))
+                .unwrap_or_default(),
+            prev_close: Decimal::from_str(content["prevClosePrice"].as_str().unwrap_or("0"))
+                .unwrap_or_default(),
+            volume: Decimal::from_str(content["volume"].as_str().unwrap_or("0"))
+                .unwrap_or_default(),
+            trading_value: Decimal::from_str(content["value"].as_str().unwrap_or("0"))
+                .unwrap_or_default(),
             timestamp: Utc::now(),
         })
     }

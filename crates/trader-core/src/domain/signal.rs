@@ -353,10 +353,7 @@ impl SignalMarker {
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
-        let level = signal
-            .metadata
-            .get("level")
-            .and_then(|v| v.as_i64());
+        let level = signal.metadata.get("level").and_then(|v| v.as_i64());
 
         // 신호 유형별 기본 메시지 생성
         let base_msg = match signal.signal_type {

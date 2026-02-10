@@ -190,26 +190,24 @@ impl SignalProcessingService {
             Uuid::parse_str(uuid_str).map_err(|e| format!("UUID 파싱 실패: {}", e))?;
 
         // DB에서 credential_id 조회
-        let row: Option<(Option<Uuid>,)> = sqlx::query_as(
-            "SELECT credential_id FROM strategies WHERE id = $1",
-        )
-        .bind(strategy_uuid)
-        .fetch_optional(&self.db_pool)
-        .await
-        .map_err(|e| format!("DB 조회 실패: {}", e))?;
+        let row: Option<(Option<Uuid>,)> =
+            sqlx::query_as("SELECT credential_id FROM strategies WHERE id = $1")
+                .bind(strategy_uuid)
+                .fetch_optional(&self.db_pool)
+                .await
+                .map_err(|e| format!("DB 조회 실패: {}", e))?;
 
         Ok(row.and_then(|r| r.0))
     }
 
     /// credential_id에서 exchange_id 조회.
     async fn get_exchange_id(&self, credential_id: Uuid) -> Result<String, String> {
-        let row: (String,) = sqlx::query_as(
-            "SELECT exchange_id FROM exchange_credentials WHERE id = $1",
-        )
-        .bind(credential_id)
-        .fetch_one(&self.db_pool)
-        .await
-        .map_err(|e| format!("exchange_id 조회 실패: {}", e))?;
+        let row: (String,) =
+            sqlx::query_as("SELECT exchange_id FROM exchange_credentials WHERE id = $1")
+                .bind(credential_id)
+                .fetch_one(&self.db_pool)
+                .await
+                .map_err(|e| format!("exchange_id 조회 실패: {}", e))?;
 
         Ok(row.0)
     }

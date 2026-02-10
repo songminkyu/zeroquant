@@ -1,6 +1,6 @@
 ---
 name: add-migration
-description: 번호가 매겨진 SQL 마이그레이션 파일 생성. 테이블/인덱스/뷰 추가 워크플로우.
+description: Generates numbered SQL migration files for tables, indexes, and views. Use when adding or modifying database schema.
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "<설명_snake_case> [테이블명|기능명]"
@@ -70,6 +70,11 @@ podman exec trader-timescaledb psql -U trader -d trader -c "\dt <테이블명>"
 # 3. 스키마 확인
 podman exec trader-timescaledb psql -U trader -d trader -c "\d <테이블명>"
 ```
+
+### 검증 실패 시
+1. 에러 메시지에서 원인 파악 (syntax error, duplicate, constraint 등)
+2. 마이그레이션 `.sql` 파일 수정
+3. `DROP TABLE IF EXISTS` 후 재적용하여 검증 반복
 
 ---
 

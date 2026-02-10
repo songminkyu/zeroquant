@@ -23,8 +23,8 @@
 use std::path::PathBuf;
 
 use trader_core::migration::{
-    MigrationAnalyzer, MigrationConsolidator, MigrationValidator,
-    DependencyGraph, generate_safety_checklist,
+    generate_safety_checklist, DependencyGraph, MigrationAnalyzer, MigrationConsolidator,
+    MigrationValidator,
 };
 
 /// 마이그레이션 설정
@@ -98,7 +98,12 @@ pub fn run_verify(config: &MigrateConfig) -> Result<bool, String> {
 
     if config.verbose {
         for file in &files {
-            println!("   {:02}. {} ({} 문장)", file.order, file.name, file.statements.len());
+            println!(
+                "   {:02}. {} ({} 문장)",
+                file.order,
+                file.name,
+                file.statements.len()
+            );
         }
         println!();
     }
@@ -173,7 +178,10 @@ pub fn run_consolidate(config: &MigrateConfig) -> Result<(), String> {
     // 다음 단계 안내
     println!("\n📝 다음 단계:");
     println!("   1. 통합된 마이그레이션 검토: cat {:?}/*.sql", output_dir);
-    println!("   2. 테스트 DB에서 검증: trader migrate apply --db-url <TEST_DB> --dir {:?}", output_dir);
+    println!(
+        "   2. 테스트 DB에서 검증: trader migrate apply --db-url <TEST_DB> --dir {:?}",
+        output_dir
+    );
     println!("   3. 스키마 비교 확인 후 운영 적용");
 
     Ok(())
@@ -195,7 +203,10 @@ pub fn run_graph(config: &MigrateConfig) -> Result<String, String> {
 }
 
 /// Mermaid 다이어그램 생성
-fn generate_mermaid_graph(graph: &DependencyGraph, files: &[trader_core::migration::MigrationFile]) -> String {
+fn generate_mermaid_graph(
+    graph: &DependencyGraph,
+    files: &[trader_core::migration::MigrationFile],
+) -> String {
     let mut output = String::new();
 
     output.push_str("```mermaid\n");
@@ -253,7 +264,10 @@ fn generate_mermaid_graph(graph: &DependencyGraph, files: &[trader_core::migrati
 }
 
 /// DOT 그래프 생성
-fn generate_dot_graph(graph: &DependencyGraph, files: &[trader_core::migration::MigrationFile]) -> String {
+fn generate_dot_graph(
+    graph: &DependencyGraph,
+    files: &[trader_core::migration::MigrationFile],
+) -> String {
     let mut output = String::new();
 
     output.push_str("digraph MigrationDependencies {\n");
@@ -281,7 +295,10 @@ fn generate_dot_graph(graph: &DependencyGraph, files: &[trader_core::migration::
 }
 
 /// 텍스트 그래프 생성
-fn generate_text_graph(graph: &DependencyGraph, files: &[trader_core::migration::MigrationFile]) -> String {
+fn generate_text_graph(
+    graph: &DependencyGraph,
+    files: &[trader_core::migration::MigrationFile],
+) -> String {
     let mut output = String::new();
 
     output.push_str("═══════════════════════════════════════════════════════════════\n");
@@ -315,7 +332,10 @@ fn generate_text_graph(graph: &DependencyGraph, files: &[trader_core::migration:
 
     for (obj, locations) in sorted_defs {
         if !obj.starts_with("idx_") {
-            let loc_strs: Vec<_> = locations.iter().map(|(f, l)| format!("{}:{}", f, l)).collect();
+            let loc_strs: Vec<_> = locations
+                .iter()
+                .map(|(f, l)| format!("{}:{}", f, l))
+                .collect();
             output.push_str(&format!("  {} @ {}\n", obj, loc_strs.join(", ")));
         }
     }
@@ -348,12 +368,18 @@ pub async fn run_apply(config: &MigrateConfig) -> Result<(), String> {
     println!("\n✅ 검증 통과\n");
 
     // 2. 데이터베이스 URL 확인
-    let db_url = config.db_url.clone()
+    let db_url = config
+        .db_url
+        .clone()
         .or_else(|| std::env::var("DATABASE_URL").ok())
         .ok_or("DATABASE_URL이 설정되지 않았습니다. --db-url 옵션 사용")?;
 
     println!("2️⃣ 데이터베이스 연결 확인...");
-    println!("   URL: {}...{}", &db_url[..20.min(db_url.len())], &db_url[db_url.len().saturating_sub(20)..]);
+    println!(
+        "   URL: {}...{}",
+        &db_url[..20.min(db_url.len())],
+        &db_url[db_url.len().saturating_sub(20)..]
+    );
 
     // 3. sqlx migrate run 실행
     println!("\n3️⃣ 마이그레이션 실행...");
@@ -370,7 +396,12 @@ pub async fn run_apply(config: &MigrateConfig) -> Result<(), String> {
             &db_url,
         ])
         .output()
-        .map_err(|e| format!("sqlx 실행 실패: {}. sqlx-cli가 설치되어 있는지 확인하세요.", e))?;
+        .map_err(|e| {
+            format!(
+                "sqlx 실행 실패: {}. sqlx-cli가 설치되어 있는지 확인하세요.",
+                e
+            )
+        })?;
 
     if output.status.success() {
         println!("\n✅ 마이그레이션 적용 완료!");
@@ -384,7 +415,9 @@ pub async fn run_apply(config: &MigrateConfig) -> Result<(), String> {
 
 /// 마이그레이션 상태 확인
 pub async fn run_status(config: &MigrateConfig) -> Result<(), String> {
-    let db_url = config.db_url.clone()
+    let db_url = config
+        .db_url
+        .clone()
         .or_else(|| std::env::var("DATABASE_URL").ok())
         .ok_or("DATABASE_URL이 설정되지 않았습니다")?;
 

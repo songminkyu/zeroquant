@@ -124,7 +124,6 @@ impl fmt::Display for MarketTemperature {
     }
 }
 
-
 /// Market Breadth - 시장 폭 지표.
 ///
 /// 20일 이동평균선 상회 종목 비율로 시장 건강도를 측정합니다.

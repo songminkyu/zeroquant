@@ -4,8 +4,8 @@ use anyhow::{Context, Result};
 use sqlx::PgPool;
 use std::fs;
 use std::path::Path;
-use trader_data::{Database, DatabaseConfig};
 use tracing::{error, info, warn};
+use trader_data::{Database, DatabaseConfig};
 
 /// 종목 수집 설정.
 #[derive(Debug)]
@@ -55,7 +55,8 @@ pub async fn fetch_symbols(config: FetchSymbolsConfig) -> Result<FetchResult> {
             })?;
 
         let db_config = DatabaseConfig::for_cli(db_url);
-        let db = Database::connect(&db_config).await
+        let db = Database::connect(&db_config)
+            .await
             .context("데이터베이스 연결 실패")?;
         Some(db.pool().clone())
     } else {

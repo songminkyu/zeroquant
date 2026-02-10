@@ -4,8 +4,8 @@
 //! 안전한 마이그레이션 SQL을 생성합니다.
 
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
 use std::fs;
+use std::path::Path;
 
 use super::models::*;
 
@@ -21,7 +21,6 @@ pub struct ConsolidationGroup {
     /// 원본 파일 없이 직접 포함할 SQL (신규 스키마 등)
     pub static_content: Option<String>,
 }
-
 
 /// 기본 통합 그룹 정의
 pub fn default_consolidation_groups() -> Vec<ConsolidationGroup> {
@@ -47,7 +46,12 @@ pub fn default_consolidation_groups() -> Vec<ConsolidationGroup> {
         ConsolidationGroup {
             name: "04_strategy_signals".to_string(),
             description: "signal_marker, alert_rule, alert_history".to_string(),
-            source_patterns: vec!["04_".to_string(), "14_".to_string(), "15_".to_string(), "16_".to_string()],
+            source_patterns: vec![
+                "04_".to_string(),
+                "14_".to_string(),
+                "15_".to_string(),
+                "16_".to_string(),
+            ],
             static_content: None,
         },
         ConsolidationGroup {
@@ -59,7 +63,12 @@ pub fn default_consolidation_groups() -> Vec<ConsolidationGroup> {
         ConsolidationGroup {
             name: "06_user_settings".to_string(),
             description: "watchlist, preset, notification, checkpoint".to_string(),
-            source_patterns: vec!["06_".to_string(), "11_".to_string(), "12_".to_string(), "17_".to_string()],
+            source_patterns: vec![
+                "06_".to_string(),
+                "11_".to_string(),
+                "12_".to_string(),
+                "17_".to_string(),
+            ],
             static_content: None,
         },
         ConsolidationGroup {
@@ -71,7 +80,12 @@ pub fn default_consolidation_groups() -> Vec<ConsolidationGroup> {
         ConsolidationGroup {
             name: "08_paper_trading".to_string(),
             description: "Mock 거래소, 전략-계정 연결, Paper Trading 세션".to_string(),
-            source_patterns: vec!["20_".to_string(), "21_".to_string(), "22_".to_string(), "24_".to_string()],
+            source_patterns: vec![
+                "20_".to_string(),
+                "21_".to_string(),
+                "22_".to_string(),
+                "24_".to_string(),
+            ],
             static_content: None,
         },
         ConsolidationGroup {
@@ -135,9 +149,9 @@ impl MigrationConsolidator {
         Self {
             groups: default_consolidation_groups(),
             exclude_patterns: vec![
-                "09_".to_string(),  // remove_legacy_tables
-                "10_".to_string(),  // restore_used_tables
-                "13_".to_string(),  // missing_views (중복)
+                "09_".to_string(), // remove_legacy_tables
+                "10_".to_string(), // restore_used_tables
+                "13_".to_string(), // missing_views (중복)
             ],
         }
     }
@@ -182,12 +196,20 @@ impl MigrationConsolidator {
             // 매칭되는 파일들 수집
             for file in files {
                 // 제외 패턴 확인
-                if self.exclude_patterns.iter().any(|p| file.name.starts_with(p)) {
+                if self
+                    .exclude_patterns
+                    .iter()
+                    .any(|p| file.name.starts_with(p))
+                {
                     continue;
                 }
 
                 // 그룹 패턴 매칭
-                if group.source_patterns.iter().any(|p| file.name.starts_with(p)) {
+                if group
+                    .source_patterns
+                    .iter()
+                    .any(|p| file.name.starts_with(p))
+                {
                     used_files.insert(file.name.clone());
 
                     // 파일 내용 정리 및 추가
@@ -229,7 +251,9 @@ impl MigrationConsolidator {
         plan.files_to_remove = files
             .iter()
             .map(|f| f.name.clone())
-            .filter(|n| used_files.contains(n) || self.exclude_patterns.iter().any(|p| n.starts_with(p)))
+            .filter(|n| {
+                used_files.contains(n) || self.exclude_patterns.iter().any(|p| n.starts_with(p))
+            })
             .collect();
 
         // 통합 후 라인 수
@@ -400,8 +424,7 @@ impl MigrationConsolidator {
     /// 통합 파일을 디렉토리에 저장
     pub fn execute(&self, plan: &ConsolidationPlan, output_dir: &Path) -> Result<(), String> {
         // 출력 디렉토리 생성
-        fs::create_dir_all(output_dir)
-            .map_err(|e| format!("디렉토리 생성 실패: {}", e))?;
+        fs::create_dir_all(output_dir).map_err(|e| format!("디렉토리 생성 실패: {}", e))?;
 
         // 각 통합 파일 저장
         for file in &plan.files {
@@ -478,7 +501,9 @@ impl SafeMigrationBuilder {
         data_type: &str,
         default: Option<&str>,
     ) -> &mut Self {
-        let default_clause = default.map(|d| format!(" DEFAULT {}", d)).unwrap_or_default();
+        let default_clause = default
+            .map(|d| format!(" DEFAULT {}", d))
+            .unwrap_or_default();
 
         self.statements.push(format!(
             r#"DO $$
@@ -528,8 +553,16 @@ SELECT {}
 FROM {}
 ON CONFLICT DO NOTHING;"#,
             target_table,
-            target_cols.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(", "),
-            source_cols.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(", "),
+            target_cols
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>()
+                .join(", "),
+            source_cols
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>()
+                .join(", "),
             source_table
         ));
 
@@ -551,11 +584,7 @@ ON CONFLICT DO NOTHING;"#,
     }
 
     /// 롤백 가능한 마이그레이션 생성 (up/down)
-    pub fn with_rollback(
-        &mut self,
-        up_sql: &str,
-        down_sql: &str,
-    ) -> &mut Self {
+    pub fn with_rollback(&mut self, up_sql: &str, down_sql: &str) -> &mut Self {
         self.statements.push(format!(
             r#"-- UP (적용)
 {}
@@ -640,8 +669,16 @@ mod tests {
 
         // 파일명이 그룹 패턴과 일치해야 함 (01_, 02_)
         let mut files = vec![
-            MigrationFile::new("01_core_foundation.sql".into(), 1, "CREATE TABLE test;".to_string()),
-            MigrationFile::new("02_data_management.sql".into(), 2, "CREATE TABLE data;".to_string()),
+            MigrationFile::new(
+                "01_core_foundation.sql".into(),
+                1,
+                "CREATE TABLE test;".to_string(),
+            ),
+            MigrationFile::new(
+                "02_data_management.sql".into(),
+                2,
+                "CREATE TABLE data;".to_string(),
+            ),
         ];
 
         // 파일에 statements 추가
@@ -691,11 +728,17 @@ mod tests {
         );
         let result = consolidator.ensure_idempotency(&stmt);
         assert!(result.contains("pg_type"), "should use pg_type check");
-        assert!(result.contains("IF NOT EXISTS (SELECT 1 FROM pg_type"), "should check pg_type");
+        assert!(
+            result.contains("IF NOT EXISTS (SELECT 1 FROM pg_type"),
+            "should check pg_type"
+        );
         assert!(result.contains("ALTER TYPE market_type ADD VALUE IF NOT EXISTS 'KOSPI'"));
         assert!(result.contains("ALTER TYPE market_type ADD VALUE IF NOT EXISTS 'KOSDAQ'"));
         assert!(result.contains("ALTER TYPE market_type ADD VALUE IF NOT EXISTS 'ETF'"));
-        assert!(!result.contains("EXCEPTION"), "should not use DO/EXCEPTION pattern");
+        assert!(
+            !result.contains("EXCEPTION"),
+            "should not use DO/EXCEPTION pattern"
+        );
 
         // CREATE VIEW → OR REPLACE
         let stmt = SqlStatement::new(
@@ -705,17 +748,24 @@ mod tests {
             1,
         );
         let result = consolidator.ensure_idempotency(&stmt);
-        assert!(result.contains("OR REPLACE"), "should use OR REPLACE for views");
+        assert!(
+            result.contains("OR REPLACE"),
+            "should use OR REPLACE for views"
+        );
 
         // CREATE FUNCTION → OR REPLACE
         let stmt = SqlStatement::new(
             StatementType::CreateFunction,
             "my_func".to_string(),
-            "CREATE FUNCTION my_func() RETURNS void AS $$ BEGIN END; $$ LANGUAGE plpgsql".to_string(),
+            "CREATE FUNCTION my_func() RETURNS void AS $$ BEGIN END; $$ LANGUAGE plpgsql"
+                .to_string(),
             1,
         );
         let result = consolidator.ensure_idempotency(&stmt);
-        assert!(result.contains("OR REPLACE"), "should use OR REPLACE for functions");
+        assert!(
+            result.contains("OR REPLACE"),
+            "should use OR REPLACE for functions"
+        );
     }
 
     #[test]
@@ -724,7 +774,10 @@ mod tests {
         assert_eq!(groups.len(), 10);
         assert_eq!(groups[0].name, "01_core_foundation");
         assert_eq!(groups[8].name, "09_strategy_watched_tickers");
-        assert!(groups[8].static_content.is_some(), "group 09 should have static content");
+        assert!(
+            groups[8].static_content.is_some(),
+            "group 09 should have static content"
+        );
         assert_eq!(groups[9].name, "10_symbol_cascade");
         assert_eq!(groups[9].source_patterns, vec!["23_"]);
     }
@@ -739,7 +792,10 @@ mod tests {
 
         // Group 09 has static content, should still appear even with no source files
         let group09 = plan.files.iter().find(|f| f.name.contains("09_"));
-        assert!(group09.is_some(), "group 09 should be generated from static content");
+        assert!(
+            group09.is_some(),
+            "group 09 should be generated from static content"
+        );
         let g09 = group09.unwrap();
         assert!(g09.content.contains("strategy_watched_tickers"));
     }

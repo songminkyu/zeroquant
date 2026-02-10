@@ -84,7 +84,9 @@ impl ExchangeProvider for DbInvestmentExchangeProvider {
         request: &ExecutionHistoryRequest,
     ) -> Result<ExecutionHistoryResponse, ProviderError> {
         // 기본 조회 개수: 100건
-        let limit = request.cursor.as_ref()
+        let limit = request
+            .cursor
+            .as_ref()
             .and_then(|c| c.parse::<usize>().ok())
             .unwrap_or(100);
 
@@ -162,10 +164,7 @@ impl MarketDataProvider for DbInvestmentExchangeProvider {
 
 #[async_trait]
 impl OrderExecutionProvider for DbInvestmentExchangeProvider {
-    async fn place_order(
-        &self,
-        request: &OrderRequest,
-    ) -> Result<OrderResponse, ProviderError> {
+    async fn place_order(&self, request: &OrderRequest) -> Result<OrderResponse, ProviderError> {
         // OrderType → DB증권 호가 유형 코드 변환
         let order_class = match request.order_type {
             OrderType::Market => "01",
@@ -196,7 +195,10 @@ impl OrderExecutionProvider for DbInvestmentExchangeProvider {
         // 가격 결정 (시장가인 경우 0)
         let price = match request.order_type {
             OrderType::Market => Decimal::ZERO,
-            _ => request.price.or(request.stop_price).unwrap_or(Decimal::ZERO),
+            _ => request
+                .price
+                .or(request.stop_price)
+                .unwrap_or(Decimal::ZERO),
         };
 
         info!(

@@ -1,12 +1,12 @@
 ---
 name: add-api
-description: API 엔드포인트 추가 체크리스트. 라우터, 핸들러, OpenAPI, TS 바인딩 포함.
+description: Scaffolds a new API endpoint with router, handler, OpenAPI docs, and TS bindings. Use when adding REST endpoints to trader-api.
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "<리소스명> [GET|POST|PUT|PATCH|DELETE]"
 allowed-tools: Read, Grep, Edit, Write, Bash(cargo *)
 context: fork
-  agent: rust-impl
+agent: rust-impl
 ---
 
 # API 엔드포인트 추가 워크플로우
@@ -116,3 +116,8 @@ cargo test --features ts-binding
 # 4. OpenAPI 스펙 확인
 # API 실행 후 http://localhost:3000/api-docs 에서 확인
 ```
+
+### 검증 실패 시
+1. 에러 메시지에서 파일/라인 확인
+2. 해당 파일 수정
+3. 검증 명령 재실행 — 통과할 때까지 반복

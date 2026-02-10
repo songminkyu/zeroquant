@@ -20,7 +20,7 @@ name: string,
 /**
  * 설명
  */
-description: string | null, 
+description?: string, 
 /**
  * 전략 카테고리
  */
@@ -36,4 +36,4 @@ custom_fields: Array<FieldSchema>,
 /**
  * 기본 설정값 (옵션)
  */
-defaults: Record<string, unknown> | null, };
+defaults?: Record<string, unknown> | null, };

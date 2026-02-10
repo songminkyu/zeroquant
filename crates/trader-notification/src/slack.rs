@@ -105,7 +105,11 @@ impl SlackSender {
                 price,
                 order_id,
             } => {
-                let side_emoji = if side.to_lowercase() == "buy" { "🟢" } else { "🔴" };
+                let side_emoji = if side.to_lowercase() == "buy" {
+                    "🟢"
+                } else {
+                    "🔴"
+                };
                 json!({
                     "blocks": [
                         {
@@ -140,7 +144,11 @@ impl SlackSender {
                 pnl,
                 pnl_percent,
             } => {
-                let pnl_emoji = if *pnl >= Decimal::ZERO { "💰" } else { "📉" };
+                let pnl_emoji = if *pnl >= Decimal::ZERO {
+                    "💰"
+                } else {
+                    "📉"
+                };
                 let pnl_sign = if *pnl >= Decimal::ZERO { "+" } else { "" };
                 json!({
                     "blocks": [
@@ -188,11 +196,7 @@ impl SlackSender {
 
                 // 진행률 바 생성
                 let filled = (strength * 10.0) as usize;
-                let strength_bar = format!(
-                    "{}{}",
-                    "█".repeat(filled),
-                    "░".repeat(10 - filled)
-                );
+                let strength_bar = format!("{}{}", "█".repeat(filled), "░".repeat(10 - filled));
 
                 let mut fields = vec![
                     json!({ "type": "mrkdwn", "text": format!("*전략*\n{}", strategy_name) }),
@@ -294,7 +298,10 @@ impl SlackSender {
                 })
             }
 
-            NotificationEvent::SystemError { error_code, message } => {
+            NotificationEvent::SystemError {
+                error_code,
+                message,
+            } => {
                 json!({
                     "blocks": [
                         {
@@ -545,7 +552,10 @@ mod tests {
         let sender = SlackSender::new(config);
 
         assert_eq!(sender.get_priority_emoji(&NotificationPriority::Low), "ℹ️");
-        assert_eq!(sender.get_priority_emoji(&NotificationPriority::Critical), "🚨");
+        assert_eq!(
+            sender.get_priority_emoji(&NotificationPriority::Critical),
+            "🚨"
+        );
     }
 
     #[test]
@@ -563,6 +573,9 @@ mod tests {
 
         let header = &blocks["blocks"][0];
         assert_eq!(header["type"], "header");
-        assert!(header["text"]["text"].as_str().unwrap().contains("시스템 오류"));
+        assert!(header["text"]["text"]
+            .as_str()
+            .unwrap()
+            .contains("시스템 오류"));
     }
 }

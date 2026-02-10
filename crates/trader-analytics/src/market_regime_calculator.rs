@@ -111,9 +111,9 @@ impl MarketRegimeCalculator {
 
         let rel_strength = ((current_price / price_60d_ago) - Decimal::ONE) * Decimal::from(100);
 
-        rel_strength.to_f64().ok_or_else(|| {
-            IndicatorError::CalculationError("Decimal to f64 변환 실패".to_string())
-        })
+        rel_strength
+            .to_f64()
+            .ok_or_else(|| IndicatorError::CalculationError("Decimal to f64 변환 실패".to_string()))
     }
 
     /// 20일 가격 기울기 계산 (선형회귀)

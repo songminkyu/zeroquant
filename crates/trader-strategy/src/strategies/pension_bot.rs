@@ -54,7 +54,6 @@ pub enum PensionAssetType {
     Cash,
 }
 
-
 /// 포트폴리오 자산 정의
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PensionAsset {
@@ -220,42 +219,90 @@ pub struct PensionBotConfig {
 
     /// 총 투자 금액
     #[serde(default = "default_total_amount")]
-    #[schema(label = "총 투자 금액", min = 1000000, max = 1000000000, default = 10000000, section = "asset")]
+    #[schema(
+        label = "총 투자 금액",
+        min = 1000000,
+        max = 1000000000,
+        default = 10000000,
+        section = "asset"
+    )]
     pub total_amount: Decimal,
 
     /// 평균 모멘텀 계산 기간 (개월)
     #[serde(default = "default_avg_momentum_period")]
-    #[schema(label = "평균 모멘텀 기간 (개월)", min = 3, max = 24, default = 10, section = "indicator")]
+    #[schema(
+        label = "평균 모멘텀 기간 (개월)",
+        min = 3,
+        max = 24,
+        default = 10,
+        section = "indicator"
+    )]
     pub avg_momentum_period: usize,
 
     /// 모멘텀 보너스 상위 종목 수
     #[serde(default = "default_top_bonus_count")]
-    #[schema(label = "모멘텀 보너스 상위 종목 수", min = 1, max = 30, default = 12, section = "filter")]
+    #[schema(
+        label = "모멘텀 보너스 상위 종목 수",
+        min = 1,
+        max = 30,
+        default = 12,
+        section = "filter"
+    )]
     pub top_bonus_count: usize,
 
     /// 남은 현금 중 단기자금 비율 (0.0~1.0)
     #[serde(default = "default_cash_to_short_term")]
-    #[schema(label = "단기자금 비율", min = 0, max = 1, default = 0.45, section = "sizing")]
+    #[schema(
+        label = "단기자금 비율",
+        min = 0,
+        max = 1,
+        default = 0.45,
+        section = "sizing"
+    )]
     pub cash_to_short_term_rate: Decimal,
 
     /// 남은 현금 중 모멘텀 보너스 비율 (0.0~1.0)
     #[serde(default = "default_cash_to_bonus")]
-    #[schema(label = "모멘텀 보너스 비율", min = 0, max = 1, default = 0.45, section = "sizing")]
+    #[schema(
+        label = "모멘텀 보너스 비율",
+        min = 0,
+        max = 1,
+        default = 0.45,
+        section = "sizing"
+    )]
     pub cash_to_bonus_rate: Decimal,
 
     /// 리밸런싱 임계값 (%)
     #[serde(default = "default_rebalance_threshold")]
-    #[schema(label = "리밸런싱 임계값 (%)", min = 1, max = 20, default = 3, section = "timing")]
+    #[schema(
+        label = "리밸런싱 임계값 (%)",
+        min = 1,
+        max = 20,
+        default = 3,
+        section = "timing"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 최소 거래 금액
     #[serde(default = "default_min_trade_amount")]
-    #[schema(label = "최소 거래 금액", min = 10000, max = 1000000, default = 50000, section = "sizing")]
+    #[schema(
+        label = "최소 거래 금액",
+        min = 10000,
+        max = 1000000,
+        default = 50000,
+        section = "sizing"
+    )]
     pub min_trade_amount: Decimal,
 
     /// 최소 GlobalScore (기본값: 60)
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", min = 0, max = 100, default = 60, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        min = 0,
+        max = 100,
+        default = 60,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -483,10 +530,7 @@ impl PensionBotStrategy {
         // RouteState 체크 - Overheat 시만 진입 제한
         if let Some(route_state) = ctx_lock.get_route_state(ticker) {
             if route_state == &RouteState::Overheat {
-                debug!(
-                    "[PensionBot] 시장 과열 - {} 진입 제한",
-                    ticker
-                );
+                debug!("[PensionBot] 시장 과열 - {} 진입 제한", ticker);
                 return false;
             }
         }
@@ -527,14 +571,13 @@ impl PensionBotStrategy {
 
         for order in result.orders {
             // BUY 시그널의 경우 can_enter() 체크
-            if order.side == RebalanceOrderSide::Buy
-                && !self.can_enter(&order.ticker) {
-                    debug!(
-                        "[PensionBot] Skipping BUY signal for {} - entry not allowed",
-                        order.ticker
-                    );
-                    continue;
-                }
+            if order.side == RebalanceOrderSide::Buy && !self.can_enter(&order.ticker) {
+                debug!(
+                    "[PensionBot] Skipping BUY signal for {} - entry not allowed",
+                    order.ticker
+                );
+                continue;
+            }
 
             let ticker = format!("{}/KRW", order.ticker);
 

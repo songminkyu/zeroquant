@@ -66,7 +66,12 @@ async fn _feed_falling_prices(
 }
 
 /// 상승 추세 klines 생성 (StrategyContext용).
-fn generate_rising_klines(ticker: &str, days: usize, base_price: Decimal, start_day: i64) -> Vec<Kline> {
+fn generate_rising_klines(
+    ticker: &str,
+    days: usize,
+    base_price: Decimal,
+    start_day: i64,
+) -> Vec<Kline> {
     let mut klines = Vec::new();
     for day in 0..days {
         let price = base_price + Decimal::from(day as i32 * 2);
@@ -89,7 +94,12 @@ fn generate_rising_klines(ticker: &str, days: usize, base_price: Decimal, start_
 }
 
 /// 하락 추세 klines 생성 (StrategyContext용).
-fn generate_falling_klines(ticker: &str, days: usize, base_price: Decimal, start_day: i64) -> Vec<Kline> {
+fn generate_falling_klines(
+    ticker: &str,
+    days: usize,
+    base_price: Decimal,
+    start_day: i64,
+) -> Vec<Kline> {
     let mut klines = Vec::new();
     for day in 0..days {
         let price = base_price - Decimal::from(day as i32 * 2);

@@ -129,7 +129,6 @@ pub struct UiValidation {
     pub max_items: Option<usize>,
 }
 
-
 /// 선택 옵션 (Select 타입용)
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UiSelectOption {
@@ -343,8 +342,8 @@ pub struct MultiTimeframeRequest {
 impl MultiTimeframeRequest {
     /// trader_core::MultiTimeframeConfig로 변환
     pub fn to_core_config(&self) -> trader_core::domain::MultiTimeframeConfig {
-        let mut config = trader_core::domain::MultiTimeframeConfig::new()
-            .with_primary(self.primary);
+        let mut config =
+            trader_core::domain::MultiTimeframeConfig::new().with_primary(self.primary);
 
         for sec in &self.secondary {
             let count = sec.candle_count.unwrap_or(60);

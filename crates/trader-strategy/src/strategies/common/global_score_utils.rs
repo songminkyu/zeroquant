@@ -206,7 +206,6 @@ pub fn calculate_risk_adjustment(score: Decimal) -> Decimal {
     }
 }
 
-
 /// GlobalScore를 Signal strength (f64)로 변환.
 ///
 /// Signal.strength 필드에 사용되며, Executor의 min_strength 필터와

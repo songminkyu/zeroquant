@@ -221,16 +221,8 @@ impl StructuralFeaturesCalculator {
             None => return dec!(0.5),
         };
 
-        let high_60d = recent
-            .iter()
-            .map(|k| k.high)
-            .max()
-            .unwrap_or(Decimal::ZERO);
-        let low_60d = recent
-            .iter()
-            .map(|k| k.low)
-            .min()
-            .unwrap_or(Decimal::ZERO);
+        let high_60d = recent.iter().map(|k| k.high).max().unwrap_or(Decimal::ZERO);
+        let low_60d = recent.iter().map(|k| k.low).min().unwrap_or(Decimal::ZERO);
 
         if high_60d == low_60d {
             return dec!(0.5);

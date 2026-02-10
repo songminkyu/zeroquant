@@ -48,7 +48,10 @@ pub struct MarketBreadthSyncResult {
 ///
 /// # 반환
 /// * 동기화 결과
-pub async fn sync_market_breadth(pool: &PgPool, cache: &RedisCache) -> Result<MarketBreadthSyncResult> {
+pub async fn sync_market_breadth(
+    pool: &PgPool,
+    cache: &RedisCache,
+) -> Result<MarketBreadthSyncResult> {
     let start = Instant::now();
 
     // MarketBreadthCalculator로 계산
@@ -70,7 +73,11 @@ pub async fn sync_market_breadth(pool: &PgPool, cache: &RedisCache) -> Result<Ma
 
     // Redis 캐시에 MarketBreadth 도메인 모델 저장
     if let Err(e) = cache
-        .set_with_ttl(MARKET_BREADTH_CACHE_KEY, &breadth, MARKET_BREADTH_CACHE_TTL_SECS)
+        .set_with_ttl(
+            MARKET_BREADTH_CACHE_KEY,
+            &breadth,
+            MARKET_BREADTH_CACHE_TTL_SECS,
+        )
         .await
     {
         error!("Market Breadth 캐시 저장 실패: {}", e);

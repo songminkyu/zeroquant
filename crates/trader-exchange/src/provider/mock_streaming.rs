@@ -14,15 +14,15 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use rand::Rng;
-use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::debug;
 
-use trader_core::{Kline, OrderBook, OrderBookLevel, RoundMethod, Ticker, TickSizeProvider};
+use trader_core::{Kline, OrderBook, OrderBookLevel, RoundMethod, TickSizeProvider, Ticker};
 
 // ==================== 설정 타입 ====================
 
@@ -38,7 +38,6 @@ pub enum MockPriceMode {
     /// 기존 Yahoo Finance D1 폴링 (하위 호환)
     YahooLegacy,
 }
-
 
 /// Mock 스트리밍 설정.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -151,7 +150,7 @@ impl RandomWalkGenerator {
     /// 가격을 호가 단위로 라운딩.
     fn round_to_tick(&self, price: Decimal) -> Decimal {
         if let Some(ref provider) = self.tick_size_provider {
-                        provider.round_to_tick(price, RoundMethod::Round)
+            provider.round_to_tick(price, RoundMethod::Round)
         } else {
             price.round_dp(2)
         }
@@ -184,8 +183,7 @@ impl MockPriceGenerator for RandomWalkGenerator {
         // 가격은 0 이하로 내려가지 않음
         let new_price_f64 = new_price_f64.max(price_f64 * 0.5);
 
-        let new_price = Decimal::from_f64_retain(new_price_f64)
-            .unwrap_or(current_price);
+        let new_price = Decimal::from_f64_retain(new_price_f64).unwrap_or(current_price);
         let new_price = self.round_to_tick(new_price);
 
         // 가격이 0 이하면 최소 호가 단위
@@ -213,8 +211,10 @@ impl MockPriceGenerator for RandomWalkGenerator {
     }
 
     async fn initialize(&mut self, symbol: &str, initial_price: Decimal) {
-        self.current_prices.insert(symbol.to_string(), initial_price);
-        self.initial_prices.insert(symbol.to_string(), initial_price);
+        self.current_prices
+            .insert(symbol.to_string(), initial_price);
+        self.initial_prices
+            .insert(symbol.to_string(), initial_price);
     }
 }
 
@@ -321,7 +321,7 @@ impl HistoricalReplayGenerator {
 
         // 호가 단위 라운딩
         if let Some(ref provider) = self.tick_size_provider {
-                        provider.round_to_tick(price, RoundMethod::Round)
+            provider.round_to_tick(price, RoundMethod::Round)
         } else {
             price.round_dp(2)
         }
@@ -356,7 +356,8 @@ impl MockPriceGenerator for HistoricalReplayGenerator {
         let next_step = tick_step + 1;
         if next_step >= 12 {
             // 다음 캔들로 이동
-            self.candle_indices.insert(symbol.to_string(), candle_idx + 1);
+            self.candle_indices
+                .insert(symbol.to_string(), candle_idx + 1);
             self.tick_steps.insert(symbol.to_string(), 0);
         } else {
             self.tick_steps.insert(symbol.to_string(), next_step);
@@ -449,11 +450,13 @@ impl MockOrderBookGenerator {
             .map(|i| {
                 let price = best_bid - tick_size * Decimal::from(i as u64);
                 let price = price.max(tick_size); // 최소 1 tick
-                // 내부 호가일수록 잔량이 많음 (역비례 감소)
+                                                  // 내부 호가일수록 잔량이 많음 (역비례 감소)
                 let volume_multiplier = dec!(1.5) - Decimal::from(i as u64) * dec!(0.1);
                 let volume_multiplier = volume_multiplier.max(dec!(0.3));
                 let jitter = Decimal::from(rng.gen_range(80u64..120)) / dec!(100);
-                let quantity = (self.base_volume * volume_multiplier * jitter).round_dp(0).max(Decimal::ONE);
+                let quantity = (self.base_volume * volume_multiplier * jitter)
+                    .round_dp(0)
+                    .max(Decimal::ONE);
                 OrderBookLevel { price, quantity }
             })
             .collect();
@@ -465,7 +468,9 @@ impl MockOrderBookGenerator {
                 let volume_multiplier = dec!(1.5) - Decimal::from(i as u64) * dec!(0.1);
                 let volume_multiplier = volume_multiplier.max(dec!(0.3));
                 let jitter = Decimal::from(rng.gen_range(80u64..120)) / dec!(100);
-                let quantity = (self.base_volume * volume_multiplier * jitter).round_dp(0).max(Decimal::ONE);
+                let quantity = (self.base_volume * volume_multiplier * jitter)
+                    .round_dp(0)
+                    .max(Decimal::ONE);
                 OrderBookLevel { price, quantity }
             })
             .collect();
@@ -592,8 +597,14 @@ mod tests {
         assert_eq!(orderbook.bids.len(), 10, "KR 호가는 10단계");
         assert_eq!(orderbook.asks.len(), 10, "KR 호가는 10단계");
         assert!(ticker.bid < ticker.ask, "매수호가 < 매도호가");
-        assert!(orderbook.bids[0].price >= orderbook.bids[1].price, "매수 호가 내림차순");
-        assert!(orderbook.asks[0].price <= orderbook.asks[1].price, "매도 호가 오름차순");
+        assert!(
+            orderbook.bids[0].price >= orderbook.bids[1].price,
+            "매수 호가 내림차순"
+        );
+        assert!(
+            orderbook.asks[0].price <= orderbook.asks[1].price,
+            "매도 호가 오름차순"
+        );
     }
 
     #[test]

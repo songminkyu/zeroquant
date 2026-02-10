@@ -105,7 +105,11 @@ impl DiscordSender {
                 price,
                 order_id,
             } => {
-                let side_emoji = if side.to_lowercase() == "buy" { "🟢" } else { "🔴" };
+                let side_emoji = if side.to_lowercase() == "buy" {
+                    "🟢"
+                } else {
+                    "🔴"
+                };
                 json!({
                     "title": format!("{} 주문 체결", side_emoji),
                     "color": if side.to_lowercase() == "buy" { 0x28a745 } else { 0xdc3545 },
@@ -129,8 +133,16 @@ impl DiscordSender {
                 pnl,
                 pnl_percent,
             } => {
-                let pnl_emoji = if *pnl >= Decimal::ZERO { "💰" } else { "📉" };
-                let pnl_color = if *pnl >= Decimal::ZERO { 0x28a745 } else { 0xdc3545 };
+                let pnl_emoji = if *pnl >= Decimal::ZERO {
+                    "💰"
+                } else {
+                    "📉"
+                };
+                let pnl_color = if *pnl >= Decimal::ZERO {
+                    0x28a745
+                } else {
+                    0xdc3545
+                };
                 let pnl_sign = if *pnl >= Decimal::ZERO { "+" } else { "" };
                 json!({
                     "title": format!("{} 포지션 청산", pnl_emoji),
@@ -233,7 +245,10 @@ impl DiscordSender {
                 })
             }
 
-            NotificationEvent::SystemError { error_code, message } => {
+            NotificationEvent::SystemError {
+                error_code,
+                message,
+            } => {
                 json!({
                     "title": "🚨 시스템 오류",
                     "color": 0xdc3545,
@@ -410,8 +425,14 @@ mod tests {
         let config = DiscordConfig::new("https://example.com".to_string());
         let sender = DiscordSender::new(config);
 
-        assert_eq!(sender.get_priority_color(&NotificationPriority::Low), 0x6c757d);
-        assert_eq!(sender.get_priority_color(&NotificationPriority::Critical), 0xdc3545);
+        assert_eq!(
+            sender.get_priority_color(&NotificationPriority::Low),
+            0x6c757d
+        );
+        assert_eq!(
+            sender.get_priority_color(&NotificationPriority::Critical),
+            0xdc3545
+        );
     }
 
     #[test]

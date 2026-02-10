@@ -325,9 +325,7 @@ impl AppState {
         tracing::info!("SignalProcessingService 시작");
 
         Some(crate::services::start_signal_processing_service(
-            signal_rx,
-            db_pool,
-            shutdown,
+            signal_rx, db_pool, shutdown,
         ))
     }
 

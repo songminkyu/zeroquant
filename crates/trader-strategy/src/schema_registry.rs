@@ -658,7 +658,10 @@ fn create_exit_config_fragment() -> SchemaFragment {
             name: "trailing_stop.mode".to_string(),
             field_type: FieldType::Select,
             label: "트레일링 모드".to_string(),
-            description: Some("FixedPercentage: 고정%, AtrBased: ATR 기반, Step: 단계별, ParabolicSar: PSAR".to_string()),
+            description: Some(
+                "FixedPercentage: 고정%, AtrBased: ATR 기반, Step: 단계별, ParabolicSar: PSAR"
+                    .to_string(),
+            ),
             default: Some(json!("FixedPercentage")),
             options: vec![
                 "FixedPercentage".to_string(),
@@ -690,7 +693,10 @@ fn create_exit_config_fragment() -> SchemaFragment {
             default: Some(json!(1.0)),
             min: Some(0.1),
             max: Some(15.0),
-            condition: Some("trailing_stop.enabled == true && trailing_stop.mode == FixedPercentage".to_string()),
+            condition: Some(
+                "trailing_stop.enabled == true && trailing_stop.mode == FixedPercentage"
+                    .to_string(),
+            ),
             section: Some("trailing_stop".to_string()),
             ..Default::default()
         },
@@ -702,7 +708,9 @@ fn create_exit_config_fragment() -> SchemaFragment {
             default: Some(json!(2.0)),
             min: Some(0.5),
             max: Some(5.0),
-            condition: Some("trailing_stop.enabled == true && trailing_stop.mode == AtrBased".to_string()),
+            condition: Some(
+                "trailing_stop.enabled == true && trailing_stop.mode == AtrBased".to_string(),
+            ),
             section: Some("trailing_stop".to_string()),
             ..Default::default()
         },
@@ -734,7 +742,9 @@ fn create_exit_config_fragment() -> SchemaFragment {
             name: "profit_lock.lock_pct".to_string(),
             field_type: FieldType::Number,
             label: "잠금 비율".to_string(),
-            description: Some("달성 수익 대비 보호 비율 (%). 예: 80% = 수익의 80% 보호".to_string()),
+            description: Some(
+                "달성 수익 대비 보호 비율 (%). 예: 80% = 수익의 80% 보호".to_string(),
+            ),
             default: Some(json!(80.0)),
             min: Some(30.0),
             max: Some(100.0),

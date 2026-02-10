@@ -30,13 +30,13 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use trader_strategy_macro::StrategyConfig;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
 use trader_core::domain::{RouteState, StrategyContext};
 use trader_core::types::Timeframe;
+use trader_strategy_macro::StrategyConfig;
 
 use crate::strategies::common::rebalance::{
     PortfolioPosition, RebalanceCalculator, RebalanceConfig, RebalanceOrderSide, TargetAllocation,
@@ -61,63 +61,137 @@ pub struct CompoundMomentumConfig {
 
     /// 공격 자산 (기본: TQQQ)
     #[serde(default = "default_aggressive_asset")]
-    #[schema(label = "공격 자산", field_type = "symbol", default = "TQQQ", section = "asset")]
+    #[schema(
+        label = "공격 자산",
+        field_type = "symbol",
+        default = "TQQQ",
+        section = "asset"
+    )]
     pub aggressive_asset: String,
     /// 공격 자산 기본 비중
     #[serde(default = "default_aggressive_weight")]
-    #[schema(label = "공격 자산 비중", min = 0, max = 1, default = 0.5, section = "sizing")]
+    #[schema(
+        label = "공격 자산 비중",
+        min = 0,
+        max = 1,
+        default = 0.5,
+        section = "sizing"
+    )]
     pub aggressive_weight: Decimal,
 
     /// 배당 자산 (기본: SCHD)
     #[serde(default = "default_dividend_asset")]
-    #[schema(label = "배당 자산", field_type = "symbol", default = "SCHD", section = "asset")]
+    #[schema(
+        label = "배당 자산",
+        field_type = "symbol",
+        default = "SCHD",
+        section = "asset"
+    )]
     pub dividend_asset: String,
     /// 배당 자산 비중
     #[serde(default = "default_dividend_weight")]
-    #[schema(label = "배당 자산 비중", min = 0, max = 1, default = 0.2, section = "sizing")]
+    #[schema(
+        label = "배당 자산 비중",
+        min = 0,
+        max = 1,
+        default = 0.2,
+        section = "sizing"
+    )]
     pub dividend_weight: Decimal,
 
     /// 금리 헤지 자산 (기본: PFIX)
     #[serde(default = "default_rate_hedge_asset")]
-    #[schema(label = "금리 헤지 자산", field_type = "symbol", default = "PFIX", section = "asset")]
+    #[schema(
+        label = "금리 헤지 자산",
+        field_type = "symbol",
+        default = "PFIX",
+        section = "asset"
+    )]
     pub rate_hedge_asset: String,
     /// 금리 헤지 비중
     #[serde(default = "default_rate_hedge_weight")]
-    #[schema(label = "금리 헤지 비중", min = 0, max = 1, default = 0.15, section = "sizing")]
+    #[schema(
+        label = "금리 헤지 비중",
+        min = 0,
+        max = 1,
+        default = 0.15,
+        section = "sizing"
+    )]
     pub rate_hedge_weight: Decimal,
 
     /// 채권 레버리지 자산 (기본: TMF)
     #[serde(default = "default_bond_leverage_asset")]
-    #[schema(label = "채권 레버리지 자산", field_type = "symbol", default = "TMF", section = "asset")]
+    #[schema(
+        label = "채권 레버리지 자산",
+        field_type = "symbol",
+        default = "TMF",
+        section = "asset"
+    )]
     pub bond_leverage_asset: String,
     /// 채권 레버리지 비중
     #[serde(default = "default_bond_leverage_weight")]
-    #[schema(label = "채권 레버리지 비중", min = 0, max = 1, default = 0.15, section = "sizing")]
+    #[schema(
+        label = "채권 레버리지 비중",
+        min = 0,
+        max = 1,
+        default = 0.15,
+        section = "sizing"
+    )]
     pub bond_leverage_weight: Decimal,
 
     /// MA 기간 (기본: 130일)
     #[serde(default = "default_ma_period")]
-    #[schema(label = "MA 기간", min = 20, max = 300, default = 130, section = "indicator")]
+    #[schema(
+        label = "MA 기간",
+        min = 20,
+        max = 300,
+        default = 130,
+        section = "indicator"
+    )]
     pub ma_period: usize,
 
     /// 리밸런싱 주기 (월 단위)
     #[serde(default = "default_rebalance_interval")]
-    #[schema(label = "리밸런싱 주기 (월)", min = 1, max = 12, default = 1, section = "timing")]
+    #[schema(
+        label = "리밸런싱 주기 (월)",
+        min = 1,
+        max = 12,
+        default = 1,
+        section = "timing"
+    )]
     pub rebalance_interval_months: u32,
 
     /// 투자 비율 (총 자산 대비)
     #[serde(default = "default_invest_rate")]
-    #[schema(label = "투자 비율", min = 0, max = 1, default = 1.0, section = "sizing")]
+    #[schema(
+        label = "투자 비율",
+        min = 0,
+        max = 1,
+        default = 1.0,
+        section = "sizing"
+    )]
     pub invest_rate: Decimal,
 
     /// 리밸런싱 임계값 (비중 편차)
     #[serde(default = "default_rebalance_threshold")]
-    #[schema(label = "리밸런싱 임계값", min = 0.01, max = 0.2, default = 0.03, section = "timing")]
+    #[schema(
+        label = "리밸런싱 임계값",
+        min = 0.01,
+        max = 0.2,
+        default = 0.03,
+        section = "timing"
+    )]
     pub rebalance_threshold: Decimal,
 
     /// 최소 GlobalScore (기본값: 60)
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", min = 0, max = 100, default = 60, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        min = 0,
+        max = 100,
+        default = 60,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -589,11 +663,7 @@ impl CompoundMomentumStrategy {
         for (ticker, quantity) in &self.positions {
             let prices = self.get_price_history(ticker);
             if let Some(current_price) = prices.first() {
-                portfolio_positions.push(PortfolioPosition::new(
-                    ticker,
-                    *quantity,
-                    *current_price,
-                ));
+                portfolio_positions.push(PortfolioPosition::new(ticker, *quantity, *current_price));
             }
         }
 
@@ -658,7 +728,10 @@ impl CompoundMomentumStrategy {
         if !signals.is_empty() {
             self.last_rebalance_ym =
                 Some(format!("{}_{}", current_time.year(), current_time.month()));
-            info!("CompoundMomentum 리밸런싱 완료: {} 주문 생성", signals.len());
+            info!(
+                "CompoundMomentum 리밸런싱 완료: {} 주문 생성",
+                signals.len()
+            );
         }
 
         signals
@@ -699,12 +772,15 @@ impl Strategy for CompoundMomentumStrategy {
         self.rebalance_calculator = RebalanceCalculator::new(rebalance_config);
 
         // initial_capital 또는 amount가 있으면 cash_balance로 설정
-        let capital_value = config.get("initial_capital").or_else(|| config.get("amount"));
+        let capital_value = config
+            .get("initial_capital")
+            .or_else(|| config.get("amount"));
         if let Some(capital_str) = capital_value {
-            let capital_opt = capital_str.as_str()
+            let capital_opt = capital_str
+                .as_str()
                 .and_then(|s| s.parse::<Decimal>().ok())
                 .or_else(|| capital_str.as_i64().map(Decimal::from));
-            
+
             if let Some(capital_dec) = capital_opt {
                 self.cash_balance = capital_dec;
                 info!("[CompoundMomentum] 초기 자본금 설정: {}", capital_dec);

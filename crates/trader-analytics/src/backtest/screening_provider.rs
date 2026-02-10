@@ -150,9 +150,14 @@ impl BacktestScreeningProvider {
 
         // 3. criteria_results 구성 (기술적 지표 기반)
         let mut criteria_results = HashMap::new();
-        criteria_results.insert("global_score".to_string(), overall_score >= config.min_score);
-        criteria_results.insert("route_state_favorable".to_string(),
-            matches!(route_state, RouteState::Attack | RouteState::Armed));
+        criteria_results.insert(
+            "global_score".to_string(),
+            overall_score >= config.min_score,
+        );
+        criteria_results.insert(
+            "route_state_favorable".to_string(),
+            matches!(route_state, RouteState::Attack | RouteState::Armed),
+        );
 
         // 컴포넌트 점수를 criteria로 추가
         for (key, value) in &score_result.component_scores {
@@ -168,9 +173,9 @@ impl BacktestScreeningProvider {
             route_state,
             criteria_results,
             timestamp: current_time,
-            sector_rs: None,        // 백테스트에서는 섹터 RS 미지원
+            sector_rs: None, // 백테스트에서는 섹터 RS 미지원
             sector_rank: None,
-            trigger_score: None,    // 향후 확장 가능
+            trigger_score: None, // 향후 확장 가능
             trigger_label: None,
         })
     }
@@ -201,9 +206,7 @@ impl BacktestScreeningProvider {
                 // 매월 1일인지 체크
                 current_time.day() == 1
             }
-            ScreeningUpdateFrequency::Custom(n) => {
-                idx % n == 0
-            }
+            ScreeningUpdateFrequency::Custom(n) => idx % n == 0,
         }
     }
 
@@ -218,8 +221,14 @@ impl BacktestScreeningProvider {
     }
 
     /// 특정 RouteState인 종목만 필터링
-    pub fn by_route_state(results: Vec<ScreeningResult>, state: RouteState) -> Vec<ScreeningResult> {
-        results.into_iter().filter(|r| r.route_state == state).collect()
+    pub fn by_route_state(
+        results: Vec<ScreeningResult>,
+        state: RouteState,
+    ) -> Vec<ScreeningResult> {
+        results
+            .into_iter()
+            .filter(|r| r.route_state == state)
+            .collect()
     }
 }
 
@@ -264,8 +273,12 @@ mod tests {
                 Kline {
                     ticker: "TEST".to_string(),
                     timeframe: Timeframe::D1,
-                    open_time: Utc.with_ymd_and_hms(2024, 1, 1 + (i as u32 / 24), 0, 0, 0).unwrap(),
-                    close_time: Utc.with_ymd_and_hms(2024, 1, 1 + (i as u32 / 24), 23, 59, 59).unwrap(),
+                    open_time: Utc
+                        .with_ymd_and_hms(2024, 1, 1 + (i as u32 / 24), 0, 0, 0)
+                        .unwrap(),
+                    close_time: Utc
+                        .with_ymd_and_hms(2024, 1, 1 + (i as u32 / 24), 23, 59, 59)
+                        .unwrap(),
                     open: price,
                     high: price + dec!(1),
                     low: price - dec!(1),
@@ -281,7 +294,10 @@ mod tests {
     #[test]
     fn test_screening_provider_creation() {
         let provider = BacktestScreeningProvider::new();
-        assert!(provider.global_scorer.calculate(&[], GlobalScorerParams::default()).is_err());
+        assert!(provider
+            .global_scorer
+            .calculate(&[], GlobalScorerParams::default())
+            .is_err());
     }
 
     #[test]
@@ -344,10 +360,7 @@ mod tests {
         all_klines.insert("TEST".to_string(), create_test_klines(10, 100.0));
 
         // ScreeningCalculator trait 메서드 사용
-        let results = provider.calculate_from_klines(
-            &all_klines,
-            Utc::now(),
-        );
+        let results = provider.calculate_from_klines(&all_klines, Utc::now());
 
         // 캔들 부족으로 결과 없음
         assert!(results.is_empty());
@@ -419,6 +432,9 @@ mod tests {
         // trait 메서드 호출
         assert_eq!(provider.config().preset_name, "test_preset");
         assert_eq!(provider.config().min_score, Decimal::from(70));
-        assert_eq!(provider.config().update_frequency, ScreeningUpdateFrequency::Monthly);
+        assert_eq!(
+            provider.config().update_frequency,
+            ScreeningUpdateFrequency::Monthly
+        );
     }
 }

@@ -31,7 +31,6 @@
 
 use crate::strategies::common::{deserialize_ticker, ExitConfig};
 use crate::{register_strategy, Strategy};
-use trader_strategy_macro::StrategyConfig;
 use async_trait::async_trait;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
@@ -45,6 +44,7 @@ use trader_core::{
     domain::{MultiTimeframeConfig, StrategyContext},
     Kline, MarketData, MarketDataType, Order, Position, RouteState, Side, Signal, Timeframe,
 };
+use trader_strategy_macro::StrategyConfig;
 
 /// 다중 타임프레임 RSI 전략 설정.
 #[derive(Debug, Clone, Deserialize, Serialize, StrategyConfig)]
@@ -57,36 +57,77 @@ use trader_core::{
 pub struct RsiMultiTfConfig {
     /// 거래할 티커
     #[serde(deserialize_with = "deserialize_ticker")]
-    #[schema(label = "거래 종목", field_type = "symbol", default = "005930", section = "asset")]
+    #[schema(
+        label = "거래 종목",
+        field_type = "symbol",
+        default = "005930",
+        section = "asset"
+    )]
     pub ticker: String,
 
     /// 거래 금액 (호가 통화 기준)
-    #[schema(label = "거래 금액", min = 100, max = 100000000, default = 1000000, section = "asset")]
+    #[schema(
+        label = "거래 금액",
+        min = 100,
+        max = 100000000,
+        default = 1000000,
+        section = "asset"
+    )]
     pub amount: Decimal,
 
     /// 일봉 RSI 추세 필터 임계값 (기본: 50)
     #[serde(default = "default_daily_trend_threshold")]
-    #[schema(label = "일봉 RSI 임계값", min = 30, max = 70, default = 50, section = "indicator")]
+    #[schema(
+        label = "일봉 RSI 임계값",
+        min = 30,
+        max = 70,
+        default = 50,
+        section = "indicator"
+    )]
     pub daily_trend_threshold: Decimal,
 
     /// 1시간봉 과매도 임계값 (기본: 35)
     #[serde(default = "default_h1_oversold")]
-    #[schema(label = "1시간봉 과매도 임계값", min = 10, max = 40, default = 35, section = "indicator")]
+    #[schema(
+        label = "1시간봉 과매도 임계값",
+        min = 10,
+        max = 40,
+        default = 35,
+        section = "indicator"
+    )]
     pub h1_oversold_threshold: Decimal,
 
     /// 5분봉 과매도 임계값 (기본: 35)
     #[serde(default = "default_m5_oversold")]
-    #[schema(label = "5분봉 과매도 임계값", min = 10, max = 40, default = 35, section = "indicator")]
+    #[schema(
+        label = "5분봉 과매도 임계값",
+        min = 10,
+        max = 40,
+        default = 35,
+        section = "indicator"
+    )]
     pub m5_oversold_threshold: Decimal,
 
     /// 과매수 청산 임계값 (기본: 65)
     #[serde(default = "default_overbought")]
-    #[schema(label = "과매수 청산 임계값", min = 60, max = 90, default = 65, section = "indicator")]
+    #[schema(
+        label = "과매수 청산 임계값",
+        min = 60,
+        max = 90,
+        default = 65,
+        section = "indicator"
+    )]
     pub overbought_threshold: Decimal,
 
     /// RSI 기간 (기본: 7)
     #[serde(default = "default_rsi_period")]
-    #[schema(label = "RSI 기간", min = 5, max = 50, default = 7, section = "indicator")]
+    #[schema(
+        label = "RSI 기간",
+        min = 5,
+        max = 50,
+        default = 7,
+        section = "indicator"
+    )]
     pub rsi_period: usize,
 
     /// 손절 비율 (%)
@@ -101,7 +142,13 @@ pub struct RsiMultiTfConfig {
 
     /// 거래 후 쿨다운 기간 (Primary 캔들 수)
     #[serde(default = "default_cooldown")]
-    #[schema(label = "쿨다운 캔들 수", min = 0, max = 20, default = 3, section = "timing")]
+    #[schema(
+        label = "쿨다운 캔들 수",
+        min = 0,
+        max = 20,
+        default = 3,
+        section = "timing"
+    )]
     pub cooldown_candles: usize,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -111,7 +158,13 @@ pub struct RsiMultiTfConfig {
 
     /// 최소 GlobalScore (기본값: 0)
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", min = 0, max = 100, default = 0, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        min = 0,
+        max = 100,
+        default = 0,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 
     /// RouteState 필터 사용 여부 (기본값: false)
@@ -269,9 +322,9 @@ impl RsiMultiTfStrategy {
         use rust_decimal::prelude::ToPrimitive;
         let ctx = self.context.as_ref()?;
         let ctx_guard = ctx.read().await;
-        ctx_guard.get_global_score(ticker).map(|gs| {
-            gs.overall_score.to_f64().unwrap_or(0.0)
-        })
+        ctx_guard
+            .get_global_score(ticker)
+            .map(|gs| gs.overall_score.to_f64().unwrap_or(0.0))
     }
 
     /// 컨텍스트 기반 진입 조건 확인 (RouteState + GlobalScore)
@@ -286,12 +339,7 @@ impl RsiMultiTfStrategy {
             use rust_decimal::prelude::ToPrimitive;
             let min_score = config.min_global_score.to_f64().unwrap_or(50.0);
             if score < min_score {
-                debug!(
-                    ticker,
-                    score,
-                    min_score,
-                    "GlobalScore 미달 - 진입 거부"
-                );
+                debug!(ticker, score, min_score, "GlobalScore 미달 - 진입 거부");
                 return false;
             }
         }

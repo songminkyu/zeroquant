@@ -53,72 +53,152 @@ pub struct MomentumSurgeConfig {
 
     /// 코스피 레버리지 티커
     #[serde(default = "default_kospi_leverage")]
-    #[schema(label = "코스피 레버리지 티커", field_type = "symbol", default = "122630", section = "asset")]
+    #[schema(
+        label = "코스피 레버리지 티커",
+        field_type = "symbol",
+        default = "122630",
+        section = "asset"
+    )]
     pub kospi_leverage: String,
 
     /// 코스닥 레버리지 티커
     #[serde(default = "default_kosdaq_leverage")]
-    #[schema(label = "코스닥 레버리지 티커", field_type = "symbol", default = "233740", section = "asset")]
+    #[schema(
+        label = "코스닥 레버리지 티커",
+        field_type = "symbol",
+        default = "233740",
+        section = "asset"
+    )]
     pub kosdaq_leverage: String,
 
     /// 코스피 인버스 티커
     #[serde(default = "default_kospi_inverse")]
-    #[schema(label = "코스피 인버스 티커", field_type = "symbol", default = "252670", section = "asset")]
+    #[schema(
+        label = "코스피 인버스 티커",
+        field_type = "symbol",
+        default = "252670",
+        section = "asset"
+    )]
     pub kospi_inverse: String,
 
     /// 코스닥 인버스 티커
     #[serde(default = "default_kosdaq_inverse")]
-    #[schema(label = "코스닥 인버스 티커", field_type = "symbol", default = "251340", section = "asset")]
+    #[schema(
+        label = "코스닥 인버스 티커",
+        field_type = "symbol",
+        default = "251340",
+        section = "asset"
+    )]
     pub kosdaq_inverse: String,
 
     /// 최대 동시 투자 종목 수 (기본값: 2)
     #[serde(default = "default_max_positions")]
-    #[schema(label = "최대 동시 포지션 수", min = 1, max = 4, default = 2, section = "filter")]
+    #[schema(
+        label = "최대 동시 포지션 수",
+        min = 1,
+        max = 4,
+        default = 2,
+        section = "filter"
+    )]
     pub max_positions: usize,
 
     /// 종목당 투자 비율 (기본값: 0.5)
     #[serde(default = "default_position_ratio")]
-    #[schema(label = "종목당 투자 비율", min = 0.1, max = 1.0, default = 0.5, section = "sizing")]
+    #[schema(
+        label = "종목당 투자 비율",
+        min = 0.1,
+        max = 1.0,
+        default = 0.5,
+        section = "sizing"
+    )]
     pub position_ratio: f64,
 
     /// OBV 기간 (기본값: 10)
     #[serde(default = "default_obv_period")]
-    #[schema(label = "OBV 기간", min = 5, max = 30, default = 10, section = "indicator")]
+    #[schema(
+        label = "OBV 기간",
+        min = 5,
+        max = 30,
+        default = 10,
+        section = "indicator"
+    )]
     pub obv_period: usize,
 
     /// MA 단기 (기본값: 5)
     #[serde(default = "default_ma_short")]
-    #[schema(label = "MA 단기", min = 3, max = 20, default = 5, section = "indicator")]
+    #[schema(
+        label = "MA 단기",
+        min = 3,
+        max = 20,
+        default = 5,
+        section = "indicator"
+    )]
     pub ma_short: usize,
 
     /// MA 중기 (기본값: 20)
     #[serde(default = "default_ma_medium")]
-    #[schema(label = "MA 중기", min = 10, max = 60, default = 20, section = "indicator")]
+    #[schema(
+        label = "MA 중기",
+        min = 10,
+        max = 60,
+        default = 20,
+        section = "indicator"
+    )]
     pub ma_medium: usize,
 
     /// MA 장기 (기본값: 60)
     #[serde(default = "default_ma_long")]
-    #[schema(label = "MA 장기", min = 30, max = 200, default = 60, section = "indicator")]
+    #[schema(
+        label = "MA 장기",
+        min = 30,
+        max = 200,
+        default = 60,
+        section = "indicator"
+    )]
     pub ma_long: usize,
 
     /// RSI 기간 (기본값: 14)
     #[serde(default = "default_rsi_period")]
-    #[schema(label = "RSI 기간", min = 7, max = 30, default = 14, section = "indicator")]
+    #[schema(
+        label = "RSI 기간",
+        min = 7,
+        max = 30,
+        default = 14,
+        section = "indicator"
+    )]
     pub rsi_period: usize,
 
     /// 손절 비율 (기본값: 3%)
     #[serde(default = "default_stop_loss")]
-    #[schema(label = "손절 비율 (%)", min = 0.5, max = 10.0, default = 3.0, section = "sizing")]
+    #[schema(
+        label = "손절 비율 (%)",
+        min = 0.5,
+        max = 10.0,
+        default = 3.0,
+        section = "sizing"
+    )]
     pub stop_loss_pct: f64,
 
     /// 익절 비율 (기본값: 10%)
     #[serde(default = "default_take_profit")]
-    #[schema(label = "익절 비율 (%)", min = 1, max = 30, default = 10.0, section = "sizing")]
+    #[schema(
+        label = "익절 비율 (%)",
+        min = 1,
+        max = 30,
+        default = 10.0,
+        section = "sizing"
+    )]
     pub take_profit_pct: f64,
 
     /// 최소 글로벌 스코어 (기본값: 60)
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", min = 0, max = 100, default = 60, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        min = 0,
+        max = 100,
+        default = 60,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정 (손절/익절/트레일링 스탑).
@@ -313,7 +393,12 @@ impl MomentumSurgeStrategy {
             return None;
         }
 
-        let closes: Vec<_> = klines.iter().rev().take(period + 1).map(|k| k.close).collect();
+        let closes: Vec<_> = klines
+            .iter()
+            .rev()
+            .take(period + 1)
+            .map(|k| k.close)
+            .collect();
         let mut gains = Vec::new();
         let mut losses = Vec::new();
 
@@ -483,7 +568,8 @@ impl MomentumSurgeStrategy {
         }
 
         // MA 정배열
-        let ma_bullish = Self::is_ma_aligned_bullish(&klines, config.ma_short, config.ma_medium, config.ma_long);
+        let ma_bullish =
+            Self::is_ma_aligned_bullish(&klines, config.ma_short, config.ma_medium, config.ma_long);
 
         if !ma_bullish {
             return false;
@@ -561,7 +647,12 @@ impl MomentumSurgeStrategy {
         }
 
         // 페어 레버리지의 MA 역배열
-        let ma_bearish = Self::is_ma_aligned_bearish(&pair_klines, config.ma_short, config.ma_medium, config.ma_long);
+        let ma_bearish = Self::is_ma_aligned_bearish(
+            &pair_klines,
+            config.ma_short,
+            config.ma_medium,
+            config.ma_long,
+        );
 
         if !ma_bearish {
             return false;
@@ -616,7 +707,12 @@ impl MomentumSurgeStrategy {
 
         // 레버리지는 MA 역배열 시 매도
         if data.etf_type == EtfType::KospiLeverage || data.etf_type == EtfType::KosdaqLeverage {
-            if Self::is_ma_aligned_bearish(&klines, config.ma_short, config.ma_medium, config.ma_long) {
+            if Self::is_ma_aligned_bearish(
+                &klines,
+                config.ma_short,
+                config.ma_medium,
+                config.ma_long,
+            ) {
                 return Some("ma_bearish".to_string());
             }
 
@@ -642,7 +738,12 @@ impl MomentumSurgeStrategy {
 
             if let Some(pair_ticker) = pair_ticker_full {
                 let pair_klines = self.get_etf_klines(pair_ticker);
-                if Self::is_ma_aligned_bullish(&pair_klines, config.ma_short, config.ma_medium, config.ma_long) {
+                if Self::is_ma_aligned_bullish(
+                    &pair_klines,
+                    config.ma_short,
+                    config.ma_medium,
+                    config.ma_long,
+                ) {
                     return Some("ma_bullish".to_string());
                 }
             }
@@ -821,7 +922,9 @@ impl Strategy for MomentumSurgeStrategy {
         }
 
         // 충분한 데이터가 있는지 확인 (StrategyContext 기반)
-        let data_status: Vec<(String, usize)> = self.etf_data.keys()
+        let data_status: Vec<(String, usize)> = self
+            .etf_data
+            .keys()
             .map(|ticker| {
                 let klines = self.get_etf_klines(ticker);
                 (ticker.clone(), klines.len())
@@ -983,7 +1086,6 @@ mod tests {
         assert!(strategy.initialized);
         assert_eq!(strategy.etf_data.len(), 4);
     }
-
 }
 
 // 전략 레지스트리에 자동 등록

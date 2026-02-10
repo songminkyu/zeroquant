@@ -77,7 +77,7 @@ impl MockConfig {
     pub fn stock_us() -> Self {
         Self {
             initial_balance: dec!(10_000),
-            commission_rate: dec!(0.0),      // 무료 수수료
+            commission_rate: dec!(0.0), // 무료 수수료
             slippage_rate: dec!(0.0001),
             market_type: "stock_us".to_string(),
             currency: "USD".to_string(),
@@ -88,8 +88,8 @@ impl MockConfig {
     pub fn crypto() -> Self {
         Self {
             initial_balance: dec!(10_000),
-            commission_rate: dec!(0.001),    // 0.1%
-            slippage_rate: dec!(0.0005),     // 0.05%
+            commission_rate: dec!(0.001), // 0.1%
+            slippage_rate: dec!(0.0005),  // 0.05%
             market_type: "crypto".to_string(),
             currency: "USDT".to_string(),
         }
@@ -153,7 +153,10 @@ impl StrategyState {
         if self.available_balance() < amount {
             return Err(format!(
                 "예약 자금 부족: 필요 {}, 가용 {} (잔고 {} - 예약 {})",
-                amount, self.available_balance(), self.balance, self.reserved_balance
+                amount,
+                self.available_balance(),
+                self.balance,
+                self.reserved_balance
             ));
         }
         self.reserved_balance += amount;
@@ -191,7 +194,11 @@ impl MockState {
     }
 
     /// 전략 상태 조회 또는 생성.
-    fn get_or_create_strategy(&mut self, strategy_id: &str, initial_balance: Decimal) -> &mut StrategyState {
+    fn get_or_create_strategy(
+        &mut self,
+        strategy_id: &str,
+        initial_balance: Decimal,
+    ) -> &mut StrategyState {
         self.strategies
             .entry(strategy_id.to_string())
             .or_insert_with(|| StrategyState::new(initial_balance))
@@ -327,7 +334,9 @@ impl MockExchangeProvider {
     pub async fn init_strategy(&self, strategy_id: &str, initial_balance: Decimal) {
         let mut state = self.state.write().await;
         if !state.strategies.contains_key(strategy_id) {
-            state.strategies.insert(strategy_id.to_string(), StrategyState::new(initial_balance));
+            state
+                .strategies
+                .insert(strategy_id.to_string(), StrategyState::new(initial_balance));
             info!("전략 초기화: {} (잔고: {})", strategy_id, initial_balance);
         }
     }
@@ -354,7 +363,8 @@ impl MockExchangeProvider {
 
         let mut state = self.state.write().await;
         for row in &session_rows {
-            let strategy_state = state.get_or_create_strategy(&row.strategy_id, row.initial_balance);
+            let strategy_state =
+                state.get_or_create_strategy(&row.strategy_id, row.initial_balance);
             strategy_state.balance = row.current_balance;
             strategy_state.reserved_balance = row.reserved_balance;
         }
@@ -450,7 +460,8 @@ impl MockExchangeProvider {
         }
 
         let state = self.state.read().await;
-        debug!("Mock 상태 복원 완료 (전략: {}, 총 포지션: {}, 미체결 주문: {})",
+        debug!(
+            "Mock 상태 복원 완료 (전략: {}, 총 포지션: {}, 미체결 주문: {})",
             state.strategies.len(),
             state.total_position_count(),
             pending_rows.len()
@@ -461,9 +472,9 @@ impl MockExchangeProvider {
     /// 전략별 상태를 DB에 저장.
     pub async fn save_strategy_state(&self, strategy_id: &str) -> Result<(), ProviderError> {
         let state = self.state.read().await;
-        let strategy_state = state.get_strategy(strategy_id).ok_or_else(|| {
-            ProviderError::Other(format!("전략 상태 없음: {}", strategy_id))
-        })?;
+        let strategy_state = state
+            .get_strategy(strategy_id)
+            .ok_or_else(|| ProviderError::Other(format!("전략 상태 없음: {}", strategy_id)))?;
 
         // 1. 세션 잔고 + 예약 잔고 업데이트
         sqlx::query!(
@@ -572,7 +583,8 @@ impl MockExchangeProvider {
             .map_err(|e| ProviderError::Other(format!("DB 에러: {}", e)))?;
         }
 
-        debug!("전략 {} 상태 저장 완료 (잔고: {}, 포지션: {}, 미체결: {})",
+        debug!(
+            "전략 {} 상태 저장 완료 (잔고: {}, 포지션: {}, 미체결: {})",
             strategy_id,
             balance,
             position_count,
@@ -582,7 +594,11 @@ impl MockExchangeProvider {
     }
 
     /// 체결 내역 DB에 저장 (전략별).
-    async fn save_execution(&self, trade: &TradeResult, strategy_id: &str) -> Result<(), ProviderError> {
+    async fn save_execution(
+        &self,
+        trade: &TradeResult,
+        strategy_id: &str,
+    ) -> Result<(), ProviderError> {
         let side_str = match trade.side {
             Side::Buy => "Buy",
             Side::Sell => "Sell",
@@ -612,9 +628,10 @@ impl MockExchangeProvider {
 
     /// Yahoo Finance에서 현재가 조회.
     pub async fn get_current_price(&self, symbol: &str) -> Result<Decimal, ProviderError> {
-        let yahoo = self.yahoo.as_ref().ok_or_else(|| {
-            ProviderError::Network("Yahoo Finance 미초기화".to_string())
-        })?;
+        let yahoo = self
+            .yahoo
+            .as_ref()
+            .ok_or_else(|| ProviderError::Network("Yahoo Finance 미초기화".to_string()))?;
 
         // 심볼을 Yahoo Finance 형식으로 변환
         let yahoo_symbol = self.to_yahoo_symbol(symbol);
@@ -648,7 +665,9 @@ impl MockExchangeProvider {
 
     /// 전략별 잔고 조회.
     pub async fn balance(&self, strategy_id: &str) -> Decimal {
-        self.state.read().await
+        self.state
+            .read()
+            .await
             .get_strategy(strategy_id)
             .map(|s| s.balance)
             .unwrap_or(Decimal::ZERO)
@@ -656,7 +675,9 @@ impl MockExchangeProvider {
 
     /// 전략별 포지션 목록 조회.
     pub async fn positions(&self, strategy_id: &str) -> HashMap<String, ProcessorPosition> {
-        self.state.read().await
+        self.state
+            .read()
+            .await
             .get_strategy(strategy_id)
             .map(|s| s.positions.clone())
             .unwrap_or_default()
@@ -664,7 +685,9 @@ impl MockExchangeProvider {
 
     /// 전략별 거래 기록 조회.
     pub async fn trades(&self, strategy_id: &str) -> Vec<TradeResult> {
-        self.state.read().await
+        self.state
+            .read()
+            .await
             .get_strategy(strategy_id)
             .map(|s| s.trades.clone())
             .unwrap_or_default()
@@ -697,7 +720,10 @@ impl MockExchangeProvider {
 
         // 전략 상태 확인 (없으면 에러)
         let strategy_state = state.get_strategy_mut(strategy_id).ok_or_else(|| {
-            ProviderError::Other(format!("전략 상태 없음: {}. init_strategy()를 먼저 호출하세요.", strategy_id))
+            ProviderError::Other(format!(
+                "전략 상태 없음: {}. init_strategy()를 먼저 호출하세요.",
+                strategy_id
+            ))
         })?;
 
         // 슬리피지 적용
@@ -740,7 +766,9 @@ impl MockExchangeProvider {
                     position_id: signal.position_id.clone(),
                     group_id: signal.group_id.clone(),
                 };
-                strategy_state.positions.insert(signal.ticker.clone(), position);
+                strategy_state
+                    .positions
+                    .insert(signal.ticker.clone(), position);
 
                 TradeResult {
                     symbol: signal.ticker.clone(),
@@ -758,9 +786,16 @@ impl MockExchangeProvider {
             }
             SignalType::Exit => {
                 // 청산: 포지션 확인 및 제거
-                let position = strategy_state.positions.remove(&signal.ticker).ok_or_else(|| {
-                    ProviderError::Other(format!("[{}] 포지션 없음: {}", strategy_id, signal.ticker))
-                })?;
+                let position =
+                    strategy_state
+                        .positions
+                        .remove(&signal.ticker)
+                        .ok_or_else(|| {
+                            ProviderError::Other(format!(
+                                "[{}] 포지션 없음: {}",
+                                strategy_id, signal.ticker
+                            ))
+                        })?;
 
                 // 실현 손익 계산
                 let realized_pnl = if position.side == Side::Buy {
@@ -800,7 +835,8 @@ impl MockExchangeProvider {
 
                 if let Some(position) = strategy_state.positions.get_mut(&signal.ticker) {
                     // 평균 단가 재계산
-                    let total_value = position.entry_price * position.quantity + execution_price * quantity;
+                    let total_value =
+                        position.entry_price * position.quantity + execution_price * quantity;
                     let total_quantity = position.quantity + quantity;
                     position.entry_price = total_value / total_quantity;
                     position.quantity = total_quantity;
@@ -817,7 +853,9 @@ impl MockExchangeProvider {
                         position_id: signal.position_id.clone(),
                         group_id: signal.group_id.clone(),
                     };
-                    strategy_state.positions.insert(signal.ticker.clone(), position);
+                    strategy_state
+                        .positions
+                        .insert(signal.ticker.clone(), position);
                 }
 
                 TradeResult {
@@ -837,9 +875,16 @@ impl MockExchangeProvider {
             SignalType::ReducePosition => {
                 // 일부 청산 - 먼저 포지션 정보 복사
                 let (pos_side, pos_qty, pos_entry_price) = {
-                    let position = strategy_state.positions.get(&signal.ticker).ok_or_else(|| {
-                        ProviderError::Other(format!("[{}] 포지션 없음: {}", strategy_id, signal.ticker))
-                    })?;
+                    let position =
+                        strategy_state
+                            .positions
+                            .get(&signal.ticker)
+                            .ok_or_else(|| {
+                                ProviderError::Other(format!(
+                                    "[{}] 포지션 없음: {}",
+                                    strategy_id, signal.ticker
+                                ))
+                            })?;
                     (position.side, position.quantity, position.entry_price)
                 };
 
@@ -896,7 +941,12 @@ impl MockExchangeProvider {
 
         info!(
             "[{}] Mock 체결: {} {} {} @ {} (PnL: {:?})",
-            strategy_id_owned, trade.symbol, trade.side, trade.quantity, trade.price, trade.realized_pnl
+            strategy_id_owned,
+            trade.symbol,
+            trade.side,
+            trade.quantity,
+            trade.price,
+            trade.realized_pnl
         );
 
         Ok(Some(trade))
@@ -1022,14 +1072,7 @@ impl ExchangeProvider for MockExchangeProvider {
             .strategies
             .values()
             .flat_map(|s| s.positions.values())
-            .map(|p| {
-                StrategyPositionInfo::new(
-                    p.symbol.clone(),
-                    p.side,
-                    p.quantity,
-                    p.entry_price,
-                )
-            })
+            .map(|p| StrategyPositionInfo::new(p.symbol.clone(), p.side, p.quantity, p.entry_price))
             .collect();
 
         Ok(positions)
@@ -1104,9 +1147,10 @@ use trader_core::domain::{MarketDataProvider, QuoteData};
 #[async_trait]
 impl MarketDataProvider for MockExchangeProvider {
     async fn get_quote(&self, symbol: &str) -> Result<QuoteData, ProviderError> {
-        let yahoo = self.yahoo.as_ref().ok_or_else(|| {
-            ProviderError::Network("Yahoo Finance 미초기화".to_string())
-        })?;
+        let yahoo = self
+            .yahoo
+            .as_ref()
+            .ok_or_else(|| ProviderError::Network("Yahoo Finance 미초기화".to_string()))?;
 
         // 심볼을 Yahoo Finance 형식으로 변환
         let yahoo_symbol = self.to_yahoo_symbol(symbol);
@@ -1243,7 +1287,10 @@ impl MockExchangeProvider {
         }
 
         self.streaming_active.store(true, Ordering::SeqCst);
-        info!("Mock 거래소 스트리밍 시작: {:?}, 간격: {}초", symbols, interval_secs);
+        info!(
+            "Mock 거래소 스트리밍 시작: {:?}, 간격: {}초",
+            symbols, interval_secs
+        );
 
         // 중지 채널 생성
         let (stop_tx, mut stop_rx) = mpsc::channel::<()>(1);
@@ -1353,7 +1400,9 @@ impl MockExchangeProvider {
 
     /// 가격 이벤트 직접 발행 (테스트/수동 사용).
     pub async fn emit_ticker(&self, ticker: Ticker) {
-        self.market_broadcaster.broadcast(MarketEvent::Ticker(ticker)).await;
+        self.market_broadcaster
+            .broadcast(MarketEvent::Ticker(ticker))
+            .await;
     }
 
     /// 확장 스트리밍 시작 (모드별 가격 생성).
@@ -1405,9 +1454,9 @@ impl MockExchangeProvider {
         // 가격 생성기 초기화
         let mut generator: Box<dyn MockPriceGenerator> = match streaming_config.mode {
             MockPriceMode::RandomWalk => Box::new(RandomWalkGenerator::new()),
-            MockPriceMode::HistoricalReplay => {
-                Box::new(HistoricalReplayGenerator::new(streaming_config.replay_speed))
-            }
+            MockPriceMode::HistoricalReplay => Box::new(HistoricalReplayGenerator::new(
+                streaming_config.replay_speed,
+            )),
             MockPriceMode::YahooLegacy => unreachable!(),
         };
 
@@ -1526,7 +1575,9 @@ impl MockExchangeProvider {
     }
 
     /// 주문 엔진 접근 (읽기).
-    pub async fn order_engine(&self) -> tokio::sync::RwLockReadGuard<'_, super::mock_order_engine::MockOrderEngine> {
+    pub async fn order_engine(
+        &self,
+    ) -> tokio::sync::RwLockReadGuard<'_, super::mock_order_engine::MockOrderEngine> {
         self.order_engine.read().await
     }
 }
@@ -1545,7 +1596,10 @@ impl OrderExecutionProvider for MockExchangeProvider {
         match request.order_type {
             OrderType::Market => {
                 // 시장가: OrderBook VWAP 체결
-                let orderbook = self.latest_order_books.read().await
+                let orderbook = self
+                    .latest_order_books
+                    .read()
+                    .await
                     .get(&request.ticker)
                     .cloned();
 
@@ -1557,17 +1611,21 @@ impl OrderExecutionProvider for MockExchangeProvider {
                         if let Some(strategy_state) = state.get_strategy_mut(&strategy_id) {
                             match fill.side {
                                 Side::Buy => {
-                                    let cost = fill.fill_price * fill.filled_quantity + fill.commission;
+                                    let cost =
+                                        fill.fill_price * fill.filled_quantity + fill.commission;
                                     if strategy_state.available_balance() < cost {
                                         return Err(ProviderError::Other(format!(
                                             "[{}] 자금 부족: 필요 {}, 가용 {}",
-                                            strategy_id, cost, strategy_state.available_balance()
+                                            strategy_id,
+                                            cost,
+                                            strategy_state.available_balance()
                                         )));
                                     }
                                     strategy_state.balance -= cost;
                                 }
                                 Side::Sell => {
-                                    let proceeds = fill.fill_price * fill.filled_quantity - fill.commission;
+                                    let proceeds =
+                                        fill.fill_price * fill.filled_quantity - fill.commission;
                                     strategy_state.balance += proceeds;
                                 }
                             }
@@ -1594,7 +1652,10 @@ impl OrderExecutionProvider for MockExchangeProvider {
 
             OrderType::Limit => {
                 // 지정가: 즉시 체결 가능이면 체결, 아니면 큐 등록 + 잔고 예약
-                let ticker_data = self.latest_tickers.read().await
+                let ticker_data = self
+                    .latest_tickers
+                    .read()
+                    .await
                     .get(&request.ticker)
                     .cloned();
 
@@ -1607,11 +1668,13 @@ impl OrderExecutionProvider for MockExchangeProvider {
                             if let Some(strategy_state) = state.get_strategy_mut(&strategy_id) {
                                 match fill.side {
                                     Side::Buy => {
-                                        let cost = fill.fill_price * fill.filled_quantity + fill.commission;
+                                        let cost = fill.fill_price * fill.filled_quantity
+                                            + fill.commission;
                                         strategy_state.balance -= cost;
                                     }
                                     Side::Sell => {
-                                        let proceeds = fill.fill_price * fill.filled_quantity - fill.commission;
+                                        let proceeds = fill.fill_price * fill.filled_quantity
+                                            - fill.commission;
                                         strategy_state.balance += proceeds;
                                     }
                                 }
@@ -1646,7 +1709,10 @@ impl OrderExecutionProvider for MockExchangeProvider {
                 } else {
                     // Ticker 없으면 큐 등록만
                     let order_no = Uuid::new_v4().to_string();
-                    debug!("[Mock] Ticker 없음, 지정가 주문 보류: {} @ {:?}", request.ticker, request.price);
+                    debug!(
+                        "[Mock] Ticker 없음, 지정가 주문 보류: {} @ {:?}",
+                        request.ticker, request.price
+                    );
                     Ok(OrderResponse {
                         order_no,
                         order_time: Utc::now().format("%H%M%S").to_string(),
@@ -1654,7 +1720,10 @@ impl OrderExecutionProvider for MockExchangeProvider {
                 }
             }
 
-            OrderType::StopLoss | OrderType::StopLossLimit | OrderType::TakeProfit | OrderType::TakeProfitLimit => {
+            OrderType::StopLoss
+            | OrderType::StopLossLimit
+            | OrderType::TakeProfit
+            | OrderType::TakeProfitLimit => {
                 // 스톱 계열 주문: 큐 등록 + 잔고 예약
                 let mut engine = self.order_engine.write().await;
                 match engine.submit_stop_order(request, &strategy_id) {
@@ -1682,7 +1751,10 @@ impl OrderExecutionProvider for MockExchangeProvider {
             _ => {
                 // 트레일링 스톱 등 미지원 주문 유형
                 let order_no = Uuid::new_v4().to_string();
-                debug!("[Mock] 미지원 주문 유형, 레거시 체결: {:?}", request.order_type);
+                debug!(
+                    "[Mock] 미지원 주문 유형, 레거시 체결: {:?}",
+                    request.order_type
+                );
                 Ok(OrderResponse {
                     order_no,
                     order_time: Utc::now().format("%H%M%S").to_string(),
@@ -1701,7 +1773,10 @@ impl OrderExecutionProvider for MockExchangeProvider {
                     strategy_state.release_reservation(cancel_result.released_amount);
                 }
             }
-            info!("[Mock] 주문 취소 완료: {} (예약 해제: {})", order_id, cancel_result.released_amount);
+            info!(
+                "[Mock] 주문 취소 완료: {} (예약 해제: {})",
+                order_id, cancel_result.released_amount
+            );
         } else {
             debug!("[Mock] 취소할 주문 없음: {}", order_id);
         }

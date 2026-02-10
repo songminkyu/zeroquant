@@ -19,8 +19,8 @@ use std::sync::Arc;
 use tracing::{debug, info};
 
 use trader_core::{
-    OrderBook, OrderBookLevel, OrderRequest, OrderStatusType, OrderType,
-    PendingOrder, Side, Ticker, TickSizeProvider,
+    OrderBook, OrderBookLevel, OrderRequest, OrderStatusType, OrderType, PendingOrder, Side,
+    TickSizeProvider, Ticker,
 };
 
 // ==================== 체결 결과 ====================
@@ -193,7 +193,10 @@ impl MockOrderEngine {
         let (fill_price, filled_qty) = Self::calculate_vwap(levels, request.quantity);
 
         if filled_qty.is_zero() {
-            debug!("[MockEngine] 시장가 체결 실패: 호가창 물량 부족 ({})", request.ticker);
+            debug!(
+                "[MockEngine] 시장가 체결 실패: 호가창 물량 부족 ({})",
+                request.ticker
+            );
             return None;
         }
 
@@ -302,8 +305,10 @@ impl MockOrderEngine {
             .entry(request.ticker.clone())
             .or_default()
             .push(pending);
-        self.order_strategy_map.insert(order_id.clone(), strategy_id.to_string());
-        self.reserved_amounts.insert(order_id.clone(), reserved_amount);
+        self.order_strategy_map
+            .insert(order_id.clone(), strategy_id.to_string());
+        self.reserved_amounts
+            .insert(order_id.clone(), reserved_amount);
 
         debug!(
             "[MockEngine] 지정가 큐 등록: {} {:?} {} @ {} (예약금: {})",
@@ -327,7 +332,9 @@ impl MockOrderEngine {
         let stop_price = request.stop_price.ok_or("스톱 주문에 stop_price 필수")?;
 
         let reserved_amount = match request.side {
-            Side::Buy => stop_price * request.quantity * (Decimal::ONE + self.fee_rate) * dec!(1.05), // 5% 버퍼
+            Side::Buy => {
+                stop_price * request.quantity * (Decimal::ONE + self.fee_rate) * dec!(1.05)
+            } // 5% 버퍼
             Side::Sell => Decimal::ZERO,
         };
 
@@ -350,8 +357,10 @@ impl MockOrderEngine {
             .entry(request.ticker.clone())
             .or_default()
             .push(pending);
-        self.order_strategy_map.insert(order_id.clone(), strategy_id.to_string());
-        self.reserved_amounts.insert(order_id.clone(), reserved_amount);
+        self.order_strategy_map
+            .insert(order_id.clone(), strategy_id.to_string());
+        self.reserved_amounts
+            .insert(order_id.clone(), reserved_amount);
 
         debug!(
             "[MockEngine] 스톱 주문 등록: {} {:?} {} @ stop={} (예약금: {})",
@@ -514,7 +523,10 @@ impl MockOrderEngine {
                 self.order_strategy_map.remove(order_id);
                 self.reserved_amounts.remove(order_id);
 
-                info!("[MockEngine] 주문 취소: {} (예약금 해제: {})", order_id, removed.reserved_amount);
+                info!(
+                    "[MockEngine] 주문 취소: {} (예약금 해제: {})",
+                    order_id, removed.reserved_amount
+                );
 
                 return Some(MockCancelResult {
                     strategy_id: removed.strategy_id,
@@ -557,7 +569,8 @@ impl MockOrderEngine {
                 };
 
                 order.reserved_amount = new_reserved;
-                self.reserved_amounts.insert(order_id.to_string(), new_reserved);
+                self.reserved_amounts
+                    .insert(order_id.to_string(), new_reserved);
 
                 let delta = new_reserved - old_reserved;
                 debug!(
@@ -621,7 +634,10 @@ impl MockOrderEngine {
 
     /// 특정 주문의 예약금 조회.
     pub fn get_reserved_amount(&self, order_id: &str) -> Decimal {
-        self.reserved_amounts.get(order_id).copied().unwrap_or(Decimal::ZERO)
+        self.reserved_amounts
+            .get(order_id)
+            .copied()
+            .unwrap_or(Decimal::ZERO)
     }
 
     /// 전략별 총 예약금 조회.
@@ -709,12 +725,13 @@ impl MockOrderEngine {
             stop_triggered: false,
         };
 
-        self.pending_orders
-            .entry(symbol)
-            .or_default()
-            .push(pending);
-        self.order_strategy_map.insert(order_id.clone(), strategy_id);
-        debug!("미체결 주문 복원: {} (예약금: {})", order_id, reserved_amount);
+        self.pending_orders.entry(symbol).or_default().push(pending);
+        self.order_strategy_map
+            .insert(order_id.clone(), strategy_id);
+        debug!(
+            "미체결 주문 복원: {} (예약금: {})",
+            order_id, reserved_amount
+        );
         self.reserved_amounts.insert(order_id, reserved_amount);
     }
 
@@ -788,14 +805,32 @@ mod tests {
         OrderBook {
             ticker: symbol.to_string(),
             bids: vec![
-                OrderBookLevel { price: mid_price - tick, quantity: dec!(100) },
-                OrderBookLevel { price: mid_price - tick * dec!(2), quantity: dec!(200) },
-                OrderBookLevel { price: mid_price - tick * dec!(3), quantity: dec!(300) },
+                OrderBookLevel {
+                    price: mid_price - tick,
+                    quantity: dec!(100),
+                },
+                OrderBookLevel {
+                    price: mid_price - tick * dec!(2),
+                    quantity: dec!(200),
+                },
+                OrderBookLevel {
+                    price: mid_price - tick * dec!(3),
+                    quantity: dec!(300),
+                },
             ],
             asks: vec![
-                OrderBookLevel { price: mid_price + tick, quantity: dec!(100) },
-                OrderBookLevel { price: mid_price + tick * dec!(2), quantity: dec!(200) },
-                OrderBookLevel { price: mid_price + tick * dec!(3), quantity: dec!(300) },
+                OrderBookLevel {
+                    price: mid_price + tick,
+                    quantity: dec!(100),
+                },
+                OrderBookLevel {
+                    price: mid_price + tick * dec!(2),
+                    quantity: dec!(200),
+                },
+                OrderBookLevel {
+                    price: mid_price + tick * dec!(3),
+                    quantity: dec!(300),
+                },
             ],
             timestamp: Utc::now(),
         }
@@ -820,7 +855,11 @@ mod tests {
         OrderRequest {
             ticker: symbol.to_string(),
             side: Side::Buy,
-            order_type: if price.is_some() { OrderType::Limit } else { OrderType::Market },
+            order_type: if price.is_some() {
+                OrderType::Limit
+            } else {
+                OrderType::Market
+            },
             quantity: qty,
             price,
             stop_price: None,
@@ -904,7 +943,9 @@ mod tests {
         let ticker = create_test_ticker("005930", dec!(70000));
         let request = create_buy_request("005930", dec!(10), Some(dec!(69500)));
 
-        let (_, _) = engine.submit_limit_order(&request, &ticker, "test_strategy").unwrap();
+        let (_, _) = engine
+            .submit_limit_order(&request, &ticker, "test_strategy")
+            .unwrap();
 
         // 가격 하락 → 체결
         let new_ticker = create_test_ticker("005930", dec!(69400));
@@ -921,7 +962,9 @@ mod tests {
         let ticker = create_test_ticker("005930", dec!(70000));
         let request = create_buy_request("005930", dec!(10), Some(dec!(69500)));
 
-        let (order_id, _) = engine.submit_limit_order(&request, &ticker, "test_strategy").unwrap();
+        let (order_id, _) = engine
+            .submit_limit_order(&request, &ticker, "test_strategy")
+            .unwrap();
 
         let result = engine.cancel_order(&order_id);
         assert!(result.is_some());

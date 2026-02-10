@@ -26,8 +26,8 @@ use trader_core::crypto::CredentialEncryptor;
 use trader_exchange::connector::kis::{KisConfig, KisOAuth};
 use trader_exchange::provider::MockExchangeProvider;
 use trader_exchange::stream::{
-    KisKrMarketStream, KisUsMarketStream, UnifiedMarketStream,
-    UpbitMarketStream, BithumbMarketStream, LsSecMarketStream,
+    BithumbMarketStream, KisKrMarketStream, KisUsMarketStream, LsSecMarketStream,
+    UnifiedMarketStream, UpbitMarketStream,
 };
 use trader_exchange::traits::MarketStream;
 
@@ -158,10 +158,8 @@ pub async fn get_or_create_market_stream(
 
             let kis_config =
                 load_kis_config_from_credential(pool, encryptor, credential_id).await?;
-            let oauth_kr =
-                create_oauth_instance(kis_oauth_cache, &kis_config, "kr").await?;
-            let oauth_us =
-                create_oauth_instance(kis_oauth_cache, &kis_config, "us").await?;
+            let oauth_kr = create_oauth_instance(kis_oauth_cache, &kis_config, "kr").await?;
+            let oauth_us = create_oauth_instance(kis_oauth_cache, &kis_config, "us").await?;
 
             let kr_stream = KisKrMarketStream::new(oauth_kr);
             let us_stream = KisUsMarketStream::new(oauth_us);
@@ -172,9 +170,9 @@ pub async fn get_or_create_market_stream(
         }
         "mock" => {
             let providers = mock_providers.read().await;
-            let provider = providers.get(&credential_id).ok_or_else(|| {
-                format!("Mock 프로바이더를 찾을 수 없습니다: {}", credential_id)
-            })?;
+            let provider = providers
+                .get(&credential_id)
+                .ok_or_else(|| format!("Mock 프로바이더를 찾을 수 없습니다: {}", credential_id))?;
             let mock_stream = provider.create_market_stream().await;
 
             let mut unified = UnifiedMarketStream::new().with_mock_stream(mock_stream);
@@ -273,12 +271,8 @@ async fn load_kis_config_from_credential(
     .await
     .map_err(|e| format!("DB 조회 실패: {}", e))?;
 
-    let row = row.ok_or_else(|| {
-        format!(
-            "활성 KIS 자격증명을 찾을 수 없습니다: {}",
-            credential_id
-        )
-    })?;
+    let row =
+        row.ok_or_else(|| format!("활성 KIS 자격증명을 찾을 수 없습니다: {}", credential_id))?;
 
     // 자격증명 복호화
     let credentials: DecryptedCredentials = encryptor
@@ -332,9 +326,8 @@ async fn load_ls_sec_token(
     .await
     .map_err(|e| format!("DB 조회 실패: {}", e))?;
 
-    let row = row.ok_or_else(|| {
-        format!("활성 LS증권 자격증명을 찾을 수 없습니다: {}", credential_id)
-    })?;
+    let row =
+        row.ok_or_else(|| format!("활성 LS증권 자격증명을 찾을 수 없습니다: {}", credential_id))?;
 
     let credentials: DecryptedCredentials = encryptor
         .decrypt_json(&row.encrypted_credentials, &row.encryption_nonce)

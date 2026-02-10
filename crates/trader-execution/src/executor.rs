@@ -699,28 +699,29 @@ impl OrderExecutor {
 
         // 진입 신호의 경우 설정에 따라 손절 및 익절 생성
         if SignalConverter::is_entry_signal(&signal.signal_type)
-            && (self.config.auto_stop_loss || self.config.auto_take_profit) {
-                // 브라켓 주문 생성을 위한 임시 포지션 생성
-                let mock_position = Position::new(
-                    "temp",
-                    signal.ticker.clone(),
-                    signal.side,
-                    order_request.quantity,
-                    current_price,
-                );
+            && (self.config.auto_stop_loss || self.config.auto_take_profit)
+        {
+            // 브라켓 주문 생성을 위한 임시 포지션 생성
+            let mock_position = Position::new(
+                "temp",
+                signal.ticker.clone(),
+                signal.side,
+                order_request.quantity,
+                current_price,
+            );
 
-                let risk_manager = self.risk_manager.read().await;
+            let risk_manager = self.risk_manager.read().await;
 
-                if self.config.auto_stop_loss {
-                    let sl_order = risk_manager.generate_stop_loss(&mock_position, None);
-                    result = result.with_stop_loss(sl_order.to_order_request());
-                }
-
-                if self.config.auto_take_profit {
-                    let tp_order = risk_manager.generate_take_profit(&mock_position, None);
-                    result = result.with_take_profit(tp_order.to_order_request());
-                }
+            if self.config.auto_stop_loss {
+                let sl_order = risk_manager.generate_stop_loss(&mock_position, None);
+                result = result.with_stop_loss(sl_order.to_order_request());
             }
+
+            if self.config.auto_take_profit {
+                let tp_order = risk_manager.generate_take_profit(&mock_position, None);
+                result = result.with_take_profit(tp_order.to_order_request());
+            }
+        }
 
         // 브라켓 주문 등록 (손절/익절이 있는 경우)
         if let Some(order_id) = result.order_id {

@@ -56,7 +56,6 @@ use chrono::{DateTime, Timelike, Utc};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use trader_strategy_macro::StrategyConfig;
 use serde_json::{json, Value};
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -64,10 +63,10 @@ use tokio::sync::RwLock;
 use tracing::{debug, info};
 use trader_core::domain::{RouteState, StrategyContext};
 use trader_core::{MarketData, MarketDataType, Order, Position, Side, Signal, Timeframe};
+use trader_strategy_macro::StrategyConfig;
 
 /// 일간 트레이딩 전략 변형.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub enum DayTradingVariant {
     /// 변동성 돌파 (래리 윌리엄스)
     #[default]
@@ -77,7 +76,6 @@ pub enum DayTradingVariant {
     /// 거래량 급증 모멘텀
     VolumeSurge,
 }
-
 
 /// 돌파 전략 설정.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -299,42 +297,90 @@ impl Default for ExitConfig {
 pub struct VolatilityBreakoutConfig {
     /// 대상 티커.
     #[serde(default = "default_day_ticker")]
-    #[schema(label = "거래 종목", field_type = "symbol", default = "005930", section = "asset")]
+    #[schema(
+        label = "거래 종목",
+        field_type = "symbol",
+        default = "005930",
+        section = "asset"
+    )]
     pub ticker: String,
 
     /// 거래 금액.
     #[serde(default = "default_trade_amount")]
-    #[schema(label = "거래 금액", field_type = "number", min = 100000, max = 100000000, default = 1000000, section = "asset")]
+    #[schema(
+        label = "거래 금액",
+        field_type = "number",
+        min = 100000,
+        max = 100000000,
+        default = 1000000,
+        section = "asset"
+    )]
     pub trade_amount: Decimal,
 
     /// 돌파 K 계수.
     #[serde(default = "default_k_factor")]
-    #[schema(label = "K 계수", field_type = "number", min = 0.1, max = 1, default = 0.1, section = "indicator")]
+    #[schema(
+        label = "K 계수",
+        field_type = "number",
+        min = 0.1,
+        max = 1,
+        default = 0.1,
+        section = "indicator"
+    )]
     pub k_factor: Decimal,
 
     /// ATR 사용 여부.
     #[serde(default)]
-    #[schema(label = "ATR 사용", field_type = "boolean", default = false, section = "indicator")]
+    #[schema(
+        label = "ATR 사용",
+        field_type = "boolean",
+        default = false,
+        section = "indicator"
+    )]
     pub use_atr: bool,
 
     /// ATR 기간.
     #[serde(default = "default_atr_period")]
-    #[schema(label = "ATR 기간", field_type = "integer", min = 5, max = 50, default = 14, section = "indicator")]
+    #[schema(
+        label = "ATR 기간",
+        field_type = "integer",
+        min = 5,
+        max = 50,
+        default = 14,
+        section = "indicator"
+    )]
     pub atr_period: usize,
 
     /// 룩백 기간.
     #[serde(default = "default_lookback")]
-    #[schema(label = "룩백 기간", field_type = "integer", min = 1, max = 10, default = 1, section = "indicator")]
+    #[schema(
+        label = "룩백 기간",
+        field_type = "integer",
+        min = 1,
+        max = 10,
+        default = 1,
+        section = "indicator"
+    )]
     pub lookback_period: usize,
 
     /// 양방향 거래 여부.
     #[serde(default = "default_trade_both_directions")]
-    #[schema(label = "양방향 거래", field_type = "boolean", default = true, section = "trading")]
+    #[schema(
+        label = "양방향 거래",
+        field_type = "boolean",
+        default = true,
+        section = "trading"
+    )]
     pub trade_both_directions: bool,
 
     /// 기간 종료 시 청산.
     #[serde(default = "default_exit_at_period_close")]
-    #[schema(label = "장 마감 청산", field_type = "boolean", default = false, section = "trading")]
+    #[schema(
+        label = "장 마감 청산",
+        field_type = "boolean",
+        default = false,
+        section = "trading"
+    )]
     pub exit_at_period_close: bool,
 
     /// 청산 설정.
@@ -344,7 +390,14 @@ pub struct VolatilityBreakoutConfig {
 
     /// 최소 GlobalScore.
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", field_type = "number", min = 0, max = 100, default = 0, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = 0,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 }
 
@@ -386,22 +439,48 @@ impl From<VolatilityBreakoutConfig> for DayTradingConfig {
 pub struct SmaCrossoverConfig {
     /// 대상 티커.
     #[serde(default = "default_day_ticker")]
-    #[schema(label = "거래 종목", field_type = "symbol", default = "005930", section = "asset")]
+    #[schema(
+        label = "거래 종목",
+        field_type = "symbol",
+        default = "005930",
+        section = "asset"
+    )]
     pub ticker: String,
 
     /// 거래 금액.
     #[serde(default = "default_trade_amount")]
-    #[schema(label = "거래 금액", field_type = "number", min = 100000, max = 100000000, default = 1000000, section = "asset")]
+    #[schema(
+        label = "거래 금액",
+        field_type = "number",
+        min = 100000,
+        max = 100000000,
+        default = 1000000,
+        section = "asset"
+    )]
     pub trade_amount: Decimal,
 
     /// 단기 이동평균 기간.
     #[serde(default = "default_short_period")]
-    #[schema(label = "단기 MA 기간", field_type = "integer", min = 2, max = 50, default = 3, section = "indicator")]
+    #[schema(
+        label = "단기 MA 기간",
+        field_type = "integer",
+        min = 2,
+        max = 50,
+        default = 3,
+        section = "indicator"
+    )]
     pub short_period: usize,
 
     /// 장기 이동평균 기간.
     #[serde(default = "default_long_period")]
-    #[schema(label = "장기 MA 기간", field_type = "integer", min = 5, max = 200, default = 7, section = "indicator")]
+    #[schema(
+        label = "장기 MA 기간",
+        field_type = "integer",
+        min = 5,
+        max = 200,
+        default = 7,
+        section = "indicator"
+    )]
     pub long_period: usize,
 
     /// 청산 설정.
@@ -411,7 +490,14 @@ pub struct SmaCrossoverConfig {
 
     /// 최소 GlobalScore.
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", field_type = "number", min = 0, max = 100, default = 0, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = 0,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 }
 
@@ -444,42 +530,96 @@ impl From<SmaCrossoverConfig> for DayTradingConfig {
 pub struct VolumeSurgeStrategyConfig {
     /// 대상 티커.
     #[serde(default = "default_day_ticker")]
-    #[schema(label = "거래 종목", field_type = "symbol", default = "005930", section = "asset")]
+    #[schema(
+        label = "거래 종목",
+        field_type = "symbol",
+        default = "005930",
+        section = "asset"
+    )]
     pub ticker: String,
 
     /// 거래 금액.
     #[serde(default = "default_trade_amount")]
-    #[schema(label = "거래 금액", field_type = "number", min = 100000, max = 100000000, default = 1000000, section = "asset")]
+    #[schema(
+        label = "거래 금액",
+        field_type = "number",
+        min = 100000,
+        max = 100000000,
+        default = 1000000,
+        section = "asset"
+    )]
     pub trade_amount: Decimal,
 
     /// 거래량 급증 배수.
     #[serde(default = "default_volume_multiplier")]
-    #[schema(label = "거래량 배수", field_type = "number", min = 1, max = 10, default = 1.1, section = "indicator")]
+    #[schema(
+        label = "거래량 배수",
+        field_type = "number",
+        min = 1,
+        max = 10,
+        default = 1.1,
+        section = "indicator"
+    )]
     pub volume_multiplier: Decimal,
 
     /// 거래량 평균 기간.
     #[serde(default = "default_volume_period")]
-    #[schema(label = "거래량 평균 기간", field_type = "integer", min = 5, max = 60, default = 5, section = "indicator")]
+    #[schema(
+        label = "거래량 평균 기간",
+        field_type = "integer",
+        min = 5,
+        max = 60,
+        default = 5,
+        section = "indicator"
+    )]
     pub volume_period: usize,
 
     /// 연속 상승봉 수.
     #[serde(default = "default_consecutive_up")]
-    #[schema(label = "연속 상승봉 수", field_type = "integer", min = 1, max = 10, default = 1, section = "indicator")]
+    #[schema(
+        label = "연속 상승봉 수",
+        field_type = "integer",
+        min = 1,
+        max = 10,
+        default = 1,
+        section = "indicator"
+    )]
     pub consecutive_up_candles: usize,
 
     /// RSI 과열 기준.
     #[serde(default = "default_rsi_overbought")]
-    #[schema(label = "RSI 과열 기준", field_type = "number", min = 60, max = 100, default = 90, section = "indicator")]
+    #[schema(
+        label = "RSI 과열 기준",
+        field_type = "number",
+        min = 60,
+        max = 100,
+        default = 90,
+        section = "indicator"
+    )]
     pub rsi_overbought: Decimal,
 
     /// RSI 기간.
     #[serde(default = "default_rsi_period")]
-    #[schema(label = "RSI 기간", field_type = "integer", min = 5, max = 50, default = 5, section = "indicator")]
+    #[schema(
+        label = "RSI 기간",
+        field_type = "integer",
+        min = 5,
+        max = 50,
+        default = 5,
+        section = "indicator"
+    )]
     pub rsi_period: usize,
 
     /// 최대 보유 시간 (분).
     #[serde(default = "default_max_hold_minutes")]
-    #[schema(label = "최대 보유 시간 (분)", field_type = "integer", min = 10, max = 480, default = 120, section = "trading")]
+    #[schema(
+        label = "최대 보유 시간 (분)",
+        field_type = "integer",
+        min = 10,
+        max = 480,
+        default = 120,
+        section = "trading"
+    )]
     pub max_hold_minutes: u32,
 
     /// 청산 설정.
@@ -489,7 +629,14 @@ pub struct VolumeSurgeStrategyConfig {
 
     /// 최소 GlobalScore.
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", field_type = "number", min = 0, max = 100, default = 0, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = 0,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 }
 
@@ -720,7 +867,6 @@ impl DayTradingStrategy {
         true
     }
 
-
     /// GlobalScore 기반 신호 강도 계산.
     ///
     /// 기본 강도를 GlobalScore에 따라 조정합니다.
@@ -930,8 +1076,8 @@ impl DayTradingStrategy {
             return None;
         }
 
-        let today_kline = &klines[0];      // 오늘 캔들 (가장 최근)
-        let prev_kline = &klines[1];       // 전일 캔들
+        let today_kline = &klines[0]; // 오늘 캔들 (가장 최근)
+        let prev_kline = &klines[1]; // 전일 캔들
 
         // 레인지: 전일 고가 - 전일 저가
         let range = prev_kline.high - prev_kline.low;
@@ -949,7 +1095,6 @@ impl DayTradingStrategy {
 
         Some((range, period_open))
     }
-
 
     /// 레인지 유효성 검증.
     fn is_range_valid(&self, range: Decimal, current_price: Decimal) -> bool {

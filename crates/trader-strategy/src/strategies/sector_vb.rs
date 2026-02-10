@@ -81,7 +81,13 @@ pub struct SectorVbConfig {
 
     /// 돌파 K 계수 (기본값: 0.5)
     #[serde(default = "default_k_factor")]
-    #[schema(label = "K 계수", min = 0.1, max = 1.0, default = 0.5, section = "indicator")]
+    #[schema(
+        label = "K 계수",
+        min = 0.1,
+        max = 1.0,
+        default = 0.5,
+        section = "indicator"
+    )]
     pub k_factor: f64,
 
     /// 섹터 선정 기준 (기본값: "returns" - 전일 수익률)
@@ -91,33 +97,69 @@ pub struct SectorVbConfig {
 
     /// 선택할 상위 섹터 수 (기본값: 1)
     #[serde(default = "default_top_n")]
-    #[schema(label = "상위 섹터 수", min = 1, max = 10, default = 1, section = "sizing")]
+    #[schema(
+        label = "상위 섹터 수",
+        min = 1,
+        max = 10,
+        default = 1,
+        section = "sizing"
+    )]
     pub top_n: usize,
 
     /// 최소 전일 거래량 (기본값: 100000)
     #[serde(default = "default_min_volume")]
-    #[schema(label = "최소 거래량", min = 10000, max = 10000000, default = 100000, section = "filter")]
+    #[schema(
+        label = "최소 거래량",
+        min = 10000,
+        max = 10000000,
+        default = 100000,
+        section = "filter"
+    )]
     pub min_volume: u64,
 
     /// 장 마감 전 청산 시간 (분, 기본값: 10분 전)
     #[serde(default = "default_close_before_minutes")]
-    #[schema(label = "마감 전 청산 (분)", min = 1, max = 60, default = 10, section = "timing")]
+    #[schema(
+        label = "마감 전 청산 (분)",
+        min = 1,
+        max = 60,
+        default = 10,
+        section = "timing"
+    )]
     pub close_before_minutes: u32,
 
     /// 손절 비율 (기본값: 2%)
     #[serde(default = "default_stop_loss_pct")]
-    #[schema(label = "손절 비율 (%)", min = 0.5, max = 10, default = 2.0, section = "sizing")]
+    #[schema(
+        label = "손절 비율 (%)",
+        min = 0.5,
+        max = 10,
+        default = 2.0,
+        section = "sizing"
+    )]
     pub stop_loss_pct: f64,
 
     /// 익절 비율 (기본값: 3%)
     #[serde(default = "default_take_profit_pct")]
-    #[schema(label = "익절 비율 (%)", min = 0.5, max = 20, default = 3.0, section = "sizing")]
+    #[schema(
+        label = "익절 비율 (%)",
+        min = 0.5,
+        max = 20,
+        default = 3.0,
+        section = "sizing"
+    )]
     pub take_profit_pct: f64,
 
     // ========== StrategyContext 연동 설정 (v2.0) ==========
     /// 최소 GlobalScore (기본값: 50.0)
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", min = 0, max = 100, default = 50, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        min = 0,
+        max = 100,
+        default = 50,
+        section = "filter"
+    )]
     pub min_global_score: f64,
 
     /// RouteState 필터 사용 여부 (기본값: true)
@@ -412,7 +454,10 @@ impl SectorVbStrategy {
     /// GlobalScore 기반 신호 강도 계산.
     async fn get_adjusted_strength(&self, ticker: &str, base_strength: f64) -> f64 {
         if let Some(score) = self.get_global_score(ticker).await {
-            adjust_strength_by_score(base_strength, Some(Decimal::try_from(score).unwrap_or_default()))
+            adjust_strength_by_score(
+                base_strength,
+                Some(Decimal::try_from(score).unwrap_or_default()),
+            )
         } else {
             base_strength
         }

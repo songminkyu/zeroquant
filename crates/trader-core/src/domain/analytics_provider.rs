@@ -343,7 +343,6 @@ pub enum ScreeningUpdateFrequency {
     Custom(usize),
 }
 
-
 /// 스크리닝 계산 요청 설정.
 ///
 /// 전략이 백테스트에서 필요로 하는 스크리닝 설정을 정의합니다.
@@ -370,7 +369,11 @@ impl Default for ScreeningCalculatorConfig {
 
 impl ScreeningCalculatorConfig {
     /// 새 스크리닝 설정 생성
-    pub fn new(preset_name: impl Into<String>, update_frequency: ScreeningUpdateFrequency, min_score: Decimal) -> Self {
+    pub fn new(
+        preset_name: impl Into<String>,
+        update_frequency: ScreeningUpdateFrequency,
+        min_score: Decimal,
+    ) -> Self {
         Self {
             preset_name: preset_name.into(),
             update_frequency,

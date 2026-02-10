@@ -88,12 +88,12 @@ use crate::state::AppState;
 
 use active_account::{get_active_account, set_active_account};
 use discord::{
-    delete_discord_settings, get_discord_settings, save_discord_settings,
-    test_discord_settings, test_new_discord_settings,
+    delete_discord_settings, get_discord_settings, save_discord_settings, test_discord_settings,
+    test_new_discord_settings,
 };
 use email::{
-    delete_email_settings, get_email_settings, save_email_settings,
-    test_email_settings, test_new_email_settings,
+    delete_email_settings, get_email_settings, save_email_settings, test_email_settings,
+    test_new_email_settings,
 };
 use exchange::{
     create_exchange_credential, delete_exchange_credential, get_supported_exchanges,
@@ -101,12 +101,12 @@ use exchange::{
     update_exchange_credential,
 };
 use slack::{
-    delete_slack_settings, get_slack_settings, save_slack_settings,
-    test_slack_settings, test_new_slack_settings,
+    delete_slack_settings, get_slack_settings, save_slack_settings, test_new_slack_settings,
+    test_slack_settings,
 };
 use sms::{
-    delete_sms_settings, get_sms_settings, save_sms_settings,
-    test_sms_settings, test_new_sms_settings,
+    delete_sms_settings, get_sms_settings, save_sms_settings, test_new_sms_settings,
+    test_sms_settings,
 };
 use telegram::{
     delete_telegram_settings, get_telegram_settings, save_telegram_settings, test_telegram_settings,

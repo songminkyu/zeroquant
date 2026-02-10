@@ -196,12 +196,24 @@ impl SignalPerformanceRepository {
                 total_signals: row.get("total_signals"),
                 win_count: row.get("win_count"),
                 loss_count: row.get("loss_count"),
-                win_rate: row.get::<Option<Decimal>, _>("win_rate").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_return_1d: row.get::<Option<Decimal>, _>("avg_return_1d").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_return_5d: row.get::<Option<Decimal>, _>("avg_return_5d").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_return_10d: row.get::<Option<Decimal>, _>("avg_return_10d").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_max_return: row.get::<Option<Decimal>, _>("avg_max_return").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_max_drawdown: row.get::<Option<Decimal>, _>("avg_max_drawdown").map(|d| d.to_string().parse().unwrap_or(0.0)),
+                win_rate: row
+                    .get::<Option<Decimal>, _>("win_rate")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_return_1d: row
+                    .get::<Option<Decimal>, _>("avg_return_1d")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_return_5d: row
+                    .get::<Option<Decimal>, _>("avg_return_5d")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_return_10d: row
+                    .get::<Option<Decimal>, _>("avg_return_10d")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_max_return: row
+                    .get::<Option<Decimal>, _>("avg_max_return")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_max_drawdown: row
+                    .get::<Option<Decimal>, _>("avg_max_drawdown")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
             })
             .collect();
 
@@ -209,7 +221,9 @@ impl SignalPerformanceRepository {
     }
 
     /// 강도별 신호 통계 조회
-    pub async fn get_strength_stats(pool: &PgPool) -> Result<Vec<SignalStrengthStats>, sqlx::Error> {
+    pub async fn get_strength_stats(
+        pool: &PgPool,
+    ) -> Result<Vec<SignalStrengthStats>, sqlx::Error> {
         let rows = sqlx::query(
             r#"
             SELECT
@@ -233,10 +247,18 @@ impl SignalPerformanceRepository {
                 strength_range: row.get("strength_range"),
                 side: row.get("side"),
                 total_signals: row.get("total_signals"),
-                win_rate: row.get::<Option<Decimal>, _>("win_rate").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_return_5d: row.get::<Option<Decimal>, _>("avg_return_5d").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_max_return: row.get::<Option<Decimal>, _>("avg_max_return").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_max_drawdown: row.get::<Option<Decimal>, _>("avg_max_drawdown").map(|d| d.to_string().parse().unwrap_or(0.0)),
+                win_rate: row
+                    .get::<Option<Decimal>, _>("win_rate")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_return_5d: row
+                    .get::<Option<Decimal>, _>("avg_return_5d")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_max_return: row
+                    .get::<Option<Decimal>, _>("avg_max_return")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_max_drawdown: row
+                    .get::<Option<Decimal>, _>("avg_max_drawdown")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
             })
             .collect();
 
@@ -278,9 +300,15 @@ impl SignalPerformanceRepository {
                 total_signals: row.get("total_signals"),
                 buy_count: row.get("buy_count"),
                 sell_count: row.get("sell_count"),
-                win_rate: row.get::<Option<Decimal>, _>("win_rate").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_return_5d: row.get::<Option<Decimal>, _>("avg_return_5d").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_strength: row.get::<Option<Decimal>, _>("avg_strength").map(|d| d.to_string().parse().unwrap_or(0.0)),
+                win_rate: row
+                    .get::<Option<Decimal>, _>("win_rate")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_return_5d: row
+                    .get::<Option<Decimal>, _>("avg_return_5d")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_strength: row
+                    .get::<Option<Decimal>, _>("avg_strength")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
             })
             .collect();
 
@@ -288,7 +316,9 @@ impl SignalPerformanceRepository {
     }
 
     /// 전략별 신호 통계 조회
-    pub async fn get_strategy_stats(pool: &PgPool) -> Result<Vec<SignalStrategyStats>, sqlx::Error> {
+    pub async fn get_strategy_stats(
+        pool: &PgPool,
+    ) -> Result<Vec<SignalStrategyStats>, sqlx::Error> {
         let rows = sqlx::query(
             r#"
             SELECT
@@ -314,12 +344,24 @@ impl SignalPerformanceRepository {
                 strategy_id: row.get("strategy_id"),
                 total_signals: row.get("total_signals"),
                 win_count: row.get("win_count"),
-                win_rate: row.get::<Option<Decimal>, _>("win_rate").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_return_1d: row.get::<Option<Decimal>, _>("avg_return_1d").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_return_5d: row.get::<Option<Decimal>, _>("avg_return_5d").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_strength: row.get::<Option<Decimal>, _>("avg_strength").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_mfe: row.get::<Option<Decimal>, _>("avg_mfe").map(|d| d.to_string().parse().unwrap_or(0.0)),
-                avg_mae: row.get::<Option<Decimal>, _>("avg_mae").map(|d| d.to_string().parse().unwrap_or(0.0)),
+                win_rate: row
+                    .get::<Option<Decimal>, _>("win_rate")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_return_1d: row
+                    .get::<Option<Decimal>, _>("avg_return_1d")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_return_5d: row
+                    .get::<Option<Decimal>, _>("avg_return_5d")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_strength: row
+                    .get::<Option<Decimal>, _>("avg_strength")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_mfe: row
+                    .get::<Option<Decimal>, _>("avg_mfe")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
+                avg_mae: row
+                    .get::<Option<Decimal>, _>("avg_mae")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
             })
             .collect();
 
@@ -377,8 +419,14 @@ impl SignalPerformanceRepository {
             .iter()
             .map(|row| SignalReturnPoint {
                 signal_id: row.get("signal_id"),
-                strength: row.get::<Decimal, _>("strength").to_string().parse().unwrap_or(0.0),
-                return_5d: row.get::<Option<Decimal>, _>("return_5d").map(|d| d.to_string().parse().unwrap_or(0.0)),
+                strength: row
+                    .get::<Decimal, _>("strength")
+                    .to_string()
+                    .parse()
+                    .unwrap_or(0.0),
+                return_5d: row
+                    .get::<Option<Decimal>, _>("return_5d")
+                    .map(|d| d.to_string().parse().unwrap_or(0.0)),
                 signal_type: row.get("signal_type"),
                 side: row.get("side"),
                 ticker: row.get("ticker"),
@@ -420,8 +468,12 @@ impl SignalPerformanceRepository {
             symbol_stats,
             strategy_stats,
             total_analyzed: overall.get::<Option<i64>, _>("total").unwrap_or(0),
-            overall_win_rate: overall.get::<Option<Decimal>, _>("win_rate").map(|d| d.to_string().parse().unwrap_or(0.0)),
-            overall_avg_return: overall.get::<Option<Decimal>, _>("avg_return").map(|d| d.to_string().parse().unwrap_or(0.0)),
+            overall_win_rate: overall
+                .get::<Option<Decimal>, _>("win_rate")
+                .map(|d| d.to_string().parse().unwrap_or(0.0)),
+            overall_avg_return: overall
+                .get::<Option<Decimal>, _>("avg_return")
+                .map(|d| d.to_string().parse().unwrap_or(0.0)),
         })
     }
 
@@ -457,9 +509,15 @@ impl SignalPerformanceRepository {
             total_signals: r.get("total_signals"),
             buy_count: r.get("buy_count"),
             sell_count: r.get("sell_count"),
-            win_rate: r.get::<Option<Decimal>, _>("win_rate").map(|d| d.to_string().parse().unwrap_or(0.0)),
-            avg_return_5d: r.get::<Option<Decimal>, _>("avg_return_5d").map(|d| d.to_string().parse().unwrap_or(0.0)),
-            avg_strength: r.get::<Option<Decimal>, _>("avg_strength").map(|d| d.to_string().parse().unwrap_or(0.0)),
+            win_rate: r
+                .get::<Option<Decimal>, _>("win_rate")
+                .map(|d| d.to_string().parse().unwrap_or(0.0)),
+            avg_return_5d: r
+                .get::<Option<Decimal>, _>("avg_return_5d")
+                .map(|d| d.to_string().parse().unwrap_or(0.0)),
+            avg_strength: r
+                .get::<Option<Decimal>, _>("avg_strength")
+                .map(|d| d.to_string().parse().unwrap_or(0.0)),
         }))
     }
 }

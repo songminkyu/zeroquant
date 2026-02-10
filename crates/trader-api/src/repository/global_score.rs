@@ -21,8 +21,8 @@ type FundamentalRow = (Uuid, Option<i64>, Option<Decimal>, Option<Decimal>);
 type FundamentalData = (Option<i64>, Option<Decimal>, Option<Decimal>);
 
 use trader_analytics::{
-    GlobalScorer, GlobalScorerParams, IndicatorEngine, SevenFactorCalculator,
-    SevenFactorInput, SevenFactorScores,
+    GlobalScorer, GlobalScorerParams, IndicatorEngine, SevenFactorCalculator, SevenFactorInput,
+    SevenFactorScores,
 };
 use trader_core::types::{MarketType, Symbol, Timeframe};
 use trader_data::cache::CachedHistoricalDataProvider;
@@ -201,23 +201,21 @@ impl GlobalScoreRepository {
 
         // 2. Fundamental 데이터 배치 조회 (N+1 제거)
         let symbol_ids: Vec<Uuid> = symbols.iter().map(|s| s.id).collect();
-        let fundamentals_rows: Vec<FundamentalRow> =
-            sqlx::query_as(
-                r#"
+        let fundamentals_rows: Vec<FundamentalRow> = sqlx::query_as(
+            r#"
                 SELECT symbol_info_id, avg_volume_10d, week_52_high, week_52_low
                 FROM symbol_fundamental
                 WHERE symbol_info_id = ANY($1)
                 "#,
-            )
-            .bind(&symbol_ids)
-            .fetch_all(pool)
-            .await?;
+        )
+        .bind(&symbol_ids)
+        .fetch_all(pool)
+        .await?;
 
-        let fundamentals: HashMap<Uuid, FundamentalData> =
-            fundamentals_rows
-                .into_iter()
-                .map(|(id, vol, high, low)| (id, (vol, high, low)))
-                .collect();
+        let fundamentals: HashMap<Uuid, FundamentalData> = fundamentals_rows
+            .into_iter()
+            .map(|(id, vol, high, low)| (id, (vol, high, low)))
+            .collect();
 
         // 3. 시장별 Volume Percentile 사전 계산 (N+1 제거)
         let volume_percentiles_rows: Vec<(Uuid, f64)> = sqlx::query_as(
@@ -327,8 +325,20 @@ impl GlobalScoreRepository {
         let lows: Vec<Decimal> = candles.iter().map(|c| c.low).collect();
 
         // 20일 최고/최저를 목표가/손절가로 사용
-        let recent_high = highs.iter().rev().take(20).max().copied().unwrap_or(current_price);
-        let recent_low = lows.iter().rev().take(20).min().copied().unwrap_or(current_price);
+        let recent_high = highs
+            .iter()
+            .rev()
+            .take(20)
+            .max()
+            .copied()
+            .unwrap_or(current_price);
+        let recent_low = lows
+            .iter()
+            .rev()
+            .take(20)
+            .min()
+            .copied()
+            .unwrap_or(current_price);
 
         // 52주 고저가 있으면 목표가/손절가에 반영
         let (target_price, stop_price) = if let Some((_, w52_high, w52_low)) = fundamental {
@@ -336,8 +346,16 @@ impl GlobalScoreRepository {
             let stop = w52_low.unwrap_or(recent_low);
             // 목표가는 현재가보다 높아야 함, 손절가는 현재가보다 낮아야 함
             (
-                if target > current_price { Some(target) } else { Some(recent_high) },
-                if stop < current_price { Some(stop) } else { Some(recent_low) },
+                if target > current_price {
+                    Some(target)
+                } else {
+                    Some(recent_high)
+                },
+                if stop < current_price {
+                    Some(stop)
+                } else {
+                    Some(recent_low)
+                },
             )
         } else {
             (Some(recent_high), Some(recent_low))
@@ -346,8 +364,11 @@ impl GlobalScoreRepository {
         // 3-2. StructuralFeatures 계산 (타입 통합으로 변환 불필요)
         let indicator_engine = trader_analytics::IndicatorEngine::new();
         let structural_features = trader_analytics::StructuralFeaturesCalculator::from_candles(
-            ticker, &candles, &indicator_engine,
-        ).ok();
+            ticker,
+            &candles,
+            &indicator_engine,
+        )
+        .ok();
 
         // 5. GlobalScore 계산
         let params = GlobalScorerParams {
@@ -739,7 +760,8 @@ impl GlobalScoreRepository {
         let mut results = Vec::with_capacity(tickers.len());
 
         for ticker in tickers {
-            if let Some(factor) = Self::get_seven_factor(pool, data_provider, ticker, market).await?
+            if let Some(factor) =
+                Self::get_seven_factor(pool, data_provider, ticker, market).await?
             {
                 results.push(factor);
             }

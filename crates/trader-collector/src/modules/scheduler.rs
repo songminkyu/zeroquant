@@ -80,11 +80,7 @@ pub struct Scheduler {
 impl Scheduler {
     /// 새 스케줄러 생성
     pub fn new(config: &SchedulingConfig) -> Self {
-        let markets = vec![
-            MarketHours::krx(),
-            MarketHours::us(),
-            MarketHours::jp(),
-        ];
+        let markets = vec![MarketHours::krx(), MarketHours::us(), MarketHours::jp()];
 
         Self {
             markets,
@@ -194,7 +190,8 @@ impl Scheduler {
         }
 
         // 장 운영 시간 체크
-        if local_naive_time >= market_hours.open_time && local_naive_time < market_hours.close_time {
+        if local_naive_time >= market_hours.open_time && local_naive_time < market_hours.close_time
+        {
             MarketStatus::Open
         } else {
             MarketStatus::Closed
@@ -233,7 +230,8 @@ impl Scheduler {
             60 // 기타 시장 기본값
         };
 
-        let earliest_run_time = market_hours.close_time + chrono::Duration::minutes(delay_minutes as i64);
+        let earliest_run_time =
+            market_hours.close_time + chrono::Duration::minutes(delay_minutes as i64);
 
         // 마감 후 대기 시간이 지났는지 확인
         if local_naive_time < earliest_run_time {

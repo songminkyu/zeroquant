@@ -3,11 +3,11 @@
 mod account;
 mod alert;
 // 거래소 중립 타입 (OHLCV, 호가, 주문 응답 등)
-mod exchange_types;
 mod analytics_provider;
 mod calculations;
 mod context;
 mod exchange_provider;
+mod exchange_types;
 mod macro_environment;
 mod market_breadth;
 mod market_data;
@@ -25,11 +25,11 @@ mod watchlist;
 
 pub use account::*;
 pub use alert::*;
-pub use exchange_types::*;
 pub use analytics_provider::*;
 pub use calculations::*;
 pub use context::*;
 pub use exchange_provider::*;
+pub use exchange_types::*;
 pub use macro_environment::*;
 pub use market_breadth::*;
 pub use market_data::*;

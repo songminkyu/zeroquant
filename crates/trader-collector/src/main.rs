@@ -51,7 +51,7 @@ async fn run_external_api_workflow(pool: &PgPool, config: &CollectorConfig) {
             batch_size: None,
             resume: false,
             stale_hours: Some(config.fundamental_collect.stale_days as u32 * 24),
-            force: false,  // 기존 값 보존
+            force: false, // 기존 값 보존
             concurrent_limit: None,
         };
         match modules::sync_naver_fundamentals_with_options(pool, naver_options).await {
@@ -73,7 +73,7 @@ async fn run_external_api_workflow(pool: &PgPool, config: &CollectorConfig) {
             market_filter: None,
             resume: false,
             stale_hours: Some(config.fundamental_collect.stale_days as u32 * 24),
-            force: false,  // 기존 값 보존
+            force: false, // 기존 값 보존
         };
         match modules::sync_yahoo_fundamentals(pool, yahoo_options).await {
             Ok(stats) => tracing::info!(
@@ -100,7 +100,10 @@ async fn run_external_api_workflow(pool: &PgPool, config: &CollectorConfig) {
 /// - Market Breadth (20일선 상회 비율)
 ///
 /// 시장 시간과 무관하게 항상 최신 데이터 유지
-async fn run_macro_data_sync(pool: &PgPool, redis_cache: &Option<std::sync::Arc<trader_data::cache::RedisCache>>) {
+async fn run_macro_data_sync(
+    pool: &PgPool,
+    redis_cache: &Option<std::sync::Arc<trader_data::cache::RedisCache>>,
+) {
     if let Some(cache) = redis_cache {
         // 1. 매크로 데이터 동기화
         match modules::sync_macro_data(cache).await {
@@ -129,7 +132,10 @@ async fn run_macro_data_sync(pool: &PgPool, redis_cache: &Option<std::sync::Arc<
                         result.kosdaq_pct.unwrap_or_default()
                     );
                 } else {
-                    tracing::warn!("[Breadth] 동기화 실패: {}", result.error.unwrap_or_default());
+                    tracing::warn!(
+                        "[Breadth] 동기화 실패: {}",
+                        result.error.unwrap_or_default()
+                    );
                 }
             }
             Err(e) => tracing::error!("[Breadth] 동기화 오류: {}", e),
@@ -406,7 +412,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // DB 연결 (중앙화된 풀 설정 사용)
     let db_config = DatabaseConfig::for_daemon(config.database_url.clone());
-    let db = Database::connect(&db_config).await
+    let db = Database::connect(&db_config)
+        .await
         .map_err(|e| CollectorError::Config(format!("데이터베이스 연결 실패: {}", e)))?;
     let pool = db.pool().clone();
 
@@ -537,7 +544,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     batch_size,
                     resume,
                     stale_hours,
-                    force: false,  // CLI에서는 기존 값 보존이 기본
+                    force: false, // CLI에서는 기존 값 보존이 기본
                     concurrent_limit: None,
                 };
                 let stats = modules::sync_naver_fundamentals_with_options(&pool, options).await?;
@@ -570,7 +577,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 market_filter: market,
                 resume,
                 stale_hours,
-                force: false,  // CLI에서는 기존 값 보존이 기본
+                force: false, // CLI에서는 기존 값 보존이 기본
             };
             let stats = modules::sync_yahoo_fundamentals(&pool, options).await?;
             tracing::info!(
@@ -686,14 +693,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     batch_size: None,
                     resume: false,
                     stale_hours: Some(24),
-                    force: false,  // 기존 값 보존
+                    force: false, // 기존 값 보존
                     concurrent_limit: None,
                 };
-                let naver_stats = modules::sync_naver_fundamentals_with_options(
-                    &pool,
-                    naver_options,
-                )
-                .await?;
+                let naver_stats =
+                    modules::sync_naver_fundamentals_with_options(&pool, naver_options).await?;
                 tracing::info!(
                     processed = naver_stats.processed,
                     valuation = naver_stats.valuation_updated,
@@ -858,9 +862,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
 
-                let mut interval = tokio::time::interval(
-                    std::time::Duration::from_secs(ranking_interval_minutes * 60)
-                );
+                let mut interval = tokio::time::interval(std::time::Duration::from_secs(
+                    ranking_interval_minutes * 60,
+                ));
                 interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
                 interval.tick().await; // 첫 tick 즉시 반환 (소비)
 
@@ -903,7 +907,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 let mut interval = tokio::time::interval(
-                    std::time::Duration::from_secs(5 * 60) // 5분 고정 주기
+                    std::time::Duration::from_secs(5 * 60), // 5분 고정 주기
                 );
                 interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
                 interval.tick().await;

@@ -32,10 +32,10 @@ use trader_analytics::ml::{CandlestickPatternInfo, ChartPatternInfo, PatternDete
 // ==================== 각 모듈에서 스키마 Import ====================
 
 use crate::error::ApiErrorResponse;
-use crate::repository::{RankedSymbol, SevenFactorData, SevenFactorResponse};
 use crate::repository::signal_performance::{
     SignalPerformanceResponse, SignalReturnPoint, SignalSymbolStats,
 };
+use crate::repository::{RankedSymbol, SevenFactorData, SevenFactorResponse};
 use crate::routes::{
     // Alert History 모듈
     alert_history::FrontendAlertHistoryResponse,
@@ -53,7 +53,10 @@ use crate::routes::{
         SaveSmsSettingsRequest, SlackSettingsResponse, SmsSettingsResponse,
     },
     // Dataset 추가 타입
-    dataset::{FailedSymbolsResponse, ReactivateSymbolsRequest, ReactivateSymbolsResponse, SymbolStatsResponse},
+    dataset::{
+        FailedSymbolsResponse, ReactivateSymbolsRequest, ReactivateSymbolsResponse,
+        SymbolStatsResponse,
+    },
     // Market 모듈
     market::{
         MacroEnvironmentResponse, MarketBreadthResponse, MarketOverviewResponse,
@@ -70,19 +73,15 @@ use crate::routes::{
     },
     // Reality Check 모듈
     reality_check::{
-        CalculateRequest as RcCalculateRequest,
-        CalculateResponse as RcCalculateResponse,
-        ResultsResponse as RcResultsResponse,
-        SaveSnapshotRequest as RcSaveSnapshotRequest,
-        SaveSnapshotResponse as RcSaveSnapshotResponse,
-        SnapshotsResponse as RcSnapshotsResponse,
+        CalculateRequest as RcCalculateRequest, CalculateResponse as RcCalculateResponse,
+        ResultsResponse as RcResultsResponse, SaveSnapshotRequest as RcSaveSnapshotRequest,
+        SaveSnapshotResponse as RcSaveSnapshotResponse, SnapshotsResponse as RcSnapshotsResponse,
         StatsResponse as RcStatsResponse,
     },
     // Signals 모듈
     signals::{
-        CreateSignalRequest, CreateSignalResponse,
-        SignalMarkerDto, SignalSearchRequest, SignalSearchResponse, StrategySignalsQuery,
-        SymbolSignalsQuery,
+        CreateSignalRequest, CreateSignalResponse, SignalMarkerDto, SignalSearchRequest,
+        SignalSearchResponse, StrategySignalsQuery, SymbolSignalsQuery,
     },
     // Strategies 모듈
     strategies::{ApiError, StrategyListItem},

@@ -200,9 +200,12 @@ impl OhlcvCache {
         let interval_days = match timeframe {
             Timeframe::M1 | Timeframe::M3 | Timeframe::M5 => (limit as i64 * 5 / 1440).max(3),
             Timeframe::M15 | Timeframe::M30 => (limit as i64 * 30 / 1440).max(5),
-            Timeframe::H1 | Timeframe::H2 | Timeframe::H4 | Timeframe::H6 | Timeframe::H8 | Timeframe::H12 => {
-                (limit as i64 * 12 / 24).max(7)
-            }
+            Timeframe::H1
+            | Timeframe::H2
+            | Timeframe::H4
+            | Timeframe::H6
+            | Timeframe::H8
+            | Timeframe::H12 => (limit as i64 * 12 / 24).max(7),
             Timeframe::D1 | Timeframe::D3 => (limit as i64 * 3).max(30),
             Timeframe::W1 => (limit as i64 * 21).max(90),
             Timeframe::MN1 => (limit as i64 * 90).max(365),
@@ -298,13 +301,12 @@ impl OhlcvCache {
         }
 
         // symbol_info 존재 확인 — 미등록 심볼의 고아 데이터 방지
-        let exists: bool = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM symbol_info WHERE ticker = $1)",
-        )
-        .bind(symbol)
-        .fetch_one(&self.pool)
-        .await
-        .unwrap_or(false);
+        let exists: bool =
+            sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM symbol_info WHERE ticker = $1)")
+                .bind(symbol)
+                .fetch_one(&self.pool)
+                .await
+                .unwrap_or(false);
 
         if !exists {
             warn!(

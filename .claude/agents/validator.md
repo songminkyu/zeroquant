@@ -38,6 +38,21 @@ cargo test --workspace
 cargo fmt --check
 ```
 
+### ⚠️ Clippy 결과 파싱 규칙
+
+**ts-rs 경고는 clippy 에러가 아님!** 반드시 필터링:
+```bash
+cargo clippy --workspace -- -D warnings 2>&1 \
+  | grep -E "^(error|warning)\[" \
+  | grep -v "failed to parse serde attribute" \
+  | grep -v "ts-rs failed to parse"
+```
+
+에러 카운트 방법:
+1. 위 필터링된 출력에서 **고유한 파일:라인 조합**만 카운트
+2. `Finished` 메시지만 나오면 0개
+3. 동일 에러가 여러 crate에서 반복되면 **각각 카운트**
+
 ### Frontend 검증
 ```bash
 cd frontend

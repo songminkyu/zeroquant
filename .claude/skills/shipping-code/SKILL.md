@@ -1,6 +1,6 @@
 ---
-name: ship
-description: 커밋 워크플로우. CHANGELOG/설계 문서 자동 업데이트 후 커밋.
+name: shipping-code
+description: Commits code changes with automated CHANGELOG and design document updates. Runs build/lint verification before commit. Use after completing a feature, bug fix, or refactoring.
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "[커밋 메시지] [--dry-run | --docs-only]"
@@ -252,8 +252,3 @@ git commit -m "<type>: <version> - <subject>" -m "<body>" -m "Co-Authored-By: Cl
 - **푸시는 수동 요청 시에만** — 자동 푸시 없음
 - **문서 업데이트 전 기존 내용 읽기** — 덮어쓰기 방지
 - **마이그레이션 변경 시 verify 필수** — 검증 없이 통합 금지
-
----
-
-**최종 업데이트**: 2026-02-10
-**버전**: 3.0.0

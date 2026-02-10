@@ -160,7 +160,6 @@ impl MarketBreadthCalculator {
 #[cfg(test)]
 mod tests {
 
-
     // 통합 테스트는 실제 DB가 필요하므로 건너뜁니다.
     // 실제 테스트는 integration test로 작성하세요.
 }

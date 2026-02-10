@@ -1,6 +1,6 @@
 ---
 name: crawl-api-spec
-description: 거래소 API 문서 크롤링 → 구조화된 명세서(markdown) 생성.
+description: Crawls exchange API documentation and generates structured markdown specs. Use when integrating a new exchange or updating API specifications.
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "<서비스명> <문서URL> [출력파일경로]"

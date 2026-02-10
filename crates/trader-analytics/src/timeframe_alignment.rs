@@ -68,10 +68,7 @@ impl TimeframeAligner {
     /// # 반환
     ///
     /// 완료된 캔들에 대한 참조 벡터 (시간순 정렬 유지)
-    pub fn get_aligned_klines(
-        klines: &[Kline],
-        reference_time: DateTime<Utc>,
-    ) -> Vec<&Kline> {
+    pub fn get_aligned_klines(klines: &[Kline], reference_time: DateTime<Utc>) -> Vec<&Kline> {
         klines
             .iter()
             .filter(|k| Self::is_valid_at(k, reference_time))
@@ -160,8 +157,6 @@ impl TimeframeAligner {
     ///
     /// 해당 캔들이 완료되는 시점
     pub fn get_candle_close_time(time: DateTime<Utc>, timeframe: Timeframe) -> DateTime<Utc> {
-        
-
         let duration = timeframe.duration();
         let duration_secs = duration.as_secs() as i64;
 

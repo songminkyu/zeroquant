@@ -629,8 +629,7 @@ pub async fn delete_strategy(
 
         // 전략 관심 종목도 정리 (Collector 우선순위에서 제외)
         if let Err(e) =
-            crate::repository::StrategyWatchedTickersRepository::delete_by_strategy(pool, &id)
-                .await
+            crate::repository::StrategyWatchedTickersRepository::delete_by_strategy(pool, &id).await
         {
             tracing::warn!(strategy_id = %id, error = %e, "전략 관심 종목 DB 정리 실패");
         }
@@ -737,15 +736,13 @@ pub async fn list_strategies(
         };
 
         // 시장 정보 (DB 우선, fallback은 심볼 기반 추론)
-        let market = db_record
-            .and_then(|r| r.market.clone())
-            .unwrap_or_else(|| {
-                if id.contains("binance") || id.contains("crypto") {
-                    "CRYPTO".to_string()
-                } else {
-                    "UNKNOWN".to_string()
-                }
-            });
+        let market = db_record.and_then(|r| r.market.clone()).unwrap_or_else(|| {
+            if id.contains("binance") || id.contains("crypto") {
+                "CRYPTO".to_string()
+            } else {
+                "UNKNOWN".to_string()
+            }
+        });
 
         // 심볼 목록 (DB symbols 컬럼 → config에서 추출 → 레지스트리 기본값)
         let symbols = db_record
@@ -876,10 +873,7 @@ pub async fn get_strategy(
     // DB에서 credential_id와 market 조회
     let (credential_id, market) = if let Some(ref pool) = state.db_pool {
         match StrategyRepository::get_by_id(pool, &id).await {
-            Ok(Some(record)) => (
-                record.credential_id.map(|u| u.to_string()),
-                record.market,
-            ),
+            Ok(Some(record)) => (record.credential_id.map(|u| u.to_string()), record.market),
             _ => (None, None),
         }
     } else {
@@ -1139,13 +1133,8 @@ async fn persist_strategy_watched_tickers(
         return;
     }
 
-    match StrategyWatchedTickersRepository::upsert_tickers(
-        pool,
-        strategy_id,
-        &tickers,
-        "config",
-    )
-    .await
+    match StrategyWatchedTickersRepository::upsert_tickers(pool, strategy_id, &tickers, "config")
+        .await
     {
         Ok(count) => {
             tracing::info!(
@@ -1549,7 +1538,10 @@ pub async fn update_credential(
         let credential_uuid = Uuid::parse_str(cred_id_str).map_err(|_| {
             (
                 StatusCode::BAD_REQUEST,
-                Json(ApiError::new("INVALID_UUID", "Invalid credential_id format")),
+                Json(ApiError::new(
+                    "INVALID_UUID",
+                    "Invalid credential_id format",
+                )),
             )
         })?;
 

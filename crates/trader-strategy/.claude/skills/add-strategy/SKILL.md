@@ -1,12 +1,12 @@
 ---
 name: add-strategy
-description: 전략 추가 5곳 수정 체크리스트. 전략명을 인수로 전달.
+description: Adds a new trading strategy across 5 locations (mod.rs, routes, backtest, SDUI schema, frontend). Use when implementing a new strategy.
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "<전략명_snake_case> [전략 설명]"
 allowed-tools: Read, Grep, Edit, Write, Bash(cargo *)
 context: fork
-  agent: rust-impl
+agent: rust-impl
 ---
 
 # 전략 추가 워크플로우
@@ -130,5 +130,10 @@ cargo test -p trader-strategy -- $ARGUMENTS[0]
 # 3. Clippy
 cargo clippy -p trader-strategy -p trader-api -- -D warnings
 ```
+
+### 검증 실패 시
+1. 에러 메시지에서 파일/라인 확인
+2. 해당 파일 수정
+3. 검증 명령 재실행 — 통과할 때까지 반복
 
 모든 검증 통과 후 사용자에게 결과를 보고합니다.

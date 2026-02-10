@@ -702,7 +702,8 @@ impl PerformanceTracker {
         };
 
         // 진입/청산 이유 추가
-        let round_trip = round_trip.with_reasons(open_position.entry_reason.clone(), exit_reason.clone());
+        let round_trip =
+            round_trip.with_reasons(open_position.entry_reason.clone(), exit_reason.clone());
 
         // 디버그: RoundTrip reason 확인
         tracing::debug!(

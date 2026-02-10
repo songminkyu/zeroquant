@@ -65,27 +65,60 @@ pub enum MeanReversionVariant {
 pub struct RsiConfig {
     /// 거래 티커
     #[serde(default = "default_ticker")]
-    #[schema(label = "거래 종목", field_type = "symbol", default = "005930", section = "asset")]
+    #[schema(
+        label = "거래 종목",
+        field_type = "symbol",
+        default = "005930",
+        section = "asset"
+    )]
     pub ticker: String,
 
     /// 거래 금액
     #[serde(default = "default_amount")]
-    #[schema(label = "거래 금액", field_type = "number", min = 10000, max = 100000000, default = 1000000, section = "asset")]
+    #[schema(
+        label = "거래 금액",
+        field_type = "number",
+        min = 10000,
+        max = 100000000,
+        default = 1000000,
+        section = "asset"
+    )]
     pub amount: Decimal,
 
     /// RSI 기간
     #[serde(default = "default_rsi_period")]
-    #[schema(label = "RSI 기간", field_type = "integer", min = 2, max = 100, default = 7, section = "indicator")]
+    #[schema(
+        label = "RSI 기간",
+        field_type = "integer",
+        min = 2,
+        max = 100,
+        default = 7,
+        section = "indicator"
+    )]
     pub rsi_period: usize,
 
     /// 과매도 임계값
     #[serde(default = "default_oversold")]
-    #[schema(label = "과매도 임계값", field_type = "number", min = 0, max = 50, default = 45, section = "indicator")]
+    #[schema(
+        label = "과매도 임계값",
+        field_type = "number",
+        min = 0,
+        max = 50,
+        default = 45,
+        section = "indicator"
+    )]
     pub oversold: Decimal,
 
     /// 과매수 임계값
     #[serde(default = "default_overbought")]
-    #[schema(label = "과매수 임계값", field_type = "number", min = 50, max = 100, default = 55, section = "indicator")]
+    #[schema(
+        label = "과매수 임계값",
+        field_type = "number",
+        min = 50,
+        max = 100,
+        default = 55,
+        section = "indicator"
+    )]
     pub overbought: Decimal,
 
     /// 청산 설정
@@ -95,12 +128,26 @@ pub struct RsiConfig {
 
     /// 최대 포지션 수
     #[serde(default = "default_max_positions")]
-    #[schema(label = "최대 포지션 수", field_type = "integer", min = 1, max = 10, default = 3, section = "filter")]
+    #[schema(
+        label = "최대 포지션 수",
+        field_type = "integer",
+        min = 1,
+        max = 10,
+        default = 3,
+        section = "filter"
+    )]
     pub max_positions: usize,
 
     /// 최소 GlobalScore
     #[serde(default = "default_min_score")]
-    #[schema(label = "최소 GlobalScore", field_type = "number", min = 0, max = 100, default = 0, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = 0,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 }
 
@@ -115,32 +162,70 @@ pub struct RsiConfig {
 pub struct BollingerConfig {
     /// 거래 티커
     #[serde(default = "default_ticker")]
-    #[schema(label = "거래 종목", field_type = "symbol", default = "005930", section = "asset")]
+    #[schema(
+        label = "거래 종목",
+        field_type = "symbol",
+        default = "005930",
+        section = "asset"
+    )]
     pub ticker: String,
 
     /// 거래 금액
     #[serde(default = "default_amount")]
-    #[schema(label = "거래 금액", field_type = "number", min = 10000, max = 100000000, default = 1000000, section = "asset")]
+    #[schema(
+        label = "거래 금액",
+        field_type = "number",
+        min = 10000,
+        max = 100000000,
+        default = 1000000,
+        section = "asset"
+    )]
     pub amount: Decimal,
 
     /// 볼린저 밴드 기간
     #[serde(default = "default_bb_period")]
-    #[schema(label = "기간", field_type = "integer", min = 5, max = 100, default = 10, section = "indicator")]
+    #[schema(
+        label = "기간",
+        field_type = "integer",
+        min = 5,
+        max = 100,
+        default = 10,
+        section = "indicator"
+    )]
     pub period: usize,
 
     /// 표준편차 배수
     #[serde(default = "default_std_multiplier")]
-    #[schema(label = "표준편차 배수", field_type = "number", min = 0.5, max = 5, default = 1.5, section = "indicator")]
+    #[schema(
+        label = "표준편차 배수",
+        field_type = "number",
+        min = 0.5,
+        max = 5,
+        default = 1.5,
+        section = "indicator"
+    )]
     pub std_multiplier: Decimal,
 
     /// RSI 확인 사용 여부
     #[serde(default = "default_false")]
-    #[schema(label = "RSI 확인 사용", field_type = "boolean", default = false, section = "indicator")]
+    #[schema(
+        label = "RSI 확인 사용",
+        field_type = "boolean",
+        default = false,
+        section = "indicator"
+    )]
     pub use_rsi_confirmation: bool,
 
     /// 최소 밴드폭 (%)
     #[serde(default = "default_min_bandwidth")]
-    #[schema(label = "최소 밴드폭 (%)", field_type = "number", min = 0, max = 10, default = 0, section = "indicator")]
+    #[schema(
+        label = "최소 밴드폭 (%)",
+        field_type = "number",
+        min = 0,
+        max = 10,
+        default = 0,
+        section = "indicator"
+    )]
     pub min_bandwidth_pct: Decimal,
 
     /// 청산 설정
@@ -150,12 +235,26 @@ pub struct BollingerConfig {
 
     /// 최대 포지션 수
     #[serde(default = "default_max_positions")]
-    #[schema(label = "최대 포지션 수", field_type = "integer", min = 1, max = 10, default = 3, section = "filter")]
+    #[schema(
+        label = "최대 포지션 수",
+        field_type = "integer",
+        min = 1,
+        max = 10,
+        default = 3,
+        section = "filter"
+    )]
     pub max_positions: usize,
 
     /// 최소 GlobalScore
     #[serde(default = "default_min_score")]
-    #[schema(label = "최소 GlobalScore", field_type = "number", min = 0, max = 100, default = 0, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        field_type = "number",
+        min = 0,
+        max = 100,
+        default = 0,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 }
 
@@ -316,8 +415,16 @@ impl RsiCalculator {
     fn update(&mut self, close: Decimal) -> Option<Decimal> {
         if let Some(prev) = self.prev_close {
             let change = close - prev;
-            let gain = if change > Decimal::ZERO { change } else { Decimal::ZERO };
-            let loss = if change < Decimal::ZERO { -change } else { Decimal::ZERO };
+            let gain = if change > Decimal::ZERO {
+                change
+            } else {
+                Decimal::ZERO
+            };
+            let loss = if change < Decimal::ZERO {
+                -change
+            } else {
+                Decimal::ZERO
+            };
 
             self.gains.push_back(gain);
             self.losses.push_back(loss);
@@ -412,11 +519,19 @@ impl MeanReversionStrategy {
         Some(features.rsi)
     }
 
-    fn get_bollinger_from_context(&self, ticker: &str) -> Option<(Decimal, Decimal, Decimal, Decimal)> {
+    fn get_bollinger_from_context(
+        &self,
+        ticker: &str,
+    ) -> Option<(Decimal, Decimal, Decimal, Decimal)> {
         let ctx = self.context.as_ref()?;
         let ctx_lock = ctx.try_read().ok()?;
         let features = ctx_lock.structural_features.get(ticker)?;
-        Some((features.bb_lower, features.bb_middle, features.bb_upper, features.bb_width))
+        Some((
+            features.bb_lower,
+            features.bb_middle,
+            features.bb_upper,
+            features.bb_width,
+        ))
     }
 
     // ========================================================================
@@ -515,15 +630,26 @@ impl MeanReversionStrategy {
         let mut signals = vec![];
 
         // 진입 체크
-        if !self.has_position() && !self.is_in_cooldown() && self.can_enter() && rsi < config.oversold {
-            let base_strength = ((config.oversold - rsi) / config.oversold).to_f64().unwrap_or(0.5);
+        if !self.has_position()
+            && !self.is_in_cooldown()
+            && self.can_enter()
+            && rsi < config.oversold
+        {
+            let base_strength = ((config.oversold - rsi) / config.oversold)
+                .to_f64()
+                .unwrap_or(0.5);
             let strength = self.get_adjusted_strength(base_strength);
             signals.push(
-                Signal::new("mean_reversion", config.ticker.clone(), Side::Buy, SignalType::Entry)
-                    .with_strength(strength)
-                    .with_prices(Some(price), None, None)
-                    .with_metadata("variant", json!("rsi"))
-                    .with_metadata("rsi", json!(rsi.to_string())),
+                Signal::new(
+                    "mean_reversion",
+                    config.ticker.clone(),
+                    Side::Buy,
+                    SignalType::Entry,
+                )
+                .with_strength(strength)
+                .with_prices(Some(price), None, None)
+                .with_metadata("variant", json!("rsi"))
+                .with_metadata("rsi", json!(rsi.to_string())),
             );
         }
 
@@ -536,10 +662,15 @@ impl MeanReversionStrategy {
                 let stop_price = entry * (dec!(1) - sl_pct / dec!(100));
                 if price <= stop_price {
                     signals.push(
-                        Signal::new("mean_reversion", config.ticker.clone(), Side::Sell, SignalType::Exit)
-                            .with_strength(1.0)
-                            .with_prices(Some(price), None, None)
-                            .with_metadata("reason", json!("stop_loss")),
+                        Signal::new(
+                            "mean_reversion",
+                            config.ticker.clone(),
+                            Side::Sell,
+                            SignalType::Exit,
+                        )
+                        .with_strength(1.0)
+                        .with_prices(Some(price), None, None)
+                        .with_metadata("reason", json!("stop_loss")),
                     );
                     self.prev_rsi = Some(rsi);
                     return signals;
@@ -551,10 +682,15 @@ impl MeanReversionStrategy {
                 let target_price = entry * (dec!(1) + tp_pct / dec!(100));
                 if price >= target_price {
                     signals.push(
-                        Signal::new("mean_reversion", config.ticker.clone(), Side::Sell, SignalType::Exit)
-                            .with_strength(1.0)
-                            .with_prices(Some(price), None, None)
-                            .with_metadata("reason", json!("take_profit")),
+                        Signal::new(
+                            "mean_reversion",
+                            config.ticker.clone(),
+                            Side::Sell,
+                            SignalType::Exit,
+                        )
+                        .with_strength(1.0)
+                        .with_prices(Some(price), None, None)
+                        .with_metadata("reason", json!("take_profit")),
                     );
                     self.prev_rsi = Some(rsi);
                     return signals;
@@ -564,10 +700,15 @@ impl MeanReversionStrategy {
             // RSI 과매수 청산
             if rsi > config.overbought {
                 signals.push(
-                    Signal::new("mean_reversion", config.ticker.clone(), Side::Sell, SignalType::Exit)
-                        .with_strength(0.8)
-                        .with_prices(Some(price), None, None)
-                        .with_metadata("reason", json!("rsi_overbought")),
+                    Signal::new(
+                        "mean_reversion",
+                        config.ticker.clone(),
+                        Side::Sell,
+                        SignalType::Exit,
+                    )
+                    .with_strength(0.8)
+                    .with_prices(Some(price), None, None)
+                    .with_metadata("reason", json!("rsi_overbought")),
                 );
             }
         }
@@ -585,7 +726,9 @@ impl MeanReversionStrategy {
             return vec![];
         };
 
-        let (lower, middle, _upper, bandwidth) = match self.get_bollinger_from_context(&config.ticker) {
+        let (lower, middle, _upper, bandwidth) = match self
+            .get_bollinger_from_context(&config.ticker)
+        {
             Some(bb) => bb,
             None => {
                 debug!(ticker = %config.ticker, "StrategyContext에서 볼린저 밴드를 가져올 수 없음");
@@ -612,11 +755,16 @@ impl MeanReversionStrategy {
             if rsi_ok {
                 let strength = self.get_adjusted_strength(0.8);
                 signals.push(
-                    Signal::new("mean_reversion", config.ticker.clone(), Side::Buy, SignalType::Entry)
-                        .with_strength(strength)
-                        .with_prices(Some(price), None, None)
-                        .with_metadata("variant", json!("bollinger"))
-                        .with_metadata("lower_band", json!(lower.to_string())),
+                    Signal::new(
+                        "mean_reversion",
+                        config.ticker.clone(),
+                        Side::Buy,
+                        SignalType::Entry,
+                    )
+                    .with_strength(strength)
+                    .with_prices(Some(price), None, None)
+                    .with_metadata("variant", json!("bollinger"))
+                    .with_metadata("lower_band", json!(lower.to_string())),
                 );
             }
         }
@@ -630,10 +778,15 @@ impl MeanReversionStrategy {
                 let stop_price = entry * (dec!(1) - sl_pct / dec!(100));
                 if price <= stop_price {
                     signals.push(
-                        Signal::new("mean_reversion", config.ticker.clone(), Side::Sell, SignalType::Exit)
-                            .with_strength(1.0)
-                            .with_prices(Some(price), None, None)
-                            .with_metadata("reason", json!("stop_loss")),
+                        Signal::new(
+                            "mean_reversion",
+                            config.ticker.clone(),
+                            Side::Sell,
+                            SignalType::Exit,
+                        )
+                        .with_strength(1.0)
+                        .with_prices(Some(price), None, None)
+                        .with_metadata("reason", json!("stop_loss")),
                     );
                     return signals;
                 }
@@ -644,10 +797,15 @@ impl MeanReversionStrategy {
                 let target_price = entry * (dec!(1) + tp_pct / dec!(100));
                 if price >= target_price {
                     signals.push(
-                        Signal::new("mean_reversion", config.ticker.clone(), Side::Sell, SignalType::Exit)
-                            .with_strength(1.0)
-                            .with_prices(Some(price), None, None)
-                            .with_metadata("reason", json!("take_profit")),
+                        Signal::new(
+                            "mean_reversion",
+                            config.ticker.clone(),
+                            Side::Sell,
+                            SignalType::Exit,
+                        )
+                        .with_strength(1.0)
+                        .with_prices(Some(price), None, None)
+                        .with_metadata("reason", json!("take_profit")),
                     );
                     return signals;
                 }
@@ -656,10 +814,15 @@ impl MeanReversionStrategy {
             // 중간밴드 청산
             if config.exit_config.exit_on_opposite_signal && price >= middle {
                 signals.push(
-                    Signal::new("mean_reversion", config.ticker.clone(), Side::Sell, SignalType::Exit)
-                        .with_strength(0.7)
-                        .with_prices(Some(price), None, None)
-                        .with_metadata("reason", json!("middle_band")),
+                    Signal::new(
+                        "mean_reversion",
+                        config.ticker.clone(),
+                        Side::Sell,
+                        SignalType::Exit,
+                    )
+                    .with_strength(0.7)
+                    .with_prices(Some(price), None, None)
+                    .with_metadata("reason", json!("middle_band")),
                 );
             }
         }

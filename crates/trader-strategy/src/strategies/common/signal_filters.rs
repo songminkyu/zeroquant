@@ -15,8 +15,8 @@
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use trader_core::domain::{Signal, SignalConflictError, StrategyContext};
 use tracing::warn;
+use trader_core::domain::{Signal, SignalConflictError, StrategyContext};
 
 /// 신호 강도.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

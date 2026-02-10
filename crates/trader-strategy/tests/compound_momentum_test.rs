@@ -68,7 +68,9 @@ fn generate_rising_klines_at_month(
     for day in 1..=days {
         let day_num = (day as u32).min(28);
         let price = base_price + Decimal::from(day as i32 * 2);
-        let timestamp = Utc.with_ymd_and_hms(year, month, day_num, 12, 0, 0).unwrap();
+        let timestamp = Utc
+            .with_ymd_and_hms(year, month, day_num, 12, 0, 0)
+            .unwrap();
         let kline = Kline::new(
             ticker.to_string(),
             Timeframe::D1,

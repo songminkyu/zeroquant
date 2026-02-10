@@ -547,7 +547,11 @@ impl SimulatedExchange {
             .ok_or_else(|| ExchangeError::SymbolNotFound(symbol.to_string()))
     }
 
-    pub async fn get_order_book(&self, symbol: &str, _limit: Option<u32>) -> ExchangeResult<OrderBook> {
+    pub async fn get_order_book(
+        &self,
+        symbol: &str,
+        _limit: Option<u32>,
+    ) -> ExchangeResult<OrderBook> {
         // 현재 가격에서 시뮬레이션된 호가창 생성
         let feed = self.data_feed.read().await;
         let current_price = feed

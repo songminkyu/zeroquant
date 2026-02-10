@@ -42,16 +42,11 @@ impl StrategyWatchedTickersRepository {
     /// 전략의 관심 종목 전체 삭제.
     ///
     /// 전략 정지 또는 삭제 시 호출됩니다.
-    pub async fn delete_by_strategy(
-        pool: &PgPool,
-        strategy_id: &str,
-    ) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query(
-            "DELETE FROM strategy_watched_tickers WHERE strategy_id = $1",
-        )
-        .bind(strategy_id)
-        .execute(pool)
-        .await?;
+    pub async fn delete_by_strategy(pool: &PgPool, strategy_id: &str) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM strategy_watched_tickers WHERE strategy_id = $1")
+            .bind(strategy_id)
+            .execute(pool)
+            .await?;
 
         Ok(result.rows_affected())
     }
@@ -90,11 +85,10 @@ impl StrategyWatchedTickersRepository {
 
     /// 모든 전략의 관심 종목 통합 조회 (중복 제거).
     pub async fn get_all_tickers(pool: &PgPool) -> Result<Vec<String>, sqlx::Error> {
-        let rows: Vec<(String,)> = sqlx::query_as(
-            "SELECT DISTINCT ticker FROM strategy_watched_tickers ORDER BY ticker",
-        )
-        .fetch_all(pool)
-        .await?;
+        let rows: Vec<(String,)> =
+            sqlx::query_as("SELECT DISTINCT ticker FROM strategy_watched_tickers ORDER BY ticker")
+                .fetch_all(pool)
+                .await?;
 
         Ok(rows.into_iter().map(|(t,)| t).collect())
     }

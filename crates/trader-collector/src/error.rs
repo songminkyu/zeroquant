@@ -12,10 +12,7 @@ pub enum CollectorError {
     /// 데이터 소스 에러 (KRX, Yahoo 등)
     DataSource(String),
     /// 신호 성과 계산 에러
-    SignalPerformance {
-        signal_id: String,
-        reason: String,
-    },
+    SignalPerformance { signal_id: String, reason: String },
     /// 스케줄링 에러
     Scheduling(String),
     /// 시장 운영 시간 에러

@@ -4,15 +4,12 @@
 
 use chrono::{Duration, Utc};
 use rust_decimal::Decimal;
-use sqlx::{PgPool, QueryBuilder, Postgres};
+use sqlx::{PgPool, Postgres, QueryBuilder};
 use std::time::Instant;
 use tracing::{debug, info, warn};
 use uuid::Uuid;
 
-use trader_analytics::{
-    indicators::IndicatorEngine,
-    MarketRegimeCalculator, RouteStateCalculator,
-};
+use trader_analytics::{indicators::IndicatorEngine, MarketRegimeCalculator, RouteStateCalculator};
 use trader_core::{Kline, Timeframe};
 
 use super::checkpoint::{self, CheckpointStatus};
@@ -107,16 +104,13 @@ pub async fn sync_indicators_with_options(
                         pool,
                         stale_threshold,
                         wl.len() as i64,
-                        None, // 체크포인트 무시
+                        None,                // 체크포인트 무시
                         Some(wl.as_slice()), // only: watchlist 심볼만
                         None,
                     )
                     .await?;
                     if !wl_syms.is_empty() {
-                        tracing::info!(
-                            count = wl_syms.len(),
-                            "관심종목 우선 처리 (Indicator)"
-                        );
+                        tracing::info!(count = wl_syms.len(), "관심종목 우선 처리 (Indicator)");
                     }
                     (wl_syms, wl)
                 }
@@ -271,7 +265,6 @@ pub async fn sync_indicators_with_options(
                 stats.errors += 1;
             }
         }
-
     }
 
     // 완료 상태 저장
@@ -311,8 +304,6 @@ async fn get_symbols_by_tickers(
 
     Ok(results)
 }
-
-
 
 /// 지표가 오래된 심볼 조회 (resume 지원, 티커 필터링).
 /// QueryBuilder 사용으로 SQL 주입 방지.

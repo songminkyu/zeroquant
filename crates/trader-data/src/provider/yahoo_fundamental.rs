@@ -176,12 +176,15 @@ impl YahooFundamentalFetcher {
         let quote_summary = {
             let mut provider = self.provider.lock().await;
             provider.get_ticker_info(ticker).await
-        }.map_err(|e| {
+        }
+        .map_err(|e| {
             let msg = format!("{:?}", e);
             if msg.contains("429") || msg.contains("Too Many") {
                 YahooFundamentalError::RateLimited
             } else if msg.contains("404") || msg.contains("Not Found") {
-                YahooFundamentalError::NoData { ticker: ticker.to_string() }
+                YahooFundamentalError::NoData {
+                    ticker: ticker.to_string(),
+                }
             } else {
                 YahooFundamentalError::YahooError(msg)
             }
@@ -192,7 +195,9 @@ impl YahooFundamentalFetcher {
             .quote_summary
             .and_then(|qs| qs.result)
             .and_then(|results| results.into_iter().next())
-            .ok_or_else(|| YahooFundamentalError::NoData { ticker: ticker.to_string() })?;
+            .ok_or_else(|| YahooFundamentalError::NoData {
+                ticker: ticker.to_string(),
+            })?;
 
         // QuoteType 정보 (종목명)
         if let Some(ref qt) = summary_data.quote_type {
@@ -203,7 +208,9 @@ impl YahooFundamentalFetcher {
         if let Some(ref sd) = summary_data.summary_detail {
             data.per = sd.trailing_pe.and_then(Decimal::from_f64_retain);
             data.forward_per = sd.forward_pe.and_then(Decimal::from_f64_retain);
-            data.dividend_yield = sd.dividend_yield.and_then(|v| Decimal::from_f64_retain(v * 100.0));
+            data.dividend_yield = sd
+                .dividend_yield
+                .and_then(|v| Decimal::from_f64_retain(v * 100.0));
             data.week_52_high = sd.fifty_two_week_high.and_then(Decimal::from_f64_retain);
             data.week_52_low = sd.fifty_two_week_low.and_then(Decimal::from_f64_retain);
             data.avg_volume_10d = sd.average_volume_10days.map(|v| v as i64);
@@ -221,16 +228,30 @@ impl YahooFundamentalFetcher {
         if let Some(ref fd) = summary_data.financial_data {
             // total_revenue는 i64 타입
             data.revenue = fd.total_revenue.map(Decimal::from);
-            data.roe = fd.return_on_equity.and_then(|v| Decimal::from_f64_retain(v * 100.0));
-            data.roa = fd.return_on_assets.and_then(|v| Decimal::from_f64_retain(v * 100.0));
-            data.gross_margin = fd.gross_margins.and_then(|v| Decimal::from_f64_retain(v * 100.0));
-            data.operating_margin = fd.operating_margins.and_then(|v| Decimal::from_f64_retain(v * 100.0));
-            data.net_profit_margin = fd.profit_margins.and_then(|v| Decimal::from_f64_retain(v * 100.0));
+            data.roe = fd
+                .return_on_equity
+                .and_then(|v| Decimal::from_f64_retain(v * 100.0));
+            data.roa = fd
+                .return_on_assets
+                .and_then(|v| Decimal::from_f64_retain(v * 100.0));
+            data.gross_margin = fd
+                .gross_margins
+                .and_then(|v| Decimal::from_f64_retain(v * 100.0));
+            data.operating_margin = fd
+                .operating_margins
+                .and_then(|v| Decimal::from_f64_retain(v * 100.0));
+            data.net_profit_margin = fd
+                .profit_margins
+                .and_then(|v| Decimal::from_f64_retain(v * 100.0));
             data.debt_to_equity = fd.debt_to_equity.and_then(Decimal::from_f64_retain);
             data.current_ratio = fd.current_ratio.and_then(Decimal::from_f64_retain);
             data.quick_ratio = fd.quick_ratio.and_then(Decimal::from_f64_retain);
-            data.revenue_growth_yoy = fd.revenue_growth.and_then(|v| Decimal::from_f64_retain(v * 100.0));
-            data.earnings_growth_yoy = fd.earnings_growth.and_then(|v| Decimal::from_f64_retain(v * 100.0));
+            data.revenue_growth_yoy = fd
+                .revenue_growth
+                .and_then(|v| Decimal::from_f64_retain(v * 100.0));
+            data.earnings_growth_yoy = fd
+                .earnings_growth
+                .and_then(|v| Decimal::from_f64_retain(v * 100.0));
         }
 
         // DefaultKeyStatistics (EPS, BPS, PBR, PSR, 주식수, 순이익)

@@ -39,11 +39,7 @@ pub struct SignalConflictEvent {
 
 impl SignalConflictEvent {
     /// SignalConflictError에서 이벤트 생성.
-    pub fn from_error(
-        strategy_id: &str,
-        signal: &Signal,
-        error: &SignalConflictError,
-    ) -> Self {
+    pub fn from_error(strategy_id: &str, signal: &Signal, error: &SignalConflictError) -> Self {
         let conflict_type = match error {
             SignalConflictError::PendingOrderExists { .. } => "pending_order",
             SignalConflictError::DuplicatePosition { .. } => "duplicate_position",
@@ -352,8 +348,8 @@ impl StrategyEngine {
         );
 
         // 공유 컨텍스트가 있으면 사용, 없으면 독립 컨텍스트 생성
-        let context = shared_context
-            .unwrap_or_else(|| Arc::new(RwLock::new(StrategyContext::default())));
+        let context =
+            shared_context.unwrap_or_else(|| Arc::new(RwLock::new(StrategyContext::default())));
         strategy.set_context(Arc::clone(&context));
 
         strategies.insert(

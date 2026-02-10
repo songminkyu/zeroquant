@@ -283,7 +283,8 @@ impl EquityCurve {
         // 시작 전 마지막 자산 가치 찾기 (초기값으로 사용)
         let initial_equity = self
             .points
-            .iter().rfind(|p| p.timestamp < start)
+            .iter()
+            .rfind(|p| p.timestamp < start)
             .map(|p| p.equity)
             .unwrap_or(self.initial_capital);
 
@@ -396,7 +397,8 @@ impl EquityCurve {
             let start_equity = self
                 .points
                 .iter()
-                .take(i).rfind(|p| p.timestamp <= start_time)
+                .take(i)
+                .rfind(|p| p.timestamp <= start_time)
                 .map(|p| p.equity)
                 .unwrap_or(self.initial_capital);
 

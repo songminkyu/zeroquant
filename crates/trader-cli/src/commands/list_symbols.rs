@@ -4,8 +4,8 @@ use anyhow::{Context, Result};
 use serde::Serialize;
 use std::fs::File;
 use std::io::Write;
-use trader_data::{Database, DatabaseConfig};
 use tracing::info;
+use trader_data::{Database, DatabaseConfig};
 
 /// 종목 조회 설정.
 #[derive(Debug)]
@@ -76,7 +76,8 @@ pub async fn list_symbols(config: ListSymbolsConfig) -> Result<usize> {
         })?;
 
     let db_config = DatabaseConfig::for_cli(db_url);
-    let db = Database::connect(&db_config).await
+    let db = Database::connect(&db_config)
+        .await
         .context("데이터베이스 연결 실패")?;
     let pool = db.pool().clone();
 

@@ -55,8 +55,7 @@ pub struct EtfAllocation {
     pub etf_type: EtfType,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
-#[derive(Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Default)]
 pub enum EtfType {
     #[serde(rename = "leverage")]
     #[default]
@@ -64,7 +63,6 @@ pub enum EtfType {
     #[serde(rename = "inverse")]
     Inverse,
 }
-
 
 /// 미국 3배 레버리지 전략 설정 v2.0
 #[derive(Debug, Clone, Deserialize, Serialize, StrategyConfig)]
@@ -82,33 +80,69 @@ pub struct Us3xLeverageConfig {
 
     /// 리밸런싱 임계값 (비율 이탈 %, 기본값: 5%)
     #[serde(default = "default_rebalance_threshold")]
-    #[schema(label = "리밸런싱 임계값 (%)", min = 1, max = 20, default = 5, section = "timing")]
+    #[schema(
+        label = "리밸런싱 임계값 (%)",
+        min = 1,
+        max = 20,
+        default = 5,
+        section = "timing"
+    )]
     pub rebalance_threshold: f64,
 
     /// 리밸런싱 주기 (일, 기본값: 30일)
     #[serde(default = "default_rebalance_period_days")]
-    #[schema(label = "리밸런싱 주기 (일)", min = 1, max = 90, default = 30, section = "timing")]
+    #[schema(
+        label = "리밸런싱 주기 (일)",
+        min = 1,
+        max = 90,
+        default = 30,
+        section = "timing"
+    )]
     pub rebalance_period_days: u32,
 
     /// 레버리지 MA 기간 (기본값: 20)
     #[serde(default = "default_ma_period")]
-    #[schema(label = "이동평균 기간", min = 5, max = 200, default = 20, section = "indicator")]
+    #[schema(
+        label = "이동평균 기간",
+        min = 5,
+        max = 200,
+        default = 20,
+        section = "indicator"
+    )]
     pub ma_period: usize,
 
     /// 하락장 인버스 최대 비중 (기본값: 60%)
     #[serde(default = "default_max_inverse_ratio")]
-    #[schema(label = "인버스 최대 비중 (%)", min = 0, max = 100, default = 60, section = "sizing")]
+    #[schema(
+        label = "인버스 최대 비중 (%)",
+        min = 0,
+        max = 100,
+        default = 60,
+        section = "sizing"
+    )]
     pub max_inverse_ratio: f64,
 
     /// 레버리지 최대 손실 시 전량 매도 (기본값: 30%)
     #[serde(default = "default_max_drawdown")]
-    #[schema(label = "최대 손실률 (%)", min = 5, max = 50, default = 30, section = "sizing")]
+    #[schema(
+        label = "최대 손실률 (%)",
+        min = 5,
+        max = 50,
+        default = 30,
+        section = "sizing"
+    )]
     pub max_drawdown_pct: f64,
 
     // ========== StrategyContext 연동 설정 (v2.0) ==========
     /// 최소 글로벌 스코어 (기본값: 55.0)
     #[serde(default = "default_min_global_score")]
-    #[schema(label = "최소 GlobalScore", min = 0, max = 100, default = 55, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        min = 0,
+        max = 100,
+        default = 55,
+        section = "filter"
+    )]
     pub min_global_score: f64,
 
     /// RouteState 필터 사용 여부 (기본값: true)
@@ -336,13 +370,16 @@ impl Us3xLeverageStrategy {
     async fn get_macro_risk(&self) -> Option<MacroRisk> {
         let ctx = self.context.as_ref()?;
         let ctx_guard = ctx.read().await;
-        ctx_guard
-            .get_macro_environment()
-            .map(|m| m.risk_level)
+        ctx_guard.get_macro_environment().map(|m| m.risk_level)
     }
 
     /// StrategyContext에서 klines를 가져와 MA 위에 있는지 확인
-    async fn is_etf_above_ma(&self, ticker: &str, ma_period: usize, current_price: Decimal) -> bool {
+    async fn is_etf_above_ma(
+        &self,
+        ticker: &str,
+        ma_period: usize,
+        current_price: Decimal,
+    ) -> bool {
         let ctx = match self.context.as_ref() {
             Some(c) => c,
             None => return false,
@@ -462,7 +499,10 @@ impl Us3xLeverageStrategy {
         let total_leverage = leverage_etfs.len();
 
         for (ticker, ma_period, current_price) in leverage_etfs {
-            if self.is_etf_above_ma(&ticker, ma_period, current_price).await {
+            if self
+                .is_etf_above_ma(&ticker, ma_period, current_price)
+                .await
+            {
                 bullish_count += 1;
             }
         }

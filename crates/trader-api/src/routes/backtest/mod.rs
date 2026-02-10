@@ -243,7 +243,15 @@ pub async fn run_backtest(
 
         // 다중 심볼 데이터 로드 (공유 data_provider 사용 - Redis 3계층 캐시)
         let multi_klines = if let Some(data_provider) = &state.data_provider {
-            match load_multi_klines_from_db(data_provider, &expanded_symbols, start_date, end_date, default_timeframe).await {
+            match load_multi_klines_from_db(
+                data_provider,
+                &expanded_symbols,
+                start_date,
+                end_date,
+                default_timeframe,
+            )
+            .await
+            {
                 Ok(data) if !data.is_empty() => {
                     debug!("DB에서 {} 심볼의 데이터 로드 완료", data.len());
                     for (sym, klines) in &data {
@@ -330,7 +338,16 @@ pub async fn run_backtest(
     // 단일 심볼 전략 (공유 data_provider 사용 - Redis 3계층 캐시)
     // primary → secondary → 일반 fallback 순서로 가용 타임프레임 탐색
     let klines = if let Some(data_provider) = &state.data_provider {
-        match load_klines_with_multi_tf_fallback(data_provider, &request.symbol, start_date, end_date, default_timeframe, secondary_timeframes).await {
+        match load_klines_with_multi_tf_fallback(
+            data_provider,
+            &request.symbol,
+            start_date,
+            end_date,
+            default_timeframe,
+            secondary_timeframes,
+        )
+        .await
+        {
             Ok(data) if !data.is_empty() => {
                 debug!(
                     symbol = %request.symbol,
@@ -555,12 +572,17 @@ pub async fn run_multi_backtest(
 
     // 다중 심볼 데이터 로드 (공유 data_provider 사용 - Redis 3계층 캐시)
     let multi_klines = if let Some(data_provider) = &state.data_provider {
-        match load_multi_klines_from_db(data_provider, &expanded_symbols, start_date, end_date, default_tf).await {
+        match load_multi_klines_from_db(
+            data_provider,
+            &expanded_symbols,
+            start_date,
+            end_date,
+            default_tf,
+        )
+        .await
+        {
             Ok(data) if !data.is_empty() => {
-                debug!(
-                    symbol_count = data.len(),
-                    "DB에서 심볼 데이터 로드 완료"
-                );
+                debug!(symbol_count = data.len(), "DB에서 심볼 데이터 로드 완료");
                 data
             }
             Ok(_) => {
@@ -852,13 +874,20 @@ async fn run_single_strategy_internal(
     // 전략의 타임프레임 조회 (primary → secondary → 일반 fallback)
     let strategy_meta = StrategyRegistry::find(strategy_id);
     let default_tf: &str = strategy_meta.map(|m| m.default_timeframe).unwrap_or("1d");
-    let secondary_tfs: &[&str] = strategy_meta
-        .map(|m| m.secondary_timeframes)
-        .unwrap_or(&[]);
+    let secondary_tfs: &[&str] = strategy_meta.map(|m| m.secondary_timeframes).unwrap_or(&[]);
 
     // 데이터 로드 (공유 data_provider 사용 - Redis 3계층 캐시)
     let klines = if let Some(data_provider) = &state.data_provider {
-        match load_klines_with_multi_tf_fallback(data_provider, symbol, start_date, end_date, default_tf, secondary_tfs).await {
+        match load_klines_with_multi_tf_fallback(
+            data_provider,
+            symbol,
+            start_date,
+            end_date,
+            default_tf,
+            secondary_tfs,
+        )
+        .await
+        {
             Ok(data) if !data.is_empty() => data,
             _ => generate_sample_klines(symbol, start_date, end_date),
         }
@@ -909,7 +938,15 @@ async fn run_multi_strategy_internal(
 
     // 다중 심볼 데이터 로드 (공유 data_provider 사용 - Redis 3계층 캐시)
     let multi_klines = if let Some(data_provider) = &state.data_provider {
-        match load_multi_klines_from_db(data_provider, &expanded_symbols, start_date, end_date, default_tf).await {
+        match load_multi_klines_from_db(
+            data_provider,
+            &expanded_symbols,
+            start_date,
+            end_date,
+            default_tf,
+        )
+        .await
+        {
             Ok(data) if !data.is_empty() => data,
             Ok(_) => {
                 warn!(strategy = %strategy_id, "배치: DB에 데이터 없음, 샘플 데이터 사용");
@@ -973,9 +1010,7 @@ fn convert_report_to_metrics(
 // ==================== 내장 전략 목록 ====================
 
 /// StrategyUISchema를 UiSchema로 변환
-fn convert_core_schema_to_ui_schema(
-    schema: &trader_core::StrategyUISchema,
-) -> UiSchema {
+fn convert_core_schema_to_ui_schema(schema: &trader_core::StrategyUISchema) -> UiSchema {
     let fields: Vec<UiField> = schema
         .custom_fields
         .iter()
@@ -1050,9 +1085,7 @@ fn convert_core_schema_to_ui_schema(
 }
 
 /// ExecutionSchedule을 StrategyCategory에서 추론
-fn infer_execution_schedule(
-    category: trader_strategy::StrategyCategory,
-) -> ExecutionSchedule {
+fn infer_execution_schedule(category: trader_strategy::StrategyCategory) -> ExecutionSchedule {
     match category {
         trader_strategy::StrategyCategory::Realtime => ExecutionSchedule::Realtime,
         trader_strategy::StrategyCategory::Intraday => ExecutionSchedule::OnCandleClose,
@@ -1085,11 +1118,7 @@ fn get_builtin_strategies() -> Vec<BacktestableStrategy> {
                 id: meta.id.to_string(),
                 name: meta.name.to_string(),
                 description: meta.description.to_string(),
-                supported_symbols: meta
-                    .default_tickers
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect(),
+                supported_symbols: meta.default_tickers.iter().map(|s| s.to_string()).collect(),
                 default_params: serde_json::json!({}),
                 ui_schema,
                 category: Some(category_str.to_string()),

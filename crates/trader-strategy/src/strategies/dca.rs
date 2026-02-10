@@ -91,17 +91,35 @@ pub struct GridTradingConfig {
 
     /// 거래 금액
     #[serde(default = "default_amount")]
-    #[schema(label = "거래 금액", field_type = "number", min = 10000, max = 100000000, default = 1000000)]
+    #[schema(
+        label = "거래 금액",
+        field_type = "number",
+        min = 10000,
+        max = 100000000,
+        default = 1000000
+    )]
     pub amount: Decimal,
 
     /// 그리드 간격 (%)
     #[serde(default = "default_grid_spacing")]
-    #[schema(label = "그리드 간격 (%)", field_type = "number", min = 0.1, max = 10, default = 0.2)]
+    #[schema(
+        label = "그리드 간격 (%)",
+        field_type = "number",
+        min = 0.1,
+        max = 10,
+        default = 0.2
+    )]
     pub spacing_pct: Decimal,
 
     /// 그리드 레벨 수
     #[serde(default = "default_grid_levels")]
-    #[schema(label = "그리드 레벨 수", field_type = "integer", min = 1, max = 20, default = 15)]
+    #[schema(
+        label = "그리드 레벨 수",
+        field_type = "integer",
+        min = 1,
+        max = 20,
+        default = 15
+    )]
     pub levels: usize,
 
     /// ATR 기반 동적 간격 사용
@@ -111,7 +129,13 @@ pub struct GridTradingConfig {
 
     /// ATR 기간
     #[serde(default = "default_atr_period")]
-    #[schema(label = "ATR 기간", field_type = "integer", min = 5, max = 50, default = 14)]
+    #[schema(
+        label = "ATR 기간",
+        field_type = "integer",
+        min = 5,
+        max = 50,
+        default = 14
+    )]
     pub atr_period: usize,
 
     /// 청산 설정
@@ -121,19 +145,38 @@ pub struct GridTradingConfig {
 
     /// 최대 포지션 수
     #[serde(default = "default_grid_max_positions")]
-    #[schema(label = "최대 포지션 수", field_type = "integer", min = 1, max = 20, default = 15)]
+    #[schema(
+        label = "최대 포지션 수",
+        field_type = "integer",
+        min = 1,
+        max = 20,
+        default = 15
+    )]
     pub max_positions: usize,
 
     /// 그리드 재설정 임계값 (%)
     /// 현재 가격이 그리드 기준 가격에서 이 비율 이상 벗어나면 그리드 재초기화
     #[serde(default = "default_reset_threshold")]
-    #[schema(label = "그리드 재설정 임계값 (%)", min = 5, max = 50, default = 10, section = "indicator")]
+    #[schema(
+        label = "그리드 재설정 임계값 (%)",
+        min = 5,
+        max = 50,
+        default = 10,
+        section = "indicator"
+    )]
     pub reset_threshold_pct: Decimal,
 
     /// 워밍업 캔들 수 (초기 관찰 기간)
     /// 이 기간 동안은 그리드를 설정만 하고 실제 거래는 하지 않음
     #[serde(default = "default_warmup_candles")]
-    #[schema(label = "워밍업 캔들 수", field_type = "integer", min = 0, max = 50, default = 5, section = "timing")]
+    #[schema(
+        label = "워밍업 캔들 수",
+        field_type = "integer",
+        min = 0,
+        max = 50,
+        default = 5,
+        section = "timing"
+    )]
     pub warmup_candles: usize,
 }
 
@@ -163,7 +206,13 @@ pub struct MagicSplitConfig {
 
     /// 최대 포지션 수
     #[serde(default = "default_split_max_positions")]
-    #[schema(label = "최대 포지션 수", field_type = "integer", min = 1, max = 10, default = 5)]
+    #[schema(
+        label = "최대 포지션 수",
+        field_type = "integer",
+        min = 1,
+        max = 10,
+        default = 5
+    )]
     pub max_positions: usize,
 }
 
@@ -178,42 +227,89 @@ pub struct MagicSplitConfig {
 pub struct InfinityBotConfig {
     /// 대상 티커
     #[serde(default = "default_ticker")]
-    #[schema(label = "대상 티커", field_type = "symbol", default = "005930", section = "asset")]
+    #[schema(
+        label = "대상 티커",
+        field_type = "symbol",
+        default = "005930",
+        section = "asset"
+    )]
     pub ticker: String,
 
     /// 총 투자 금액
     #[serde(default = "default_total_amount")]
-    #[schema(label = "총 투자 금액", min = 100000, max = 1000000000, default = 10000000, section = "asset")]
+    #[schema(
+        label = "총 투자 금액",
+        min = 100000,
+        max = 1000000000,
+        default = 10000000,
+        section = "asset"
+    )]
     pub total_amount: Decimal,
 
     /// 최대 라운드 수
     #[serde(default = "default_max_rounds")]
-    #[schema(label = "최대 라운드 수", min = 1, max = 100, default = 50, section = "sizing")]
+    #[schema(
+        label = "최대 라운드 수",
+        min = 1,
+        max = 100,
+        default = 50,
+        section = "sizing"
+    )]
     pub max_rounds: usize,
 
     /// 라운드당 투자 비율 (%)
     #[serde(default = "default_round_pct")]
-    #[schema(label = "라운드당 투자 비율 (%)", min = 0.5, max = 20, default = 2, section = "sizing")]
+    #[schema(
+        label = "라운드당 투자 비율 (%)",
+        min = 0.5,
+        max = 20,
+        default = 2,
+        section = "sizing"
+    )]
     pub round_pct: Decimal,
 
     /// 추가 매수 트리거 하락률 (%)
     #[serde(default = "default_dip_trigger")]
-    #[schema(label = "추가 매수 트리거 하락률 (%)", min = 0.5, max = 20, default = 2, section = "indicator")]
+    #[schema(
+        label = "추가 매수 트리거 하락률 (%)",
+        min = 0.5,
+        max = 20,
+        default = 2,
+        section = "indicator"
+    )]
     pub dip_trigger_pct: Decimal,
 
     /// 익절 목표 수익률 (%)
     #[serde(default = "default_take_profit")]
-    #[schema(label = "익절 목표 수익률 (%)", min = 0.5, max = 50, default = 3, section = "indicator")]
+    #[schema(
+        label = "익절 목표 수익률 (%)",
+        min = 0.5,
+        max = 50,
+        default = 3,
+        section = "indicator"
+    )]
     pub take_profit_pct: Decimal,
 
     /// 이동평균 기간
     #[serde(default = "default_ma_period")]
-    #[schema(label = "이동평균 기간", min = 5, max = 200, default = 20, section = "indicator")]
+    #[schema(
+        label = "이동평균 기간",
+        min = 5,
+        max = 200,
+        default = 20,
+        section = "indicator"
+    )]
     pub ma_period: usize,
 
     /// 최소 GlobalScore
     #[serde(default = "default_min_score")]
-    #[schema(label = "최소 GlobalScore", min = 0, max = 100, default = 50, section = "filter")]
+    #[schema(
+        label = "최소 GlobalScore",
+        min = 0,
+        max = 100,
+        default = 50,
+        section = "filter"
+    )]
     pub min_global_score: Decimal,
 
     /// 청산 설정
@@ -260,11 +356,31 @@ fn default_warmup_candles() -> usize {
 
 fn default_split_levels() -> Vec<SplitLevel> {
     vec![
-        SplitLevel { trigger_rate: dec!(0), target_rate: dec!(10), amount: dec!(100000) },
-        SplitLevel { trigger_rate: dec!(-3), target_rate: dec!(8), amount: dec!(150000) },
-        SplitLevel { trigger_rate: dec!(-5), target_rate: dec!(6), amount: dec!(200000) },
-        SplitLevel { trigger_rate: dec!(-7), target_rate: dec!(5), amount: dec!(250000) },
-        SplitLevel { trigger_rate: dec!(-10), target_rate: dec!(4), amount: dec!(300000) },
+        SplitLevel {
+            trigger_rate: dec!(0),
+            target_rate: dec!(10),
+            amount: dec!(100000),
+        },
+        SplitLevel {
+            trigger_rate: dec!(-3),
+            target_rate: dec!(8),
+            amount: dec!(150000),
+        },
+        SplitLevel {
+            trigger_rate: dec!(-5),
+            target_rate: dec!(6),
+            amount: dec!(200000),
+        },
+        SplitLevel {
+            trigger_rate: dec!(-7),
+            target_rate: dec!(5),
+            amount: dec!(250000),
+        },
+        SplitLevel {
+            trigger_rate: dec!(-10),
+            target_rate: dec!(4),
+            amount: dec!(300000),
+        },
     ]
 }
 
@@ -320,7 +436,7 @@ pub struct DcaConfig {
     pub use_atr: bool,
     pub atr_period: usize,
     pub reset_threshold_pct: Decimal, // 그리드 재설정 임계값
-    pub warmup_candles: usize, // 워밍업 캔들 수
+    pub warmup_candles: usize,        // 워밍업 캔들 수
 
     // MagicSplit 전용
     pub split_levels: Vec<SplitLevel>,
@@ -375,7 +491,7 @@ impl From<MagicSplitConfig> for DcaConfig {
             use_atr: false,
             atr_period: 0,
             reset_threshold_pct: Decimal::ZERO, // MagicSplit은 그리드 재설정 미사용
-            warmup_candles: 0, // MagicSplit은 워밍업 미사용
+            warmup_candles: 0,                  // MagicSplit은 워밍업 미사용
             split_levels: cfg.levels,
             total_amount: Decimal::ZERO,
             max_rounds: 0,
@@ -401,7 +517,7 @@ impl From<InfinityBotConfig> for DcaConfig {
             use_atr: false,
             atr_period: 0,
             reset_threshold_pct: Decimal::ZERO, // InfinityBot은 그리드 재설정 미사용
-            warmup_candles: 0, // InfinityBot은 워밍업 미사용 (즉시 진입)
+            warmup_candles: 0,                  // InfinityBot은 워밍업 미사용 (즉시 진입)
             split_levels: vec![],
             total_amount: cfg.total_amount,
             max_rounds: cfg.max_rounds,
@@ -576,7 +692,6 @@ impl DcaStrategy {
         Some(klines.to_vec())
     }
 
-
     // ========================================================================
     // 공통 헬퍼
     // ========================================================================
@@ -720,7 +835,8 @@ impl DcaStrategy {
             // 동적 그리드 재설정 체크
             let spacing = self.grid_base_price * config.grid_spacing_pct / dec!(100);
             let grid_upper = self.grid_base_price;
-            let grid_lower = self.grid_base_price - spacing * Decimal::from(config.grid_levels as i32);
+            let grid_lower =
+                self.grid_base_price - spacing * Decimal::from(config.grid_levels as i32);
             let threshold = config.reset_threshold_pct / dec!(100);
 
             // 가격이 그리드 상단을 threshold% 이상 벗어났거나
@@ -730,7 +846,9 @@ impl DcaStrategy {
 
             if upper_breach || lower_breach {
                 // 기존 포지션 수 카운트 (로깅용)
-                let existing_positions = self.grid_levels.iter()
+                let existing_positions = self
+                    .grid_levels
+                    .iter()
                     .filter(|l| l.state == GridLevelState::WaitingSell)
                     .count();
 
@@ -746,7 +864,9 @@ impl DcaStrategy {
 
                 // 기존 포지션 정보 저장 (진입가격 목록)
                 // 재설정 후에도 해당 가격 레벨에서 익절 가능하도록
-                let held_entry_prices: Vec<Decimal> = self.grid_levels.iter()
+                let held_entry_prices: Vec<Decimal> = self
+                    .grid_levels
+                    .iter()
                     .filter(|l| l.state == GridLevelState::WaitingSell)
                     .map(|l| l.buy_price)
                     .collect();
@@ -758,7 +878,10 @@ impl DcaStrategy {
                 // 이렇게 하면 기존 포지션도 익절 조건 도달 시 청산 가능
                 for entry_price in held_entry_prices {
                     // 새 그리드에서 진입가격에 가장 가까운 레벨 찾기
-                    if let Some((idx, _)) = self.grid_levels.iter().enumerate()
+                    if let Some((idx, _)) = self
+                        .grid_levels
+                        .iter()
+                        .enumerate()
                         .filter(|(_, l)| l.state == GridLevelState::WaitingBuy)
                         .min_by_key(|(_, l)| {
                             if l.buy_price > entry_price {
@@ -963,13 +1086,14 @@ impl DcaStrategy {
             match action {
                 SplitAction::Buy => {
                     let strength = self.get_adjusted_strength(0.8);
-                    let mut signal = Signal::new("dca", config.ticker.clone(), Side::Buy, SignalType::Entry)
-                        .with_position_id(position_id)
-                        .with_strength(strength)
-                        .with_prices(Some(price), None, None)
-                        .with_metadata("variant", json!("split"))
-                        .with_metadata("level", json!(i + 1))
-                        .with_metadata("amount", json!(value.to_string()));
+                    let mut signal =
+                        Signal::new("dca", config.ticker.clone(), Side::Buy, SignalType::Entry)
+                            .with_position_id(position_id)
+                            .with_strength(strength)
+                            .with_prices(Some(price), None, None)
+                            .with_metadata("variant", json!("split"))
+                            .with_metadata("level", json!(i + 1))
+                            .with_metadata("amount", json!(value.to_string()));
 
                     if let Some(ref group_id) = self.split_group_id {
                         signal = signal.with_group_id(group_id.clone());
@@ -985,14 +1109,15 @@ impl DcaStrategy {
                     }
                 }
                 SplitAction::TakeProfit => {
-                    let mut signal = Signal::new("dca", config.ticker.clone(), Side::Sell, SignalType::Exit)
-                        .with_position_id(position_id)
-                        .with_strength(0.9)
-                        .with_prices(Some(price), None, None)
-                        .with_metadata("variant", json!("split"))
-                        .with_metadata("level", json!(i + 1))
-                        .with_metadata("exit_reason", json!("take_profit"))
-                        .with_metadata("profit_rate", json!(value.to_string()));
+                    let mut signal =
+                        Signal::new("dca", config.ticker.clone(), Side::Sell, SignalType::Exit)
+                            .with_position_id(position_id)
+                            .with_strength(0.9)
+                            .with_prices(Some(price), None, None)
+                            .with_metadata("variant", json!("split"))
+                            .with_metadata("level", json!(i + 1))
+                            .with_metadata("exit_reason", json!("take_profit"))
+                            .with_metadata("profit_rate", json!(value.to_string()));
 
                     if let Some(ref group_id) = self.split_group_id {
                         signal = signal.with_group_id(group_id.clone());
@@ -1171,7 +1296,10 @@ impl DcaStrategy {
 
         // 1. 익절 조건 확인
         if !self.infinity_state.total_quantity.is_zero() && self.should_take_profit(price) {
-            let return_pct = self.infinity_state.current_return(price).unwrap_or(Decimal::ZERO);
+            let return_pct = self
+                .infinity_state
+                .current_return(price)
+                .unwrap_or(Decimal::ZERO);
 
             info!(
                 ticker = %config.ticker,
@@ -1184,13 +1312,14 @@ impl DcaStrategy {
             let total_rounds = self.infinity_state.current_round;
             for round_info in &self.infinity_state.rounds {
                 let position_id = format!("{}_infinity_R{}", config.ticker, round_info.round);
-                let mut signal = Signal::new("dca", config.ticker.clone(), Side::Sell, SignalType::Exit)
-                    .with_position_id(position_id)
-                    .with_strength(1.0)
-                    .with_metadata("action", json!("take_profit"))
-                    .with_metadata("return_pct", json!(return_pct.to_string()))
-                    .with_metadata("round", json!(round_info.round))
-                    .with_metadata("rounds", json!(total_rounds));
+                let mut signal =
+                    Signal::new("dca", config.ticker.clone(), Side::Sell, SignalType::Exit)
+                        .with_position_id(position_id)
+                        .with_strength(1.0)
+                        .with_metadata("action", json!("take_profit"))
+                        .with_metadata("return_pct", json!(return_pct.to_string()))
+                        .with_metadata("round", json!(round_info.round))
+                        .with_metadata("rounds", json!(total_rounds));
 
                 if let Some(ref group_id) = self.infinity_group_id {
                     signal = signal.with_group_id(group_id.clone());
@@ -1222,14 +1351,20 @@ impl DcaStrategy {
                         // 모든 라운드 손절 - 각 라운드별로 개별 청산 신호
                         let total_rounds = self.infinity_state.current_round;
                         for round_info in &self.infinity_state.rounds {
-                            let position_id = format!("{}_infinity_R{}", config.ticker, round_info.round);
-                            let mut signal = Signal::new("dca", config.ticker.clone(), Side::Sell, SignalType::Exit)
-                                .with_position_id(position_id)
-                                .with_strength(1.0)
-                                .with_metadata("action", json!("stop_loss"))
-                                .with_metadata("return_pct", json!(return_pct.to_string()))
-                                .with_metadata("round", json!(round_info.round))
-                                .with_metadata("rounds", json!(total_rounds));
+                            let position_id =
+                                format!("{}_infinity_R{}", config.ticker, round_info.round);
+                            let mut signal = Signal::new(
+                                "dca",
+                                config.ticker.clone(),
+                                Side::Sell,
+                                SignalType::Exit,
+                            )
+                            .with_position_id(position_id)
+                            .with_strength(1.0)
+                            .with_metadata("action", json!("stop_loss"))
+                            .with_metadata("return_pct", json!(return_pct.to_string()))
+                            .with_metadata("round", json!(round_info.round))
+                            .with_metadata("rounds", json!(total_rounds));
 
                             if let Some(ref group_id) = self.infinity_group_id {
                                 signal = signal.with_group_id(group_id.clone());
@@ -1284,13 +1419,17 @@ impl DcaStrategy {
             );
 
             let strength = self.get_adjusted_strength(1.0);
-            let mut signal = Signal::new("dca", config.ticker.clone(), Side::Buy, SignalType::Entry)
-                .with_position_id(position_id)
-                .with_strength(strength)
-                .with_metadata("action", json!("round_entry"))
-                .with_metadata("round", json!(round))
-                .with_metadata("quantity", json!(quantity.to_string()))
-                .with_metadata("avg_price", json!(self.infinity_state.avg_price.map(|d| d.to_string())));
+            let mut signal =
+                Signal::new("dca", config.ticker.clone(), Side::Buy, SignalType::Entry)
+                    .with_position_id(position_id)
+                    .with_strength(strength)
+                    .with_metadata("action", json!("round_entry"))
+                    .with_metadata("round", json!(round))
+                    .with_metadata("quantity", json!(quantity.to_string()))
+                    .with_metadata(
+                        "avg_price",
+                        json!(self.infinity_state.avg_price.map(|d| d.to_string())),
+                    );
 
             if let Some(ref group_id) = self.infinity_group_id {
                 signal = signal.with_group_id(group_id.clone());
@@ -1413,7 +1552,9 @@ impl Strategy for DcaStrategy {
         let signals = match variant {
             DcaVariant::Grid => self.generate_grid_signals(price),
             DcaVariant::MagicSplit => self.generate_split_signals(price, data.timestamp),
-            DcaVariant::InfinityBot => self.generate_infinity_signals(price, data.timestamp.timestamp()),
+            DcaVariant::InfinityBot => {
+                self.generate_infinity_signals(price, data.timestamp.timestamp())
+            }
         };
 
         Ok(signals)
@@ -1468,13 +1609,17 @@ impl Strategy for DcaStrategy {
 
             // Grid variant일 때 상세 상태 추가
             if config.variant == DcaVariant::Grid {
-                let grid_levels_json: Vec<Value> = self.grid_levels.iter().map(|level| {
-                    json!({
-                        "buy_price": level.buy_price.to_string(),
-                        "sell_price": level.sell_price.to_string(),
-                        "state": format!("{:?}", level.state),
+                let grid_levels_json: Vec<Value> = self
+                    .grid_levels
+                    .iter()
+                    .map(|level| {
+                        json!({
+                            "buy_price": level.buy_price.to_string(),
+                            "sell_price": level.sell_price.to_string(),
+                            "state": format!("{:?}", level.state),
+                        })
                     })
-                }).collect();
+                    .collect();
 
                 state["state"] = json!({
                     "grid": {
@@ -1488,15 +1633,18 @@ impl Strategy for DcaStrategy {
             // InfinityBot variant일 때 상세 상태 추가
             if config.variant == DcaVariant::InfinityBot {
                 // klines_count 계산 (context에서)
-                let klines_count = self.context.as_ref().and_then(|ctx| {
-                    ctx.try_read().ok().map(|c| {
-                        c.get_klines(&config.ticker, Timeframe::D1).len() as i64
+                let klines_count = self
+                    .context
+                    .as_ref()
+                    .and_then(|ctx| {
+                        ctx.try_read()
+                            .ok()
+                            .map(|c| c.get_klines(&config.ticker, Timeframe::D1).len() as i64)
                     })
-                }).unwrap_or(0);
+                    .unwrap_or(0);
 
                 // 마지막 진입가 (rounds 배열에서)
-                let last_entry_price = self.infinity_state.rounds.last()
-                    .map(|r| r.entry_price);
+                let last_entry_price = self.infinity_state.rounds.last().map(|r| r.entry_price);
 
                 state["klines_count"] = json!(klines_count);
                 state["config"] = json!({

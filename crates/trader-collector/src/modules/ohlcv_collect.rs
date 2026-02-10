@@ -20,9 +20,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
 
 use super::watchlist_helper;
-use trader_analytics::{
-    indicators::IndicatorEngine, MarketRegimeCalculator, RouteStateCalculator,
-};
+use trader_analytics::{indicators::IndicatorEngine, MarketRegimeCalculator, RouteStateCalculator};
 use trader_core::{CredentialEncryptor, Kline, Timeframe};
 use trader_data::cache::historical::CachedHistoricalDataProvider;
 use trader_data::provider::krx_api::KrxApiClient;
@@ -35,10 +33,17 @@ use super::utils::{calculate_ttm_squeeze, to_screaming_snake_case};
 type OhlcvDateRange = Option<(Option<chrono::DateTime<Utc>>, Option<chrono::DateTime<Utc>>)>;
 
 /// OHLCV 메타데이터 조회 결과 타입
-type OhlcvMetadataRow = (String, Option<chrono::DateTime<Utc>>, Option<chrono::DateTime<Utc>>);
+type OhlcvMetadataRow = (
+    String,
+    Option<chrono::DateTime<Utc>>,
+    Option<chrono::DateTime<Utc>>,
+);
 
 /// 날짜 범위 계산 결과 타입 (앞쪽 구간, 뒤쪽 구간)
-type DateRangeGaps = (Option<(NaiveDate, NaiveDate)>, Option<(NaiveDate, NaiveDate)>);
+type DateRangeGaps = (
+    Option<(NaiveDate, NaiveDate)>,
+    Option<(NaiveDate, NaiveDate)>,
+);
 
 /// ETA 및 시장별 진행률을 추적하는 트래커.
 struct ProgressTracker {
@@ -89,8 +94,8 @@ impl ProgressTracker {
         if self.recent_durations.is_empty() || self.completed == 0 {
             return None;
         }
-        let avg: Duration = self.recent_durations.iter().sum::<Duration>()
-            / self.recent_durations.len() as u32;
+        let avg: Duration =
+            self.recent_durations.iter().sum::<Duration>() / self.recent_durations.len() as u32;
         let remaining = self.total.saturating_sub(self.completed);
         Some(avg * remaining as u32)
     }
@@ -115,15 +120,20 @@ impl ProgressTracker {
             0
         };
         let elapsed = self.overall_start.elapsed();
-        let eta_str = self.estimated_remaining()
+        let eta_str = self
+            .estimated_remaining()
             .map(format_duration)
             .unwrap_or_else(|| "계산 중".to_string());
 
         // 시장별 진행률 문자열 생성
-        let market_progress: Vec<String> = self.market_totals.iter().map(|(m, total)| {
-            let done = self.market_completed.get(m).copied().unwrap_or(0);
-            format!("{}: {}/{}", m, done, total)
-        }).collect();
+        let market_progress: Vec<String> = self
+            .market_totals
+            .iter()
+            .map(|(m, total)| {
+                let done = self.market_completed.get(m).copied().unwrap_or(0);
+                format!("{}: {}/{}", m, done, total)
+            })
+            .collect();
 
         tracing::info!(
             "[{}/{}] ({}%) | ETA: {} | 경과: {} | {} | 현재: {} ({})",
@@ -307,8 +317,10 @@ pub async fn collect_ohlcv(
         match watchlist_helper::fetch_all_priority_tickers(pool).await {
             Ok(wl_tickers) if !wl_tickers.is_empty() => {
                 let wl_set = watchlist_helper::to_hashset(&wl_tickers);
-                let mut watchlist_first: Vec<(Uuid, String, String)> = Vec::with_capacity(target_symbols.len());
-                let mut rest: Vec<(Uuid, String, String)> = Vec::with_capacity(target_symbols.len());
+                let mut watchlist_first: Vec<(Uuid, String, String)> =
+                    Vec::with_capacity(target_symbols.len());
+                let mut rest: Vec<(Uuid, String, String)> =
+                    Vec::with_capacity(target_symbols.len());
 
                 for item in target_symbols {
                     if wl_set.contains(&item.1) {
@@ -432,9 +444,15 @@ pub async fn collect_ohlcv(
                     // symbol_info에 등록된 종목만 처리
                     if let Some(&symbol_info_id) = kr_ticker_map.get(&short_code) {
                         // OHLCV 데이터 수집
-                        if let (Some(open), Some(high), Some(low)) = (trade.open, trade.high, trade.low) {
-                            let open_time = trade.date.and_hms_opt(0, 0, 0)
-                                .map(|dt| chrono::DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
+                        if let (Some(open), Some(high), Some(low)) =
+                            (trade.open, trade.high, trade.low)
+                        {
+                            let open_time = trade
+                                .date
+                                .and_hms_opt(0, 0, 0)
+                                .map(|dt| {
+                                    chrono::DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc)
+                                })
                                 .unwrap_or_else(Utc::now);
 
                             ohlcv_rows.push(KrxOhlcvRow {
@@ -501,7 +519,8 @@ pub async fn collect_ohlcv(
 
     tracing::info!(
         total = target_symbols.len(),
-        "OHLCV 수집 시작 - 총 {}개 심볼", target_symbols.len()
+        "OHLCV 수집 시작 - 총 {}개 심볼",
+        target_symbols.len()
     );
 
     // 심볼별 수집 (KRX API로 이미 수집된 종목은 fallback 대상에서 제외)
@@ -526,7 +545,8 @@ pub async fn collect_ohlcv(
     // =========================================================================
     // 사전 필터링: 일괄 날짜 범위 조회 → 메모리에서 수집 대상 결정
     // =========================================================================
-    let fallback_tickers: Vec<String> = fallback_symbols.iter().map(|(_, t, _)| t.clone()).collect();
+    let fallback_tickers: Vec<String> =
+        fallback_symbols.iter().map(|(_, t, _)| t.clone()).collect();
     let existing_ranges = get_all_existing_ranges(pool, &fallback_tickers, primary_timeframe).await;
 
     // 우선순위 종목 세트 (watchlist + 전략 관심 종목)
@@ -544,35 +564,39 @@ pub async fn collect_ohlcv(
 
     // 메모리에서 사전 필터링 — 수집이 필요한 심볼만 추출
     let mut gap_skipped = 0usize;
-    let symbols_needing_collection: Vec<_> = fallback_symbols.into_iter().filter(|(_, ticker, _)| {
-        let (existing_start, existing_end) = existing_ranges
-            .get(ticker).copied().unwrap_or((None, None));
-        let (past, future) = calculate_missing_ranges(start_date, end_date, existing_start, existing_end);
+    let symbols_needing_collection: Vec<_> = fallback_symbols
+        .into_iter()
+        .filter(|(_, ticker, _)| {
+            let (existing_start, existing_end) =
+                existing_ranges.get(ticker).copied().unwrap_or((None, None));
+            let (past, future) =
+                calculate_missing_ranges(start_date, end_date, existing_start, existing_end);
 
-        // 수집할 것이 없으면 스킵
-        if past.is_none() && future.is_none() {
-            return false;
-        }
+            // 수집할 것이 없으면 스킵
+            if past.is_none() && future.is_none() {
+                return false;
+            }
 
-        // 비우선순위 종목의 대규모 갭 백필 제한
-        if max_gap > 0 && !priority_set.contains(ticker) {
-            if let Some((ps, pe)) = &past {
-                let gap_days = (*pe - *ps).num_days();
-                if gap_days > max_gap {
-                    tracing::debug!(
-                        ticker = ticker,
-                        gap_days = gap_days,
-                        max_gap = max_gap,
-                        "비우선순위 종목 대규모 갭 스킵"
-                    );
-                    gap_skipped += 1;
-                    return false;
+            // 비우선순위 종목의 대규모 갭 백필 제한
+            if max_gap > 0 && !priority_set.contains(ticker) {
+                if let Some((ps, pe)) = &past {
+                    let gap_days = (*pe - *ps).num_days();
+                    if gap_days > max_gap {
+                        tracing::debug!(
+                            ticker = ticker,
+                            gap_days = gap_days,
+                            max_gap = max_gap,
+                            "비우선순위 종목 대규모 갭 스킵"
+                        );
+                        gap_skipped += 1;
+                        return false;
+                    }
                 }
             }
-        }
 
-        true
-    }).collect();
+            true
+        })
+        .collect();
 
     let pre_filter_skipped = fallback_tickers.len() - symbols_needing_collection.len();
     tracing::info!(
@@ -602,23 +626,27 @@ pub async fn collect_ohlcv(
     let mut progress = ProgressTracker::new(&symbols_needing_collection);
 
     // 체크포인트: 수집 시작
-    let _ = checkpoint::save_checkpoint(pool, "ohlcv_collect", "", 0, CheckpointStatus::Running).await;
+    let _ =
+        checkpoint::save_checkpoint(pool, "ohlcv_collect", "", 0, CheckpointStatus::Running).await;
 
     for (idx, (symbol_info_id, ticker, market)) in symbols_needing_collection.iter().enumerate() {
         stats.total += 1;
         let symbol_start = Instant::now();
 
         // Semaphore로 동시 실행 수 제한 (permit 획득까지 대기)
-        let _permit = semaphore.clone().acquire_owned().await.expect("세마포어 획득 실패");
+        let _permit = semaphore
+            .clone()
+            .acquire_owned()
+            .await
+            .expect("세마포어 획득 실패");
 
         // 일괄 조회 결과에서 기존 데이터 범위 가져오기 (개별 DB 쿼리 불필요)
-        let (existing_start, existing_end) = existing_ranges
-            .get(ticker).copied().unwrap_or((None, None));
+        let (existing_start, existing_end) =
+            existing_ranges.get(ticker).copied().unwrap_or((None, None));
 
         // 누락 구간 계산
-        let (past_range, future_range) = calculate_missing_ranges(
-            start_date, end_date, existing_start, existing_end,
-        );
+        let (past_range, future_range) =
+            calculate_missing_ranges(start_date, end_date, existing_start, existing_end);
 
         // 누락 구간이 없으면 스킵 (사전 필터링 후에도 안전 장치)
         if past_range.is_none() && future_range.is_none() {
@@ -633,16 +661,29 @@ pub async fn collect_ohlcv(
         if let Some((ps, pe)) = &past_range {
             let gap_days = (*pe - *ps).num_days();
             if gap_days > 365 {
-                tracing::info!(ticker = ticker, gap_days, "대규모 과거 데이터 수집 ({}년)", gap_days / 365);
+                tracing::info!(
+                    ticker = ticker,
+                    gap_days,
+                    "대규모 과거 데이터 수집 ({}년)",
+                    gap_days / 365
+                );
             }
         }
 
         // 수집할 구간 결정 (과거 방향 우선)
         let (fetch_start, fetch_end) = if let Some((ps, pe)) = past_range {
-            tracing::info!(ticker = ticker, range = format!("{} ~ {}", ps, pe), "과거 방향 증분 수집");
+            tracing::info!(
+                ticker = ticker,
+                range = format!("{} ~ {}", ps, pe),
+                "과거 방향 증분 수집"
+            );
             (ps, pe)
         } else if let Some((fs, fe)) = future_range {
-            tracing::debug!(ticker = ticker, range = format!("{} ~ {}", fs, fe), "최신 방향 증분 수집");
+            tracing::debug!(
+                ticker = ticker,
+                range = format!("{} ~ {}", fs, fe),
+                "최신 방향 증분 수집"
+            );
             (fs, fe)
         } else {
             continue;
@@ -664,7 +705,11 @@ pub async fn collect_ohlcv(
                 Timeframe::M1 | Timeframe::M5 | Timeframe::M15 | Timeframe::M30 | Timeframe::H1 => {
                     let max_days = 55;
                     let intraday_start = end_date - chrono::Duration::days(max_days);
-                    let adjusted_start = if fetch_start > intraday_start { fetch_start } else { intraday_start };
+                    let adjusted_start = if fetch_start > intraday_start {
+                        fetch_start
+                    } else {
+                        intraday_start
+                    };
                     (adjusted_start, fetch_end)
                 }
                 _ => (fetch_start, fetch_end),
@@ -673,16 +718,19 @@ pub async fn collect_ohlcv(
             let klines_result = match timeframe {
                 Timeframe::D1 => {
                     if market == "KR" {
-                        fetch_kr_klines(&krx_client, &yahoo_provider, ticker, tf_start, tf_end).await
+                        fetch_kr_klines(&krx_client, &yahoo_provider, ticker, tf_start, tf_end)
+                            .await
                     } else {
-                        yahoo_provider.get_klines_range(ticker, Timeframe::D1, tf_start, tf_end)
-                            .await.map_err(|e| e.to_string())
+                        yahoo_provider
+                            .get_klines_range(ticker, Timeframe::D1, tf_start, tf_end)
+                            .await
+                            .map_err(|e| e.to_string())
                     }
                 }
-                _ => {
-                    yahoo_provider.get_klines_range(ticker, timeframe, tf_start, tf_end)
-                        .await.map_err(|e| e.to_string())
-                }
+                _ => yahoo_provider
+                    .get_klines_range(ticker, timeframe, tf_start, tf_end)
+                    .await
+                    .map_err(|e| e.to_string()),
             };
 
             match klines_result {
@@ -692,14 +740,28 @@ pub async fn collect_ohlcv(
                     if timeframe == Timeframe::D1 && klines.len() >= 40 {
                         stats.success += 1;
                         update_indicators_for_symbol(
-                            pool, *symbol_info_id, ticker, market, &klines,
-                            &route_state_calc, &market_regime_calc, &indicator_engine,
-                        ).await;
+                            pool,
+                            *symbol_info_id,
+                            ticker,
+                            market,
+                            &klines,
+                            &route_state_calc,
+                            &market_regime_calc,
+                            &indicator_engine,
+                        )
+                        .await;
                     }
-                    tracing::info!(ticker = ticker, timeframe = tf_str, klines = klines.len(), "수집 완료");
+                    tracing::info!(
+                        ticker = ticker,
+                        timeframe = tf_str,
+                        klines = klines.len(),
+                        "수집 완료"
+                    );
                 }
                 Ok(_) => {
-                    if timeframe == Timeframe::D1 { stats.empty += 1; }
+                    if timeframe == Timeframe::D1 {
+                        stats.empty += 1;
+                    }
                 }
                 Err(e) => {
                     let error_str = e.to_string();
@@ -718,7 +780,9 @@ pub async fn collect_ohlcv(
                         .await;
                         break;
                     } else {
-                        if timeframe == Timeframe::D1 { stats.errors += 1; }
+                        if timeframe == Timeframe::D1 {
+                            stats.errors += 1;
+                        }
                         tracing::error!(ticker = ticker, timeframe = tf_str, error = %e, "조회 실패");
                     }
                 }
@@ -740,15 +804,25 @@ pub async fn collect_ohlcv(
         // 체크포인트: 100개마다 갱신
         if (idx + 1) % 100 == 0 {
             let _ = checkpoint::save_checkpoint(
-                pool, "ohlcv_collect", ticker, (idx + 1) as i32, CheckpointStatus::Running,
-            ).await;
+                pool,
+                "ohlcv_collect",
+                ticker,
+                (idx + 1) as i32,
+                CheckpointStatus::Running,
+            )
+            .await;
         }
     }
 
     // 체크포인트: 수집 완료
     let _ = checkpoint::save_checkpoint(
-        pool, "ohlcv_collect", "", collection_count as i32, CheckpointStatus::Completed,
-    ).await;
+        pool,
+        "ohlcv_collect",
+        "",
+        collection_count as i32,
+        CheckpointStatus::Completed,
+    )
+    .await;
 
     stats.elapsed = start.elapsed();
     Ok(stats)
@@ -843,14 +917,16 @@ fn get_default_retention_days(timeframe: &str) -> i64 {
 /// 날짜 범위 결정 (타임프레임 기반)
 fn determine_date_range(config: &CollectorConfig, timeframe: &str) -> (NaiveDate, NaiveDate) {
     let end_date = match &config.ohlcv_collect.end_date {
-        Some(date) => NaiveDate::parse_from_str(date, "%Y%m%d")
-            .unwrap_or_else(|_| Utc::now().date_naive()),
+        Some(date) => {
+            NaiveDate::parse_from_str(date, "%Y%m%d").unwrap_or_else(|_| Utc::now().date_naive())
+        }
         None => Utc::now().date_naive(),
     };
 
     let start_date = match &config.ohlcv_collect.start_date {
-        Some(date) => NaiveDate::parse_from_str(date, "%Y%m%d")
-            .unwrap_or_else(|_| end_date - chrono::Duration::days(get_default_retention_days(timeframe))),
+        Some(date) => NaiveDate::parse_from_str(date, "%Y%m%d").unwrap_or_else(|_| {
+            end_date - chrono::Duration::days(get_default_retention_days(timeframe))
+        }),
         None => {
             // 타임프레임별 기본 수집 기간 적용
             let retention_days = get_default_retention_days(timeframe);
@@ -1019,19 +1095,18 @@ async fn get_all_existing_ranges(
         return result_map;
     }
 
-    let rows: Vec<OhlcvMetadataRow> =
-        sqlx::query_as(
-            r#"
+    let rows: Vec<OhlcvMetadataRow> = sqlx::query_as(
+        r#"
             SELECT symbol, first_cached_time, last_cached_time
             FROM ohlcv_metadata
             WHERE symbol = ANY($1) AND timeframe = $2
             "#,
-        )
-        .bind(tickers)
-        .bind(timeframe)
-        .fetch_all(pool)
-        .await
-        .unwrap_or_default();
+    )
+    .bind(tickers)
+    .bind(timeframe)
+    .fetch_all(pool)
+    .await
+    .unwrap_or_default();
 
     for (symbol, first_time, last_time) in rows {
         result_map.insert(
@@ -1085,12 +1160,9 @@ fn calculate_missing_ranges(
     }
 }
 
-
 // ============================================================================
 // KRX API 일괄 수집 헬퍼 함수
 // ============================================================================
-
-
 
 /// KRX OHLCV 배치 데이터 저장을 위한 구조체
 struct KrxOhlcvRow {
@@ -1143,7 +1215,7 @@ async fn save_krx_ohlcv_batch(
              low = EXCLUDED.low, \
              close = EXCLUDED.close, \
              volume = EXCLUDED.volume, \
-             updated_at = NOW()"
+             updated_at = NOW()",
         );
 
         let result = query_builder.build().execute(pool).await?;
@@ -1197,5 +1269,3 @@ async fn update_market_info_batch(
 
     Ok(total_affected)
 }
-
-

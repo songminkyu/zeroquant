@@ -238,7 +238,10 @@ impl AlertsRepository {
         pool: &PgPool,
         request: &CreateAlertRequest,
     ) -> Result<AlertHistory, sqlx::Error> {
-        let metadata = request.metadata.clone().unwrap_or(JsonValue::Object(Default::default()));
+        let metadata = request
+            .metadata
+            .clone()
+            .unwrap_or(JsonValue::Object(Default::default()));
 
         let alert = sqlx::query_as::<_, AlertHistory>(
             r#"
@@ -330,12 +333,10 @@ impl AlertsRepository {
 
     /// ID로 알림 조회
     pub async fn get_by_id(pool: &PgPool, id: Uuid) -> Result<Option<AlertHistory>, sqlx::Error> {
-        sqlx::query_as::<_, AlertHistory>(
-            r#"SELECT * FROM alert_history WHERE id = $1"#,
-        )
-        .bind(id)
-        .fetch_optional(pool)
-        .await
+        sqlx::query_as::<_, AlertHistory>(r#"SELECT * FROM alert_history WHERE id = $1"#)
+            .bind(id)
+            .fetch_optional(pool)
+            .await
     }
 
     /// 알림 목록 조회 (필터링 + 페이징)
@@ -382,7 +383,9 @@ impl AlertsRepository {
             ORDER BY created_at DESC
             LIMIT ${} OFFSET ${}
             "#,
-            where_clause, param_idx, param_idx + 1
+            where_clause,
+            param_idx,
+            param_idx + 1
         );
 
         // 바인딩 (수동으로 처리 - sqlx의 동적 쿼리 한계)
@@ -426,10 +429,7 @@ impl AlertsRepository {
     }
 
     /// 최근 알림 조회
-    pub async fn get_recent(
-        pool: &PgPool,
-        limit: i32,
-    ) -> Result<Vec<AlertHistory>, sqlx::Error> {
+    pub async fn get_recent(pool: &PgPool, limit: i32) -> Result<Vec<AlertHistory>, sqlx::Error> {
         sqlx::query_as::<_, AlertHistory>(
             r#"
             SELECT * FROM alert_history

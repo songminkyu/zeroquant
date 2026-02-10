@@ -1,17 +1,17 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use async_trait::async_trait;
-use chrono::{Utc, DateTime};
+use chrono::{DateTime, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use reqwest::{Client, Method};
 use rust_decimal::Decimal;
-use std::str::FromStr;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use uuid::Uuid;
 
 use trader_core::domain::{
-    ExchangeProvider, MarketDataProvider, StrategyAccountInfo, PendingOrder,
-    StrategyPositionInfo, OrderStatusType, Side, Trade,
+    ExchangeProvider, MarketDataProvider, OrderStatusType, PendingOrder, Side, StrategyAccountInfo,
+    StrategyPositionInfo, Trade,
 };
 use trader_core::{ProviderError, QuoteData};
 
@@ -41,8 +41,6 @@ impl BithumbConfig {
             secret_key,
         }
     }
-
-
 }
 
 // ============================================================================
@@ -178,7 +176,8 @@ impl BithumbClient {
             &Header::default(),
             &claims,
             &EncodingKey::from_secret(self.config.secret_key.as_bytes()),
-        ).map_err(|e: jsonwebtoken::errors::Error| ProviderError::Authentication(e.to_string()))?;
+        )
+        .map_err(|e: jsonwebtoken::errors::Error| ProviderError::Authentication(e.to_string()))?;
 
         Ok(format!("Bearer {}", token))
     }
@@ -204,13 +203,13 @@ impl BithumbClient {
                 builder = builder.query(q);
             }
         } else if let Some(b) = body {
-             let query_string = serde_urlencoded::to_string(b).unwrap_or_default();
-             use sha2::{Digest, Sha512};
-             let mut hasher = Sha512::new();
-             hasher.update(query_string.as_bytes());
-             query_hash = Some(hex::encode(hasher.finalize()));
-             
-             builder = builder.json(b);
+            let query_string = serde_urlencoded::to_string(b).unwrap_or_default();
+            use sha2::{Digest, Sha512};
+            let mut hasher = Sha512::new();
+            hasher.update(query_string.as_bytes());
+            query_hash = Some(hex::encode(hasher.finalize()));
+
+            builder = builder.json(b);
         }
 
         let token = self.generate_token(query_hash)?;
@@ -233,9 +232,15 @@ impl BithumbClient {
             )));
         }
 
-        let text = response.text().await.map_err(|e| ProviderError::Network(e.to_string()))?;
+        let text = response
+            .text()
+            .await
+            .map_err(|e| ProviderError::Network(e.to_string()))?;
         serde_json::from_str::<T>(&text).map_err(|e| {
-            ProviderError::Parse(format!("Failed to parse Bithumb response: {}. Body: {}", e, text))
+            ProviderError::Parse(format!(
+                "Failed to parse Bithumb response: {}. Body: {}",
+                e, text
+            ))
         })
     }
 }
@@ -249,8 +254,8 @@ impl BithumbClient {
     pub async fn place_order(
         &self,
         market: &str,
-        side: &str,      // "bid"=매수, "ask"=매도
-        ord_type: &str,   // "limit", "price"(시장가 매수), "market"(시장가 매도)
+        side: &str,     // "bid"=매수, "ask"=매도
+        ord_type: &str, // "limit", "price"(시장가 매수), "market"(시장가 매도)
         volume: Option<&str>,
         price: Option<&str>,
     ) -> Result<BithumbOrder, ProviderError> {
@@ -269,7 +274,8 @@ impl BithumbClient {
             body["price"] = serde_json::Value::String(p.to_string());
         }
 
-        self.request(Method::POST, "/orders", None, Some(&body)).await
+        self.request(Method::POST, "/orders", None, Some(&body))
+            .await
     }
 
     /// 주문 취소 (DELETE /v1/order)
@@ -277,7 +283,8 @@ impl BithumbClient {
         let query = serde_json::json!({
             "uuid": uuid,
         });
-        self.request(Method::DELETE, "/order", Some(&query), None).await
+        self.request(Method::DELETE, "/order", Some(&query), None)
+            .await
     }
 
     /// 주문 조회 (GET /v1/order)
@@ -285,7 +292,8 @@ impl BithumbClient {
         let query = serde_json::json!({
             "uuid": uuid,
         });
-        self.request(Method::GET, "/order", Some(&query), None).await
+        self.request(Method::GET, "/order", Some(&query), None)
+            .await
     }
 
     /// 거래 내역 조회 (GET /v1/trades, §2.7 Private API).
@@ -323,7 +331,7 @@ impl BithumbClient {
             let side = match t.side.as_str() {
                 "buy" => Side::Buy,
                 "sell" => Side::Sell,
-                _ => continue,  // 알 수 없는 side는 스킵
+                _ => continue, // 알 수 없는 side는 스킵
             };
 
             // UUID 파싱 (실패 시 스킵)
@@ -346,10 +354,10 @@ impl BithumbClient {
             let fee = Decimal::from_str(&t.commission).unwrap_or_default();
 
             result.push(Trade {
-                id: Uuid::new_v4(),  // 내부 ID 생성
+                id: Uuid::new_v4(), // 내부 ID 생성
                 order_id,
                 exchange: "bithumb".to_string(),
-                exchange_trade_id: t.uuid.clone(),  // Bithumb은 별도 거래 ID 없음
+                exchange_trade_id: t.uuid.clone(), // Bithumb은 별도 거래 ID 없음
                 ticker: t.market,
                 side,
                 quantity,
@@ -357,7 +365,7 @@ impl BithumbClient {
                 fee,
                 fee_currency: "KRW".to_string(),
                 executed_at,
-                is_maker: false,  // Bithumb API는 메이커/테이커 구분 없음
+                is_maker: false, // Bithumb API는 메이커/테이커 구분 없음
                 metadata: serde_json::json!({
                     "ask_fee": t.ask_fee,
                     "funds": t.funds,
@@ -380,16 +388,15 @@ impl ExchangeProvider for BithumbClient {
     }
 
     async fn fetch_account(&self) -> Result<StrategyAccountInfo, ProviderError> {
-        let balances: Vec<BithumbBalance> = self
-            .request(Method::GET, "/accounts", None, None)
-            .await?;
+        let balances: Vec<BithumbBalance> =
+            self.request(Method::GET, "/accounts", None, None).await?;
 
         let mut total_balance = Decimal::ZERO;
         let mut available_balance = Decimal::ZERO;
-        
+
         for b in &balances {
             if b.currency == "KRW" {
-                 if let Ok(val) = Decimal::from_str(&b.balance) {
+                if let Ok(val) = Decimal::from_str(&b.balance) {
                     available_balance += val;
                     total_balance += val;
                 }
@@ -409,25 +416,27 @@ impl ExchangeProvider for BithumbClient {
     }
 
     async fn fetch_positions(&self) -> Result<Vec<StrategyPositionInfo>, ProviderError> {
-         let balances: Vec<BithumbBalance> = self
-            .request(Method::GET, "/accounts", None, None)
-            .await?;
+        let balances: Vec<BithumbBalance> =
+            self.request(Method::GET, "/accounts", None, None).await?;
 
         let mut positions = Vec::new();
         for b in balances {
-            if b.currency == "KRW" { continue; } 
-            
-            let quantity = Decimal::from_str(&b.balance).unwrap_or_default() + Decimal::from_str(&b.locked).unwrap_or_default();
+            if b.currency == "KRW" {
+                continue;
+            }
+
+            let quantity = Decimal::from_str(&b.balance).unwrap_or_default()
+                + Decimal::from_str(&b.locked).unwrap_or_default();
             let avg_price = Decimal::from_str(&b.avg_buy_price).unwrap_or_default();
-            
+
             if quantity > Decimal::ZERO {
-                let ticker = format!("KRW-{}", b.currency); 
-                
+                let ticker = format!("KRW-{}", b.currency);
+
                 positions.push(StrategyPositionInfo::new(
                     ticker,
-                    Side::Buy, 
+                    Side::Buy,
                     quantity,
-                    avg_price
+                    avg_price,
                 ));
             }
         }
@@ -438,27 +447,41 @@ impl ExchangeProvider for BithumbClient {
         let query = serde_json::json!({
             "state": "wait",
         });
-        
-        let orders: Vec<BithumbOrder> = self.request(Method::GET, "/orders", Some(&query), None).await?;
-        
+
+        let orders: Vec<BithumbOrder> = self
+            .request(Method::GET, "/orders", Some(&query), None)
+            .await?;
+
         let mut open_orders = Vec::new();
         for order in orders {
-             let side = if order.side == "bid" { Side::Buy } else { Side::Sell };
-             let price = order.price.and_then(|p| Decimal::from_str(&p).ok()).unwrap_or_default();
-             let quantity = order.remaining_volume.and_then(|v| Decimal::from_str(&v).ok()).unwrap_or_default();
-  
-             open_orders.push(PendingOrder {
-                 order_id: order.uuid,
-                 ticker: order.market,
-                 side,
-                 price,
-                 quantity,
-                 filled_quantity: Decimal::ZERO,
-                 status: OrderStatusType::Pending,
-                 created_at: DateTime::parse_from_rfc3339(&format!("{}+09:00", order.created_at)).unwrap_or_default().with_timezone(&Utc),
-             });
+            let side = if order.side == "bid" {
+                Side::Buy
+            } else {
+                Side::Sell
+            };
+            let price = order
+                .price
+                .and_then(|p| Decimal::from_str(&p).ok())
+                .unwrap_or_default();
+            let quantity = order
+                .remaining_volume
+                .and_then(|v| Decimal::from_str(&v).ok())
+                .unwrap_or_default();
+
+            open_orders.push(PendingOrder {
+                order_id: order.uuid,
+                ticker: order.market,
+                side,
+                price,
+                quantity,
+                filled_quantity: Decimal::ZERO,
+                status: OrderStatusType::Pending,
+                created_at: DateTime::parse_from_rfc3339(&format!("{}+09:00", order.created_at))
+                    .unwrap_or_default()
+                    .with_timezone(&Utc),
+            });
         }
-        
+
         Ok(open_orders)
     }
 }
@@ -470,14 +493,17 @@ impl MarketDataProvider for BithumbClient {
             "markets": symbol
         });
 
-        let tickers: Vec<BithumbTicker> = self.request(Method::GET, "/ticker", Some(&query), None).await?;
-        
+        let tickers: Vec<BithumbTicker> = self
+            .request(Method::GET, "/ticker", Some(&query), None)
+            .await?;
+
         if let Some(t) = tickers.into_iter().next() {
             Ok(QuoteData {
                 symbol: t.market,
                 current_price: Decimal::from_f64_retain(t.trade_price).unwrap_or_default(),
                 price_change: Decimal::from_f64_retain(t.signed_change_price).unwrap_or_default(),
-                change_percent: Decimal::from_f64_retain(t.signed_change_rate * 100.0).unwrap_or_default(),
+                change_percent: Decimal::from_f64_retain(t.signed_change_rate * 100.0)
+                    .unwrap_or_default(),
                 high: Decimal::from_f64_retain(t.high_price).unwrap_or_default(),
                 low: Decimal::from_f64_retain(t.low_price).unwrap_or_default(),
                 open: Decimal::from_f64_retain(t.opening_price).unwrap_or_default(),
@@ -487,7 +513,7 @@ impl MarketDataProvider for BithumbClient {
                 timestamp: Utc::now(),
             })
         } else {
-             Err(ProviderError::Api("Quote not found".to_string()))
+            Err(ProviderError::Api("Quote not found".to_string()))
         }
     }
 
@@ -495,34 +521,37 @@ impl MarketDataProvider for BithumbClient {
         if symbols.is_empty() {
             return Vec::new();
         }
-        
+
         let markets = symbols.join(",");
         let query = serde_json::json!({
             "markets": markets
         });
 
-        match self.request::<Vec<BithumbTicker>>(Method::GET, "/ticker", Some(&query), None).await {
-            Ok(tickers) => {
-                tickers.into_iter().map(|t| {
-                    QuoteData {
-                         symbol: t.market,
-                         current_price: Decimal::from_f64_retain(t.trade_price).unwrap_or_default(),
-                         price_change: Decimal::from_f64_retain(t.change_price).unwrap_or_default(),
-                         change_percent: Decimal::from_f64_retain(t.change_rate).unwrap_or_default(),
-                         high: Decimal::from_f64_retain(t.high_price).unwrap_or_default(),
-                         low: Decimal::from_f64_retain(t.low_price).unwrap_or_default(),
-                         open: Decimal::from_f64_retain(t.opening_price).unwrap_or_default(),
-                         prev_close: Decimal::from_f64_retain(t.prev_closing_price).unwrap_or_default(),
-                         volume: Decimal::from_f64_retain(t.acc_trade_volume_24h).unwrap_or_default(),
-                         trading_value: Decimal::from_f64_retain(t.acc_trade_price_24h).unwrap_or_default(),
-                         timestamp: Utc::now(),
-                    }
-                }).collect()
-            }
+        match self
+            .request::<Vec<BithumbTicker>>(Method::GET, "/ticker", Some(&query), None)
+            .await
+        {
+            Ok(tickers) => tickers
+                .into_iter()
+                .map(|t| QuoteData {
+                    symbol: t.market,
+                    current_price: Decimal::from_f64_retain(t.trade_price).unwrap_or_default(),
+                    price_change: Decimal::from_f64_retain(t.change_price).unwrap_or_default(),
+                    change_percent: Decimal::from_f64_retain(t.change_rate).unwrap_or_default(),
+                    high: Decimal::from_f64_retain(t.high_price).unwrap_or_default(),
+                    low: Decimal::from_f64_retain(t.low_price).unwrap_or_default(),
+                    open: Decimal::from_f64_retain(t.opening_price).unwrap_or_default(),
+                    prev_close: Decimal::from_f64_retain(t.prev_closing_price).unwrap_or_default(),
+                    volume: Decimal::from_f64_retain(t.acc_trade_volume_24h).unwrap_or_default(),
+                    trading_value: Decimal::from_f64_retain(t.acc_trade_price_24h)
+                        .unwrap_or_default(),
+                    timestamp: Utc::now(),
+                })
+                .collect(),
             Err(_) => Vec::new(),
         }
     }
-    
+
     fn provider_name(&self) -> &str {
         "bithumb"
     }

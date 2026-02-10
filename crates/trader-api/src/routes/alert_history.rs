@@ -74,8 +74,14 @@ pub struct FrontendAlertHistoryItem {
 impl From<AlertHistory> for FrontendAlertHistoryItem {
     fn from(alert: AlertHistory) -> Self {
         // metadata에서 symbol과 strategy_id 추출
-        let symbol = alert.metadata.get("symbol").and_then(|v| v.as_str().map(String::from));
-        let strategy_id = alert.metadata.get("strategy_id").and_then(|v| v.as_str().map(String::from));
+        let symbol = alert
+            .metadata
+            .get("symbol")
+            .and_then(|v| v.as_str().map(String::from));
+        let strategy_id = alert
+            .metadata
+            .get("strategy_id")
+            .and_then(|v| v.as_str().map(String::from));
 
         Self {
             id: alert.id.to_string(),
@@ -87,7 +93,10 @@ impl From<AlertHistory> for FrontendAlertHistoryItem {
             strategy_id,
             message: alert.message,
             status: alert.status,
-            sent_at: alert.sent_at.map(|t| t.to_rfc3339()).unwrap_or_else(|| alert.created_at.to_rfc3339()),
+            sent_at: alert
+                .sent_at
+                .map(|t| t.to_rfc3339())
+                .unwrap_or_else(|| alert.created_at.to_rfc3339()),
             read_at: alert.acknowledged_at.map(|t| t.to_rfc3339()),
             metadata: Some(alert.metadata),
         }
@@ -116,7 +125,10 @@ pub async fn list_alert_history(
     let db_pool = state.db_pool.as_ref().ok_or_else(|| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::new("DB_NOT_CONFIGURED", "데이터베이스가 구성되지 않았습니다")),
+            Json(ApiError::new(
+                "DB_NOT_CONFIGURED",
+                "데이터베이스가 구성되지 않았습니다",
+            )),
         )
     })?;
 
@@ -142,13 +154,16 @@ pub async fn list_alert_history(
         })?;
 
     // 읽지 않은 알림 수 조회
-    let unread_count = AlertsRepository::count_unread(db_pool)
-        .await
-        .unwrap_or(0);
+    let unread_count = AlertsRepository::count_unread(db_pool).await.unwrap_or(0);
 
     let alerts: Vec<FrontendAlertHistoryItem> = result.alerts.into_iter().map(Into::into).collect();
 
-    debug!(count = alerts.len(), total = result.total, unread = unread_count, "알림 히스토리 조회");
+    debug!(
+        count = alerts.len(),
+        total = result.total,
+        unread = unread_count,
+        "알림 히스토리 조회"
+    );
 
     Ok(Json(FrontendAlertHistoryResponse {
         alerts,
@@ -180,7 +195,10 @@ pub async fn mark_alert_as_read(
     let db_pool = state.db_pool.as_ref().ok_or_else(|| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::new("DB_NOT_CONFIGURED", "데이터베이스가 구성되지 않았습니다")),
+            Json(ApiError::new(
+                "DB_NOT_CONFIGURED",
+                "데이터베이스가 구성되지 않았습니다",
+            )),
         )
     })?;
 
@@ -208,7 +226,10 @@ pub async fn mark_alert_as_read(
             warn!(error = %e, alert_id = %id, "알림 읽음 처리 실패");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::new("DB_ERROR", format!("알림 읽음 처리 실패: {}", e))),
+                Json(ApiError::new(
+                    "DB_ERROR",
+                    format!("알림 읽음 처리 실패: {}", e),
+                )),
             )
         })?;
 
@@ -234,7 +255,10 @@ pub async fn mark_all_alerts_as_read(
     let db_pool = state.db_pool.as_ref().ok_or_else(|| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError::new("DB_NOT_CONFIGURED", "데이터베이스가 구성되지 않았습니다")),
+            Json(ApiError::new(
+                "DB_NOT_CONFIGURED",
+                "데이터베이스가 구성되지 않았습니다",
+            )),
         )
     })?;
 
@@ -244,7 +268,10 @@ pub async fn mark_all_alerts_as_read(
             warn!(error = %e, "전체 알림 읽음 처리 실패");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError::new("DB_ERROR", format!("전체 알림 읽음 처리 실패: {}", e))),
+                Json(ApiError::new(
+                    "DB_ERROR",
+                    format!("전체 알림 읽음 처리 실패: {}", e),
+                )),
             )
         })?;
 

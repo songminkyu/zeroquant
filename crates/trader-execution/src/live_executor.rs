@@ -17,14 +17,15 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, warn};
 
-use trader_core::{OrderExecutionProvider, OrderRequest, OrderType, Side, Signal, SignalType, TimeInForce};
+use trader_core::{
+    OrderExecutionProvider, OrderRequest, OrderType, Side, Signal, SignalType, TimeInForce,
+};
 
 use crate::executor::{BracketOrderManager, ConversionConfig};
 use crate::signal_processor::{
-    apply_slippage, build_add_trade, build_entry_trade, build_exit_trade,
-    calculate_position_size, calculate_realized_pnl, determine_close_quantity,
-    update_position_average, validate_funds, ProcessorConfig, ProcessorPosition,
-    SignalProcessor, SignalProcessorError, TradeResult,
+    apply_slippage, build_add_trade, build_entry_trade, build_exit_trade, calculate_position_size,
+    calculate_realized_pnl, determine_close_quantity, update_position_average, validate_funds,
+    ProcessorConfig, ProcessorPosition, SignalProcessor, SignalProcessorError, TradeResult,
 };
 
 /// 실거래 실행기.
@@ -305,11 +306,7 @@ impl LiveExecutor {
         );
 
         // 자금 검증 (공통 유틸리티)
-        let _ = validate_funds(
-            position_amount,
-            self.config.commission_rate,
-            self.balance,
-        )?;
+        let _ = validate_funds(position_amount, self.config.commission_rate, self.balance)?;
 
         // Signal → OrderRequest 변환 후 거래소에 제출
         let order_request = OrderRequest {
@@ -375,7 +372,12 @@ impl LiveExecutor {
 
         // 거래 기록 생성 (공통 유틸리티)
         let trade = build_entry_trade(
-            signal, quantity, execution_price, commission, slippage_amount, timestamp,
+            signal,
+            quantity,
+            execution_price,
+            commission,
+            slippage_amount,
+            timestamp,
         );
 
         info!(
@@ -411,11 +413,8 @@ impl LiveExecutor {
         );
 
         // 자금 검증 (공통 유틸리티)
-        let commission = validate_funds(
-            position_amount,
-            self.config.commission_rate,
-            self.balance,
-        )?;
+        let commission =
+            validate_funds(position_amount, self.config.commission_rate, self.balance)?;
 
         // 거래소에 주문 제출
         let order_request = OrderRequest {
@@ -946,15 +945,13 @@ mod tests {
         let mut executor = create_mock_executor(false);
 
         // 2개 포지션 열기
-        let signal1 =
-            create_test_signal("005930", Side::Buy, SignalType::Entry).with_strength(0.3);
+        let signal1 = create_test_signal("005930", Side::Buy, SignalType::Entry).with_strength(0.3);
         executor
             .process_signal(&signal1, dec!(50000), Utc::now())
             .await
             .unwrap();
 
-        let signal2 =
-            create_test_signal("035720", Side::Buy, SignalType::Entry).with_strength(0.3);
+        let signal2 = create_test_signal("035720", Side::Buy, SignalType::Entry).with_strength(0.3);
         executor
             .process_signal(&signal2, dec!(100000), Utc::now())
             .await
@@ -977,8 +974,7 @@ mod tests {
     async fn test_total_equity() {
         let mut executor = create_mock_executor(false);
 
-        let signal =
-            create_test_signal("005930", Side::Buy, SignalType::Entry).with_strength(0.5);
+        let signal = create_test_signal("005930", Side::Buy, SignalType::Entry).with_strength(0.5);
         executor
             .process_signal(&signal, dec!(50000), Utc::now())
             .await
@@ -997,8 +993,7 @@ mod tests {
         let mut executor = create_mock_executor(false);
 
         // 첫 매수
-        let signal1 =
-            create_test_signal("005930", Side::Buy, SignalType::Entry).with_strength(0.3);
+        let signal1 = create_test_signal("005930", Side::Buy, SignalType::Entry).with_strength(0.3);
         executor
             .process_signal(&signal1, dec!(50000), Utc::now())
             .await

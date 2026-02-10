@@ -3,15 +3,17 @@
 //! 모든 활성 심볼에 대해 GlobalScore를 계산하여 symbol_global_score 테이블에 저장합니다.
 
 use rust_decimal::Decimal;
-use sqlx::{PgPool, QueryBuilder, Postgres};
-use std::sync::Arc;
+use sqlx::{PgPool, Postgres, QueryBuilder};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
 use tracing::{debug, info, warn};
 use uuid::Uuid;
 
-use trader_analytics::{GlobalScorer, GlobalScorerParams, IndicatorEngine, StructuralFeaturesCalculator};
 use trader_analytics::indicators::AtrParams;
+use trader_analytics::{
+    GlobalScorer, GlobalScorerParams, IndicatorEngine, StructuralFeaturesCalculator,
+};
 use trader_core::{Symbol, Timeframe};
 use trader_data::cache::historical::CachedHistoricalDataProvider;
 
@@ -108,10 +110,7 @@ pub async fn sync_global_scores_with_options(
                     )
                     .await?;
                     if !wl_syms.is_empty() {
-                        tracing::info!(
-                            count = wl_syms.len(),
-                            "관심종목 우선 처리 (GlobalScore)"
-                        );
+                        tracing::info!(count = wl_syms.len(), "관심종목 우선 처리 (GlobalScore)");
                     }
                     (wl_syms, wl)
                 }
@@ -164,7 +163,10 @@ pub async fn sync_global_scores_with_options(
     }
 
     let total = target_symbols.len();
-    info!("GlobalScore 동기화 시작: {} 심볼 (동시 {}개)", total, DEFAULT_CONCURRENT_LIMIT);
+    info!(
+        "GlobalScore 동기화 시작: {} 심볼 (동시 {}개)",
+        total, DEFAULT_CONCURRENT_LIMIT
+    );
     stats.total = total;
 
     // 시작 상태 저장
@@ -276,7 +278,10 @@ pub async fn sync_global_scores_with_options(
     stats.elapsed = start.elapsed();
     info!(
         "GlobalScore 동기화 완료: {}/{} 성공, {} 스킵, {} 오류 ({:.1}초)",
-        stats.success, stats.total, stats.skipped, stats.errors,
+        stats.success,
+        stats.total,
+        stats.skipped,
+        stats.errors,
         stats.elapsed.as_secs_f64()
     );
 
@@ -313,48 +318,63 @@ async fn calculate_and_save(
     let highs: Vec<Decimal> = candles.iter().map(|c| c.high).collect();
     let lows: Vec<Decimal> = candles.iter().map(|c| c.low).collect();
     let closes: Vec<Decimal> = candles.iter().map(|c| c.close).collect();
-    
+
     let current_price = closes.last().copied();
 
     // 4. 거래대금 계산 (유동성 점수용)
     let avg_volume_amount = {
-        let total_amount: Decimal = candles
-            .iter()
-            .map(|c| c.volume * c.close)
-            .sum();
+        let total_amount: Decimal = candles.iter().map(|c| c.volume * c.close).sum();
         Some(total_amount / Decimal::from(candles.len()))
     };
 
     // 5. ATR 기반 목표가/손절가 계산 (2 ATR 목표, 1 ATR 손절)
     let atr_params = AtrParams { period: 14 };
     let atr_result = indicator_engine.atr(&highs, &lows, &closes, atr_params);
-    
+
     let (target_price, stop_price) = if let Some(price) = current_price {
         let latest_atr = atr_result
             .ok()
             .and_then(|v| v.last().copied().flatten())
             .unwrap_or(price * Decimal::new(2, 2)); // 기본 2%
         let target = Some(price + latest_atr * Decimal::from(2)); // +2 ATR
-        let stop = Some(price - latest_atr);                       // -1 ATR
+        let stop = Some(price - latest_atr); // -1 ATR
         (target, stop)
     } else {
         (None, None)
     };
 
     // 6. StructuralFeatures 계산 (ERS 점수용)
-    let structural_features = StructuralFeaturesCalculator::from_candles(ticker, &candles, indicator_engine).ok();
+    let structural_features =
+        StructuralFeaturesCalculator::from_candles(ticker, &candles, indicator_engine).ok();
 
     // 7. 거래대금 퍼센타일 계산 (시장 전체 기준)
     // 일단 거래대금 기반으로 대략적 퍼센타일 추정
     // 거래대금 1억 이하: 0.1, 10억: 0.3, 100억: 0.5, 1000억: 0.7, 1조 이상: 0.9
     let volume_percentile = avg_volume_amount.map(|amt| {
         let amt_f64 = amt.to_string().parse::<f64>().unwrap_or(0.0);
-        if amt_f64 >= 1_000_000_000_000.0 { 0.95 }      // 1조 이상
-        else if amt_f64 >= 100_000_000_000.0 { 0.8 }    // 1000억 이상
-        else if amt_f64 >= 10_000_000_000.0 { 0.6 }     // 100억 이상
-        else if amt_f64 >= 1_000_000_000.0 { 0.4 }      // 10억 이상
-        else if amt_f64 >= 100_000_000.0 { 0.2 }        // 1억 이상
-        else { 0.1 }                                     // 1억 미만
+        if amt_f64 >= 1_000_000_000_000.0 {
+            0.95
+        }
+        // 1조 이상
+        else if amt_f64 >= 100_000_000_000.0 {
+            0.8
+        }
+        // 1000억 이상
+        else if amt_f64 >= 10_000_000_000.0 {
+            0.6
+        }
+        // 100억 이상
+        else if amt_f64 >= 1_000_000_000.0 {
+            0.4
+        }
+        // 10억 이상
+        else if amt_f64 >= 100_000_000.0 {
+            0.2
+        }
+        // 1억 이상
+        else {
+            0.1
+        } // 1억 미만
     });
 
     // 8. GlobalScore 계산
@@ -411,7 +431,7 @@ async fn calculate_and_save(
     // 10. Score History 저장 (일별 히스토리)
     // route_state는 symbol_fundamental에서 조회
     let route_state: Option<String> = sqlx::query_scalar(
-        r#"SELECT route_state::text FROM symbol_fundamental WHERE symbol_info_id = $1"#
+        r#"SELECT route_state::text FROM symbol_fundamental WHERE symbol_info_id = $1"#,
     )
     .bind(symbol_info_id)
     .fetch_optional(pool)
@@ -420,14 +440,16 @@ async fn calculate_and_save(
     .flatten();
 
     let today = chrono::Utc::now().date_naive();
-    sqlx::query(r#"
+    sqlx::query(
+        r#"
         INSERT INTO score_history (score_date, symbol, global_score, route_state, component_scores)
         VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (score_date, symbol) DO UPDATE SET
             global_score = EXCLUDED.global_score,
             route_state = EXCLUDED.route_state,
             component_scores = EXCLUDED.component_scores
-    "#)
+    "#,
+    )
     .bind(today)
     .bind(ticker)
     .bind(result.overall_score)
@@ -467,8 +489,6 @@ async fn get_symbols_by_tickers(
 
     Ok(results)
 }
-
-
 
 /// 활성 심볼 조회 (resume, stale_hours, 티커 필터링 지원).
 /// QueryBuilder 사용으로 SQL 주입 방지.
