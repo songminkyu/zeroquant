@@ -90,18 +90,18 @@ pub struct StrategyListItem {
     #[serde(rename = "isMultiTimeframe")]
     pub is_multi_timeframe: bool,
     /// 다중 타임프레임 설정 (NULL이면 단일 TF 전략)
-    #[serde(
-        rename = "multiTimeframeConfig",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "multiTimeframeConfig")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional, type = "Record<string, unknown> | null")]
     pub multi_timeframe_config: Option<Value>,
     /// 연결된 거래소 계정 ID
-    #[serde(rename = "credentialId", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "credentialId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub credential_id: Option<String>,
     /// 연결된 거래소 계정 이름 (표시용)
-    #[serde(rename = "credentialName", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "credentialName")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub credential_name: Option<String>,
 }
@@ -121,7 +121,8 @@ pub struct StrategyDetailResponse {
     /// 전략 설정 (편집용)
     pub config: Value,
     /// 연결된 거래소 계정 ID
-    #[serde(rename = "credentialId", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "credentialId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_id: Option<String>,
     /// 대상 시장 (KR/US/CRYPTO)
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -60,12 +60,12 @@ isMultiTimeframe: boolean,
 /**
  * 다중 타임프레임 설정 (NULL이면 단일 TF 전략)
  */
-multi_timeframe_config?: Record<string, unknown> | null, 
+multiTimeframeConfig?: Record<string, unknown> | null, 
 /**
  * 연결된 거래소 계정 ID
  */
-credential_id?: string, 
+credentialId?: string, 
 /**
  * 연결된 거래소 계정 이름 (표시용)
  */
-credential_name?: string, };
+credentialName?: string, };

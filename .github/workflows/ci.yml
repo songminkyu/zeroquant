@@ -22,15 +22,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libfontconfig1-dev
 
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-
-      - name: Install nightly toolchain (for rustfmt)
+      - name: Install nightly toolchain
         uses: dtolnay/rust-toolchain@nightly
         with:
-          components: rustfmt
+          components: rustfmt, clippy
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
@@ -39,7 +34,7 @@ jobs:
         run: cargo +nightly fmt --all --check
 
       - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo +nightly clippy --all-targets --all-features -- -D warnings
 
   rust-test:
     name: Rust Test
@@ -52,14 +47,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libfontconfig1-dev
 
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - name: Install nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: Run tests
-        run: cargo test --workspace
+        run: cargo +nightly test --workspace
 
   frontend:
     name: Frontend (lint + build)

@@ -16,7 +16,7 @@ composite_score: number,
 /**
  * 기존 GlobalScore 정보 - JSON에서 숫자로 직렬화
  */
-global_score: number | null, grade: string | null, 
+global_score: number | null, grade?: string, 
 /**
  * 계산 시각
  */

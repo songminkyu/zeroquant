@@ -547,7 +547,7 @@ impl SectorVbStrategy {
             })
             .collect();
 
-        ranked.sort_by(|a, b| b.returns.cmp(&a.returns));
+        ranked.sort_by_key(|b| std::cmp::Reverse(b.returns));
 
         if let Some(top) = ranked.first() {
             self.selected_sector = Some(top.ticker.clone());

@@ -12,7 +12,7 @@ use sqlx::PgPool;
 use trader_core::{Side, SignalIndicators, SignalMarker, SignalType, Symbol};
 use uuid::Uuid;
 
-use crate::error::{ApiErrorResponse, ApiResult};
+use crate::error::{internal_error, not_found, ApiErrorResponse, ApiResult, BoxedApiError};
 
 /// SignalMarker 리포지토리
 pub struct SignalMarkerRepository {
@@ -42,42 +42,29 @@ impl SignalMarkerRepository {
         .bind(&marker.ticker)
         .fetch_optional(&self.pool)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ApiErrorResponse::new(
-                    "NOT_FOUND",
-                    format!("Symbol not found: {}", marker.ticker),
-                )),
-            )
-        })?;
+        .map_err(|e| internal_error(e.to_string()))?
+        .ok_or_else(|| not_found(format!("Symbol not found: {}", marker.ticker)))?;
 
         // indicators를 JSONB로 변환
         let indicators_json = serde_json::to_value(&marker.indicators).map_err(|e| {
-            (
+            BoxedApiError::from((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ApiErrorResponse::new(
                     "SERIALIZATION_ERROR",
                     format!("Failed to serialize indicators: {}", e),
                 )),
-            )
+            ))
         })?;
 
         // metadata를 JSONB로 변환
         let metadata_json = serde_json::to_value(&marker.metadata).map_err(|e| {
-            (
+            BoxedApiError::from((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ApiErrorResponse::new(
                     "SERIALIZATION_ERROR",
                     format!("Failed to serialize metadata: {}", e),
                 )),
-            )
+            ))
         })?;
 
         // side를 Option<String>으로 변환
@@ -109,12 +96,7 @@ impl SignalMarkerRepository {
         .bind(&metadata_json)
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(|e| internal_error(e.to_string()))?;
 
         Ok(id)
     }
@@ -160,12 +142,7 @@ impl SignalMarkerRepository {
         .bind(limit)
         .fetch_all(&self.pool)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(|e| internal_error(e.to_string()))?;
 
         markers
             .into_iter()
@@ -211,12 +188,7 @@ impl SignalMarkerRepository {
         .bind(limit)
         .fetch_all(&self.pool)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(|e| internal_error(e.to_string()))?;
 
         markers
             .into_iter()
@@ -271,12 +243,7 @@ impl SignalMarkerRepository {
             .bind(limit)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiErrorResponse::new("DB_ERROR", e.to_string())),
-                )
-            })?;
+            .map_err(|e| internal_error(e.to_string()))?;
 
         markers
             .into_iter()
@@ -295,12 +262,7 @@ impl SignalMarkerRepository {
         .bind(strategy_id)
         .execute(&self.pool)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiErrorResponse::new("DB_ERROR", e.to_string())),
-            )
-        })?;
+        .map_err(|e| internal_error(e.to_string()))?;
 
         Ok(result.rows_affected())
     }
@@ -343,13 +305,13 @@ impl SignalMarkerRow {
             "REDUCE_POSITION" | "ReducePosition" => SignalType::ReducePosition,
             "SCALE" | "Scale" => SignalType::Scale,
             _ => {
-                return Err((
+                return Err(BoxedApiError::from((
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(ApiErrorResponse::new(
                         "PARSE_ERROR",
                         format!("Unknown signal type: {}", self.signal_type),
                     )),
-                ))
+                )))
             }
         };
 
@@ -383,25 +345,25 @@ impl SignalMarkerRow {
         // SignalIndicators 역직렬화
         let indicators: SignalIndicators =
             serde_json::from_value(self.indicators).map_err(|e| {
-                (
+                BoxedApiError::from((
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(ApiErrorResponse::new(
                         "PARSE_ERROR",
                         format!("Failed to deserialize indicators: {}", e),
                     )),
-                )
+                ))
             })?;
 
         // Metadata 역직렬화
         let metadata: HashMap<String, JsonValue> =
             serde_json::from_value(self.metadata).map_err(|e| {
-                (
+                BoxedApiError::from((
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(ApiErrorResponse::new(
                         "PARSE_ERROR",
                         format!("Failed to deserialize metadata: {}", e),
                     )),
-                )
+                ))
             })?;
 
         Ok(SignalMarker {

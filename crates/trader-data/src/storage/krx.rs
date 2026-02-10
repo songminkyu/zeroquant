@@ -215,7 +215,7 @@ impl KrxDataSource {
         }
 
         // 날짜순 정렬 (오래된 것부터)
-        klines.sort_by(|a, b| a.open_time.cmp(&b.open_time));
+        klines.sort_by_key(|a| a.open_time);
 
         Ok(klines)
     }

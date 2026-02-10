@@ -421,7 +421,7 @@ impl ValidationReport {
     /// 심각도별 정렬된 이슈 목록
     pub fn sorted_issues(&self) -> Vec<&ValidationIssue> {
         let mut sorted: Vec<_> = self.issues.iter().collect();
-        sorted.sort_by(|a, b| b.severity.cmp(&a.severity));
+        sorted.sort_by_key(|b| std::cmp::Reverse(b.severity));
         sorted
     }
 }

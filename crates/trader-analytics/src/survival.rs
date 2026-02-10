@@ -191,7 +191,7 @@ impl SurvivalTracker {
     /// 생존일이 긴 순서대로 정렬된 종목 목록을 반환합니다.
     pub fn rank_by_survival(&self, history: &[DailyRanking]) -> Vec<SurvivalResult> {
         let mut results: Vec<SurvivalResult> = self.calculate_all(history).into_values().collect();
-        results.sort_by(|a, b| b.survival_days.cmp(&a.survival_days));
+        results.sort_by_key(|b| std::cmp::Reverse(b.survival_days));
         results
     }
 }

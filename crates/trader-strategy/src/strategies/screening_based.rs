@@ -416,7 +416,7 @@ impl ScreeningBasedStrategy {
             .collect();
 
         // overall_score 기준 내림차순 정렬
-        filtered.sort_by(|a, b| b.overall_score.cmp(&a.overall_score));
+        filtered.sort_by_key(|b| std::cmp::Reverse(b.overall_score));
 
         // 상위 N개 선택
         let selected: Vec<_> = filtered.into_iter().take(config.top_n).collect();

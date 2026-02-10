@@ -1,16 +1,17 @@
 # ZeroQuant Trading Bot - 기술 아키텍처
 
 > 작성일: 2026-02-10
-> 버전: 3.7 (v0.9.1 반영)
+> 버전: 3.8 (v0.10.1 반영)
 >
 > 주요 변경:
+> - API 에러 처리 리팩토링 (BoxedApiError, helper 함수)
+> - 거래소 주문 실행 완성 (Upbit, LS증권, DB증권, Bithumb)
 > - Paper Trading 실시간 가격 반영 (Mock 캐시 → 미실현 손익)
 > - MarketStream 다중 거래소 팩토리 (KIS/Mock/Upbit/Bithumb/LS증권)
 > - Mock 거래소 KIS 수준 업그레이드 (VWAP 체결, 호가창, 지정가/스톱 큐)
 > - StrategyContext 통합 아키텍처 (ExchangeProvider + AnalyticsProvider)
 > - 전략 실행 모드 (실거래/페이퍼트레이딩/백테스트) 분리
 > - 포지션 ID/그룹 ID 시스템 (Grid/Spread 전략)
-> - KIS WebSocket 실시간 연동, Paper Trading
 
 ---
 

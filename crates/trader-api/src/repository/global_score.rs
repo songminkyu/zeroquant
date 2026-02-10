@@ -62,12 +62,14 @@ pub struct RankedSymbol {
     pub ticker: String,
     pub name: String,
     pub market: String,
+    #[ts(optional)]
     pub exchange: Option<String>,
     /// 종합 점수 (0-100) - JSON에서 숫자로 직렬화
     #[serde(with = "rust_decimal::serde::float")]
     #[ts(type = "number")]
     pub overall_score: Decimal,
     pub grade: String,
+    #[ts(optional)]
     pub confidence: Option<String>,
     #[ts(type = "Record<string, number>")]
     pub component_scores: JsonValue,
@@ -99,6 +101,7 @@ pub struct SevenFactorResponse {
     #[serde(default, with = "rust_decimal::serde::float_option")]
     #[ts(type = "number | null")]
     pub global_score: Option<Decimal>,
+    #[ts(optional)]
     pub grade: Option<String>,
     /// 계산 시각
     #[ts(type = "string")]

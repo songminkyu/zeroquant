@@ -33,6 +33,20 @@
 
 ---
 
+## [0.10.1] - 2026-02-10
+
+> **API 에러 처리 리팩토링**: 반복적인 에러 생성 코드를 helper 함수로 간소화하고, Arc를 사용한 BoxedApiError로 메모리 효율을 개선했습니다.
+
+### Changed
+- **API 에러 처리 개선** (`trader-api`)
+  - `BoxedApiError` newtype 도입 — Arc 래핑으로 에러 객체 복제 비용 감소
+  - `ApiResult<T>` 타입 별칭 변경 — `Result<T, BoxedApiError>`
+  - `internal_error()`, `not_found()` helper 함수 추가 — 반복 코드 제거
+  - 영향 받은 파일: `error.rs`, `signal_alert_rule.rs`, `signal_marker.rs`, `signals.rs`
+  - 코드량 감소: +129줄 (helper 추가), -152줄 (중복 제거) = 순 -23줄
+
+---
+
 ## [0.10.0] - 2026-02-10
 
 > **거래소 주문 실행 및 데이터 완전성 완성**: Upbit, LS증권, DB증권, Bithumb 4개 거래소의 주문 실행 및 체결 내역 조회 기능을 완성했습니다. 모든 거래소가 OrderExecutionProvider를 구현하여 실거래 준비가 완료되었습니다.

@@ -92,7 +92,7 @@ pub struct FieldSchema {
     pub max: Option<f64>,
 
     /// 선택 옵션 (select/multi_select 타입)
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(default)]
     pub options: Vec<String>,
 
     /// 조건부 표시 (예: "enabled == true")
@@ -105,7 +105,7 @@ pub struct FieldSchema {
     pub required: bool,
 
     /// 숨김 여부 (UI에서 표시하지 않음)
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[serde(default)]
     pub hidden: bool,
 
     /// 표시 순서 (낮을수록 먼저 표시)
@@ -169,7 +169,7 @@ pub struct SchemaFragment {
     pub fields: Vec<FieldSchema>,
 
     /// 다른 Fragment에 대한 의존성
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(default)]
     pub dependencies: Vec<String>,
 }
 
@@ -265,11 +265,11 @@ pub struct StrategyUISchema {
     pub category: String,
 
     /// 사용하는 Fragment 목록
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(default)]
     pub fragments: Vec<FragmentRef>,
 
     /// 전략 고유 커스텀 필드
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(default)]
     pub custom_fields: Vec<FieldSchema>,
 
     /// 기본 설정값 (옵션)

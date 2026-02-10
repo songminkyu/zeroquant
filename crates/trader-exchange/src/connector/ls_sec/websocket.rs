@@ -333,10 +333,10 @@ impl LsSecWebSocket {
         }
 
         // 매도 호가: 가격 오름차순 정렬
-        asks.sort_by(|a, b| a.price.cmp(&b.price));
+        asks.sort_by_key(|a| a.price);
 
         // 매수 호가: 가격 내림차순 정렬
-        bids.sort_by(|a, b| b.price.cmp(&a.price));
+        bids.sort_by_key(|b| std::cmp::Reverse(b.price));
 
         // 유효한 호가가 없으면 None 반환
         if asks.is_empty() && bids.is_empty() {

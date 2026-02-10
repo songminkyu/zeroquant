@@ -639,6 +639,7 @@ pub struct TradeResultItem {
     pub timestamp: String,
     /// 실현 손익 (청산 거래인 경우)
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub realized_pnl: Option<String>,
     /// 분할 매수/매도 여부
     pub is_partial: bool,

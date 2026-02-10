@@ -1,10 +1,25 @@
 # ZeroQuant
 
-> v0.9.1 | 2026-02-10 | Rust 기반 다중 시장 자동화 트레이딩 시스템
+> v0.10.1 | 2026-02-10 | Rust 기반 다중 시장 자동화 트레이딩 시스템
 
 ## 코딩 규칙
 
 > `.claude/rules/` (11개 파일) 자동 로드됨. 원본: `docs/development_rules.md`
+
+## 품질 원칙: Zero Error · Zero Warning · Zero Debt
+
+> **에러 0, 경고 0, 기술 부채 0** — 예외 없는 절대 기준. 모든 에이전트에 적용.
+
+- `#[allow(...)]`로 경고를 숨기지 않는다 — 원인을 제거한다
+- `@ts-ignore`, `@ts-expect-error`, `eslint-disable`로 우회하지 않는다
+- `any` 타입, `unwrap()`, `TODO/FIXME` 주석 금지
+- 기술 부채는 "나중에"가 아니라 "지금" 해결한다
+
+## 현재 작업 방향
+
+> **빠른 구현 → 정확하고 최적화된, 테스트 가능한 코드**로 전환 완료.
+> 기능 구현(v1.5, v2)과 품질 스프린트(Q0)를 병행하며, 모든 코드가 Zero Tolerance를 통과해야 한다.
+> Prometheus는 불필요 (경량 모니터링 사용 중). 과도한 인프라 의존성을 줄이는 방향.
 
 ---
 
@@ -53,16 +68,21 @@ MarketData → StrategyEngine → Strategy.on_market_data() → Signal[]
 
 | 에이전트 | 모델 | 역할 |
 |----------|------|------|
+| `planner` | sonnet | 설계/분석, 작업 명세서 (readonly) |
 | `rust-impl` | sonnet | Rust 구현 |
 | `ts-impl` | sonnet | TS/SolidJS 구현 |
-| `validator` | haiku | 빌드/테스트 검증 |
+| `test-writer` | sonnet | 테스트 작성 (테스트 코드만) |
+| `refactorer` | sonnet | 코드 리팩토링 (동작 보존) |
+| `validator` | haiku | 빌드/테스트 검증 (readonly) |
 | `code-reviewer` | sonnet | 코드 리뷰 (readonly) |
 | `ux-reviewer` | sonnet | UX/접근성 검증 (readonly) |
-| `db-reviewer` | sonnet | DB/SQL 마이그레이션 |
+| `db-specialist` | sonnet | DB/SQL 마이그레이션 |
 | `debugger` | opus | 근본 원인 분석 |
 | `lead` | sonnet | 팀 조율 (delegate) |
 
 **MCP**: Context7(API 검증) · Serena(심볼 탐색) · Playwright(E2E) · Chrome DevTools(성능)
+
+**모니터링**: 경량 시스템(`ErrorTracker` + `/health/*`). Prometheus **미사용**.
 
 ---
 
@@ -74,7 +94,7 @@ MarketData → StrategyEngine → Strategy.on_market_data() → Signal[]
 | 전략 추가/수정 | `/add-strategy` 스킬 · `docs/STRATEGY_GUIDE.md` |
 | API 엔드포인트 추가 | `/add-api` 스킬 · `docs/api.md` |
 | 거래소 커넥터 추가 | `/add-exchange` 스킬 |
-| DB 마이그레이션 | `/add-migration` 스킬 · `docs/migration_guide.md` · `db-reviewer` 에이전트 |
+| DB 마이그레이션 | `/add-migration` 스킬 · `docs/migration_guide.md` · `db-specialist` 에이전트 |
 | 프론트엔드 컴포넌트 | `/add-component` 스킬 |
 | 커밋 워크플로우 | `/shipping-code` 스킬 |
 | 에러 진단 | `/diagnose` 스킬 |

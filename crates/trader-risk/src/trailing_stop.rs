@@ -520,7 +520,7 @@ impl StepTrailingStopBuilder {
     /// 트레일링 스톱 모드 빌드
     pub fn build(mut self) -> TrailingStopMode {
         // 수익률 기준 오름차순 정렬
-        self.levels.sort_by(|a, b| a.profit_pct.cmp(&b.profit_pct));
+        self.levels.sort_by_key(|a| a.profit_pct);
 
         TrailingStopMode::Step {
             profit_levels: self.levels,

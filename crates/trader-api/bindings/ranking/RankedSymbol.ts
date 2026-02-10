@@ -3,11 +3,11 @@
 /**
  * GlobalScore 랭킹 응답용 (JOIN with symbol_info)
  */
-export type RankedSymbol = { ticker: string, name: string, market: string, exchange: string | null, 
+export type RankedSymbol = { ticker: string, name: string, market: string, exchange?: string, 
 /**
  * 종합 점수 (0-100) - JSON에서 숫자로 직렬화
  */
-overall_score: number, grade: string, confidence: string | null, component_scores: Record<string, number>, penalties: Record<string, number> | null, calculated_at: string, 
+overall_score: number, grade: string, confidence?: string, component_scores: Record<string, number>, penalties: Record<string, number> | null, calculated_at: string, 
 /**
  * RouteState (실시간 계산됨, DB 조회 시 None)
  */

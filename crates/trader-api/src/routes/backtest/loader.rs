@@ -332,7 +332,7 @@ pub fn merge_multi_klines(multi_klines: &HashMap<String, Vec<Kline>>) -> Vec<Kli
         .collect();
 
     // 시간순 정렬
-    all_klines.sort_by(|a, b| a.open_time.cmp(&b.open_time));
+    all_klines.sort_by_key(|a| a.open_time);
 
     all_klines
 }

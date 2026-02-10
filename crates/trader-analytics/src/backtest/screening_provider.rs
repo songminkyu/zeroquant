@@ -118,7 +118,7 @@ impl BacktestScreeningProvider {
         }
 
         // overall_score 기준 내림차순 정렬
-        results.sort_by(|a, b| b.overall_score.cmp(&a.overall_score));
+        results.sort_by_key(|b| std::cmp::Reverse(b.overall_score));
 
         results
     }

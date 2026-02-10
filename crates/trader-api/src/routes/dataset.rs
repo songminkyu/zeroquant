@@ -606,7 +606,7 @@ pub async fn get_candles(
 
                 // 최신순 정렬 (desc)
                 let mut sorted_klines = klines;
-                sorted_klines.sort_by(|a, b| b.open_time.cmp(&a.open_time));
+                sorted_klines.sort_by_key(|b| std::cmp::Reverse(b.open_time));
 
                 let candles: Vec<CandleItem> = sorted_klines
                     .into_iter()

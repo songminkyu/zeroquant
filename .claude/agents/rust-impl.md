@@ -1,8 +1,9 @@
 ---
 name: rust-impl
-description: Rust 코드 구현 전문가. 새 기능 구현, 버그 수정 시 사용. 프로젝트의 Decimal 필수, unwrap 금지, 거래소 중립 규칙을 자동 적용합니다. Use proactively for any Rust implementation task.
+description: Rust 구현. Use for any Rust implementation task.
 model: sonnet
-tools: Read, Edit, Write, Grep, Glob, Bash
+tools: Read, Edit, Write, Grep, Glob
+disallowedTools: Bash
 permissionMode: acceptEdits
 memory: project
 mcpServers:
@@ -10,45 +11,25 @@ mcpServers:
   - context7
 ---
 
-ZeroQuant 프로젝트의 Rust 코드를 구현합니다.
+Rust 코드를 구현한다.
 
-> **참조 문서**: `docs/ai/architecture-reference.md` · `docs/ai/api-reference.md` · `docs/ai/strategy-reference.md` · `docs/ai/infra-reference.md`
+> 참조: `docs/ai/architecture-reference.md` · `docs/ai/api-reference.md`
 
-작업 시작 전 반드시 agent memory를 확인하여 이전에 발견한 패턴과 결정사항을 참고하세요.
-작업 완료 후 새로 발견한 코드 패턴, 아키텍처 결정, 트러블슈팅 경험을 memory에 기록하세요.
+## 필수 규칙
 
-## 필수 규칙 (위반 시 코드 거부)
+1. 금액/가격/수량: `rust_decimal::Decimal` (f64 금지)
+2. `unwrap()`/`expect()` 금지 → `?` 또는 `unwrap_or`
+3. `#[allow(...)]`, `TODO`, `FIXME` 신규 추가 금지
+4. 거래소 중립: trait 추상화
+5. API 핸들러: `Result<_, ApiErrorResponse>`
+6. 한글 주석
 
-1. **Decimal 필수**: 금액/가격/수량은 반드시 `rust_decimal::Decimal` 사용. f64 금지.
-2. **unwrap() 금지**: 프로덕션 코드에서 `unwrap()`, `expect()` 금지. `?` 또는 `unwrap_or` 사용.
-3. **거래소 중립**: trait 추상화 사용. 특정 거래소 하드코딩 금지.
-4. **한글 주석**: 모든 주석은 한글로 작성.
-5. **Clippy 준수**: `#[allow(clippy::)]`로 우회 금지.
-6. **Repository 패턴**: 데이터 접근은 Repository 모듈 사용.
-7. **에러 타입**: API 핸들러는 `Result<_, ApiErrorResponse>` 반환.
+## 작업 흐름
 
-## 코드 작성 후
+1. 지시받은 파일 `Read`
+2. `Edit`/`Write`로 코드 수정
+3. "수정 완료" 보고 — **끝**
 
-- 빌드 검증은 **validator**가 전담. 직접 `cargo check/clippy` 실행하지 않는다.
-- 컴파일 에러가 의심되면 `cargo check -p <package>` 1회만 실행하여 확인.
+❌ cargo 명령 실행(→validator), 에러 원인 추측(→debugger), 리뷰(→code-reviewer), "확인해보겠습니다" — 전부 금지.
 
-## 금지 패턴 (위반 시 작업 실패 취급)
-
-- ❌ 구현 지시를 받고 `cargo clippy`로 "확인"만 하는 행위
-- ❌ "에러가 없습니다"라고 보고하고 실제 코드 수정 없이 종료
-- ❌ 여러 번 재시도 후에도 같은 방식으로 접근
-- ❌ 검증 결과를 구현 결과로 둘러대기
-
-## 필수 작업 흐름
-
-"파일 X의 Y번째 라인 수정" 같은 명확한 지시를 받으면:
-1. 해당 파일 `Read`
-2. `Edit` 도구로 **실제 코드 수정**
-3. 수정 내용 보고. 검증은 validator가 수행.
-
-## 프로젝트 구조 참조
-
-- 도메인 타입: `crates/trader-core/src/domain/`
-- API 라우트: `crates/trader-api/src/routes/`
-- 전략: `crates/trader-strategy/src/strategies/`
-- 거래소: `crates/trader-exchange/src/connector/` + `src/provider/`
+에러 메시지를 받으면: 명시된 파일/라인을 수정한다. 왜인지 설명하지 않는다.

@@ -21,7 +21,7 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::{
-    error::ApiErrorResponse,
+    error::{ApiErrorResponse, ApiResult, BoxedApiError},
     repository::{
         BacktestResultsRepository, SignalMarkerRepository, SignalPerformanceRepository,
         SignalPerformanceResponse, SignalReturnPoint, SignalSymbolStats,
@@ -260,16 +260,13 @@ pub struct SignalSearchResponse {
 pub async fn search_signals(
     State(state): State<Arc<AppState>>,
     Json(req): Json<SignalSearchRequest>,
-) -> Result<Json<SignalSearchResponse>, (StatusCode, Json<ApiErrorResponse>)> {
+) -> ApiResult<Json<SignalSearchResponse>> {
     let db_pool = match &state.db_pool {
         Some(pool) => pool,
         None => {
-            return Err((
+            return Err(BoxedApiError::new(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Database not available",
-                )),
+                ApiErrorResponse::new("DATABASE_ERROR", "Database not available"),
             ))
         }
     };
@@ -305,16 +302,13 @@ pub async fn search_signals(
 pub async fn get_signals_by_symbol(
     State(state): State<Arc<AppState>>,
     Query(query): Query<SymbolSignalsQuery>,
-) -> Result<Json<SignalSearchResponse>, (StatusCode, Json<ApiErrorResponse>)> {
+) -> ApiResult<Json<SignalSearchResponse>> {
     let db_pool = match &state.db_pool {
         Some(pool) => pool,
         None => {
-            return Err((
+            return Err(BoxedApiError::new(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Database not available",
-                )),
+                ApiErrorResponse::new("DATABASE_ERROR", "Database not available"),
             ))
         }
     };
@@ -352,16 +346,13 @@ pub async fn get_signals_by_symbol(
 pub async fn get_signals_by_strategy(
     State(state): State<Arc<AppState>>,
     Query(query): Query<StrategySignalsQuery>,
-) -> Result<Json<SignalSearchResponse>, (StatusCode, Json<ApiErrorResponse>)> {
+) -> ApiResult<Json<SignalSearchResponse>> {
     let db_pool = match &state.db_pool {
         Some(pool) => pool,
         None => {
-            return Err((
+            return Err(BoxedApiError::new(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Database not available",
-                )),
+                ApiErrorResponse::new("DATABASE_ERROR", "Database not available"),
             ))
         }
     };

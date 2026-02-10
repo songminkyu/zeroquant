@@ -284,7 +284,7 @@ impl MomentumCalculator {
             .collect();
 
         // Sort by score descending (highest momentum first)
-        results.sort_by(|a, b| b.1.score.cmp(&a.1.score));
+        results.sort_by_key(|b| std::cmp::Reverse(b.1.score));
 
         results
     }

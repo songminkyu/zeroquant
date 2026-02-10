@@ -40,7 +40,7 @@ timestamp: string,
 /**
  * 실현 손익 (청산 거래인 경우)
  */
-realized_pnl: string | null, 
+realized_pnl?: string, 
 /**
  * 분할 매수/매도 여부
  */
@@ -48,4 +48,4 @@ is_partial: boolean,
 /**
  * 메타데이터
  */
-metadata: { [key in string]?: string }, };
+metadata: { [key in string]: string }, };

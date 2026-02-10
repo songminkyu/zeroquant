@@ -14,9 +14,11 @@ Large
 
 ## F-1: 분산 트레이싱 (OpenTelemetry)
 
+> ⚠️ Prometheus는 사용하지 않음. 경량 모니터링 시스템(`error_tracker` + `/health/*`)이 메트릭을 담당.
+
 - [ ] `opentelemetry` + `tracing-opentelemetry` 의존성 추가
 - [ ] API → Strategy → Exchange → DB 요청 상관관계 추적
-- [ ] Jaeger/Zipkin 연동 설정
+- [ ] Jaeger/Zipkin 연동 설정 (또는 경량 모니터링과 통합)
 
 ## F-2: Collector 헬스 메트릭
 

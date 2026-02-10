@@ -773,7 +773,7 @@ impl EquityCurve {
         }
 
         // 최대 낙폭 기준 내림차순 정렬
-        periods.sort_by(|a, b| b.max_drawdown_pct.cmp(&a.max_drawdown_pct));
+        periods.sort_by_key(|b| std::cmp::Reverse(b.max_drawdown_pct));
 
         periods
     }

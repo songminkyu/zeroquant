@@ -464,7 +464,7 @@ impl PensionBotStrategy {
             .filter(|m| m.asset_type != PensionAssetType::Cash && m.momentum_score > dec!(0))
             .map(|m| (m.ticker.clone(), m.momentum_score))
             .collect();
-        sorted.sort_by(|a, b| b.1.cmp(&a.1));
+        sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
 
         // 상위 12개에 차등 보너스 (3-3-3-3-2-2-2-2-1-1-1-1 = 24등분)
         let bonus_tickers: Vec<String> = sorted

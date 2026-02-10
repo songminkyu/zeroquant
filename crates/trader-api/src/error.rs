@@ -10,7 +10,12 @@
 //! - `simulation::SimulationApiError` → `ApiErrorResponse`
 //! - `ml::ErrorResponse` → `ApiErrorResponse` (필드명: error → code)
 
-use axum::http::{Method, Uri};
+use std::sync::Arc;
+
+use axum::{
+    http::{Method, StatusCode, Uri},
+    response::{IntoResponse, Response},
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use utoipa::ToSchema;
@@ -159,6 +164,39 @@ impl std::fmt::Display for ApiErrorResponse {
 
 impl std::error::Error for ApiErrorResponse {}
 
+// ==================== Newtype for Boxed Error ====================
+
+/// Arc로 감싼 API 에러 (메모리 효율).
+#[derive(Debug, Clone)]
+pub struct BoxedApiError(Arc<(axum::http::StatusCode, axum::Json<ApiErrorResponse>)>);
+
+impl BoxedApiError {
+    /// 새 BoxedApiError 생성.
+    pub fn new(status: axum::http::StatusCode, response: ApiErrorResponse) -> Self {
+        Self(Arc::new((status, axum::Json(response))))
+    }
+}
+
+impl IntoResponse for BoxedApiError {
+    fn into_response(self) -> Response {
+        let inner = Arc::clone(&self.0);
+        let (status, json) = &*inner;
+        (*status, json.clone()).into_response()
+    }
+}
+
+impl From<(axum::http::StatusCode, axum::Json<ApiErrorResponse>)> for BoxedApiError {
+    fn from(value: (axum::http::StatusCode, axum::Json<ApiErrorResponse>)) -> Self {
+        Self(Arc::new(value))
+    }
+}
+
+impl From<Arc<(axum::http::StatusCode, axum::Json<ApiErrorResponse>)>> for BoxedApiError {
+    fn from(value: Arc<(axum::http::StatusCode, axum::Json<ApiErrorResponse>)>) -> Self {
+        Self(value)
+    }
+}
+
 // ==================== Type Aliases (점진적 마이그레이션용) ====================
 
 /// 기존 `strategies::ApiError` 호환 타입 별칭.
@@ -190,13 +228,53 @@ pub type SimulationApiError = ApiErrorResponse;
 ///     let strategy = state.strategy_repo
 ///         .find_by_id(&id)
 ///         .await
-///         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiErrorResponse::new("DB_ERROR", e.to_string()))))?
-///         .ok_or_else(|| (StatusCode::NOT_FOUND, Json(ApiErrorResponse::new("NOT_FOUND", format!("Strategy {} not found", id)))))?;
+///         .map_err(|e| internal_error(e.to_string()))?
+///         .ok_or_else(|| not_found(format!("Strategy {} not found", id)))?;
 ///
 ///     Ok(Json(strategy))
 /// }
 /// ```
-pub type ApiResult<T> = Result<T, (axum::http::StatusCode, axum::Json<ApiErrorResponse>)>;
+pub type ApiResult<T> = Result<T, BoxedApiError>;
+
+/// 내부 서버 에러 생성 helper.
+///
+/// # Arguments
+///
+/// * `msg` - 에러 메시지
+///
+/// # Example
+///
+/// ```
+/// use trader_api::error::internal_error;
+///
+/// let error = internal_error("Database connection failed");
+/// ```
+pub fn internal_error(msg: impl Into<String>) -> BoxedApiError {
+    BoxedApiError::new(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        ApiErrorResponse::new("INTERNAL_ERROR", msg),
+    )
+}
+
+/// 리소스 없음 에러 생성 helper.
+///
+/// # Arguments
+///
+/// * `msg` - 에러 메시지
+///
+/// # Example
+///
+/// ```
+/// use trader_api::error::not_found;
+///
+/// let error = not_found("Strategy not found");
+/// ```
+pub fn not_found(msg: impl Into<String>) -> BoxedApiError {
+    BoxedApiError::new(
+        StatusCode::NOT_FOUND,
+        ApiErrorResponse::new("NOT_FOUND", msg),
+    )
+}
 
 #[cfg(test)]
 mod tests {

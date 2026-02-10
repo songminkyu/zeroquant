@@ -16,7 +16,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.10.0"
+version = "0.10.1"
 edition = "2021"
 authors = ["Trading Bot Team"]
 license = "MIT"
@@ -109,7 +109,7 @@ proptest = "1.5"
 criterion = "0.5"
 
 # TypeScript 타입 생성
-ts-rs = { version = "10", features = ["serde-compat", "chrono-impl", "uuid-impl"] }
+ts-rs = { version = "12", features = ["serde-compat", "chrono-impl", "uuid-impl"] }
 
 # API Documentation
 utoipa = { version = "5", features = ["axum_extras", "chrono", "uuid", "decimal"] }

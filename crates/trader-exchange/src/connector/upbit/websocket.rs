@@ -302,9 +302,9 @@ impl UpbitWebSocket {
         }
 
         // 매도 호가는 가격 오름차순 정렬 (낮은 가격부터)
-        asks.sort_by(|a, b| a.price.cmp(&b.price));
+        asks.sort_by_key(|a| a.price);
         // 매수 호가는 가격 내림차순 정렬 (높은 가격부터)
-        bids.sort_by(|a, b| b.price.cmp(&a.price));
+        bids.sort_by_key(|b| std::cmp::Reverse(b.price));
 
         Some(OrderBook {
             ticker: code,

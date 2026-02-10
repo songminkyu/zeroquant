@@ -1381,7 +1381,7 @@ impl RotationStrategy {
             .collect();
 
         // 모멘텀 내림차순 정렬
-        assets.sort_by(|a, b| b.score.cmp(&a.score));
+        assets.sort_by_key(|b| std::cmp::Reverse(b.score));
 
         // 순위 부여
         for (i, asset) in assets.iter_mut().enumerate() {
